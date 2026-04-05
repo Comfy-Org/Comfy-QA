@@ -1,0 +1,23 @@
+{
+  "name": "comfy-qa",
+  "version": "0.1.0",
+  "description": "ComfyUI QA automation CLI",
+  "module": "src/index.ts",
+  "main": "src/index.ts",
+  "type": "module",
+  "bin": {
+    "comfy-qa": "./src/cli.ts"
+  },
+  "scripts": {
+    "start": "bun src/cli.ts",
+    "dev": "bun --hot src/cli.ts",
+    "test": "bun test",
+    "build": "bun build src/cli.ts --compile --outfile dist/comfy-qa"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
