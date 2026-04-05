@@ -6,7 +6,8 @@
   "main": "src/index.ts",
   "type": "module",
   "bin": {
-    "comfy-qa": "./src/cli.ts"
+    "comfy-qa": "./src/cli.ts",
+    "cmqa": "./src/cli.ts"
   },
   "files": [
     "src/"
