@@ -1,12 +1,18 @@
 {
   "name": "comfy-qa",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "ComfyUI QA automation CLI",
   "module": "src/index.ts",
   "main": "src/index.ts",
   "type": "module",
   "bin": {
     "comfy-qa": "./src/cli.ts"
+  },
+  "files": [
+    "src/"
+  ],
+  "engines": {
+    "bun": ">=1"
   },
   "scripts": {
     "start": "bun src/cli.ts",
