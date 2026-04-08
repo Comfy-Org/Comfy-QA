@@ -19,12 +19,20 @@
     "start": "bun src/cli.ts",
     "dev": "bun --hot src/cli.ts",
     "test": "bun test",
-    "build": "bun build src/cli.ts --compile --outfile dist/comfy-qa"
+    "build": "bun build src/cli.ts --compile --outfile dist/comfy-qa",
+    "prepare": "git submodule update --init --remote && cd lib/demowright && bun install && bun run build",
+    "postinstall": "git submodule update --init --remote && cd lib/demowright && bun install && bun run build"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.82.0",
+    "playwright": "^1.59.1",
+    "zod": "^4.3.6"
   }
 }
