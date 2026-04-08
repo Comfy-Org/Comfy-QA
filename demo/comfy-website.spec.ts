@@ -1,14 +1,22 @@
-import { test, safeMove } from "./fixture";
+import { test } from "./fixture";
 import { createVideoScript } from "../lib/demowright/dist/index.mjs";
 
+// Note: www.comfy.org is a Nuxt SSR site whose page.evaluate calls hang
+// after a few seconds (filed as demowright issue #3). This spec uses ONLY
+// mouse.wheel / mouse.move (which don't call page.evaluate) to avoid hangs.
 test("comfy.org website tour", async ({ page }) => {
-  test.setTimeout(5 * 60_000);
+  test.setTimeout(3 * 60_000);
 
-  // Block analytics, chat widgets that hang page.evaluate on Nuxt SSR
+  // www.comfy.org is a Nuxt SSR site whose hydration JS hangs Playwright
+  // operations after a few seconds. Block ALL .js files (and analytics) so the
+  // page renders as static HTML — mouse moves and scrolls then work reliably.
   await page.route("**/*", (route) => {
-    const url = route.request().url();
+    const req = route.request();
+    const url = req.url();
+    const type = req.resourceType();
     if (
-      /google-analytics|googletagmanager|sentry|posthog|hotjar|intercom|crisp|drift|hubspot|plausible|fullstory/i.test(
+      type === "script" ||
+      /google-analytics|googletagmanager|sentry|posthog|hotjar|intercom|crisp|drift|hubspot|plausible|fullstory|segment|mixpanel/i.test(
         url,
       )
     ) {
@@ -18,45 +26,51 @@ test("comfy.org website tour", async ({ page }) => {
   });
 
   await page.goto("https://www.comfy.org/", { waitUntil: "domcontentloaded" });
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(2500);
 
   const script = createVideoScript()
-    .title("Comfy.org", { subtitle: "Website Tour", durationMs: 1500 })
-    .segment("Welcome to the official Comfy.org website.", async (pace) => {
-      await safeMove(page, "h1");
+    .title("Comfy.org", { subtitle: "Website Tour", durationMs: 2000 })
+    .segment("Welcome to comfy.org, the official ComfyUI homepage.", async (pace) => {
+      await page.mouse.move(640, 360);
       await pace();
     })
-    .segment("This is the home page for the ComfyUI ecosystem.", async (pace) => {
-      await safeMove(page, "main");
+    .segment("ComfyUI is the most powerful node-based AI image generation tool.", async (pace) => {
+      await page.mouse.move(400, 200);
       await pace();
-      await page.mouse.wheel(0, 200);
-      await pace();
-    })
-    .segment("The top navigation links to docs, blog, and downloads.", async (pace) => {
-      await safeMove(page, "header");
-      await pace();
-      await safeMove(page, "header nav");
+      await page.mouse.move(800, 400);
       await pace();
     })
-    .segment("Scrolling through the landing page sections.", async (pace) => {
+    .segment("Scrolling through the landing page hero section.", async (pace) => {
       await page.mouse.wheel(0, 400);
       await pace();
       await page.mouse.wheel(0, 400);
       await pace();
     })
-    .segment("Feature highlights and call to actions appear next.", async (pace) => {
+    .segment("Browse features, screenshots, and integrations as you scroll.", async (pace) => {
       await page.mouse.wheel(0, 500);
       await pace();
       await page.mouse.wheel(0, 500);
       await pace();
     })
-    .segment("The footer has community links and resources.", async (pace) => {
-      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    .segment("Discover what makes ComfyUI a leading open source platform.", async (pace) => {
+      await page.mouse.wheel(0, 600);
       await pace();
-      await safeMove(page, "footer");
+      await page.mouse.wheel(0, 600);
       await pace();
     })
-    .outro({ text: "Comfy.org", subtitle: "www.comfy.org", durationMs: 1500 });
+    .segment("Continue scrolling to see community testimonials and links.", async (pace) => {
+      await page.mouse.wheel(0, 700);
+      await pace();
+      await page.mouse.wheel(0, 700);
+      await pace();
+    })
+    .segment("The footer holds documentation, GitHub, and Discord links.", async (pace) => {
+      await page.mouse.wheel(0, 800);
+      await pace();
+      await page.mouse.wheel(0, 800);
+      await pace();
+    })
+    .outro({ text: "Comfy.org", subtitle: "www.comfy.org", durationMs: 2000 });
 
   await script.prepare(page);
   await script.render(page, { baseName: "comfy-website", outputDir: ".comfy-qa/demos" });
