@@ -58,5 +58,5 @@ test("comfy vibe tour", async ({ page }) => {
     .outro({ text: "Comfy Vibe", subtitle: "comfy-vibe.vercel.app", durationMs: 2000 });
 
   await script.prepare(page);
-  await script.render(page, { baseName: "comfy-vibe", outputDir: ".comfy-qa/demos" });
+  await script.render(page, { baseName: "comfy-vibe", outputDir: ".comfy-qa/.demos" });
 });

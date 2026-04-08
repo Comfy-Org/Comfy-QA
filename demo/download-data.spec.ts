@@ -73,6 +73,6 @@ test("comfyui download statistics tour", async ({ page }) => {
   await script.prepare(page);
   await script.render(page, {
     baseName: "download-data",
-    outputDir: ".comfy-qa/demos",
+    outputDir: ".comfy-qa/.demos",
   });
 });

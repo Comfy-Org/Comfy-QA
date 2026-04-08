@@ -56,5 +56,5 @@ test("custom node licenses tour", async ({ page }) => {
     .outro({ text: "Custom Node Licenses", subtitle: "custom-node-licenses.vercel.app", durationMs: 2000 });
 
   await script.prepare(page);
-  await script.render(page, { baseName: "custom-node-licenses", outputDir: ".comfy-qa/demos" });
+  await script.render(page, { baseName: "custom-node-licenses", outputDir: ".comfy-qa/.demos" });
 });

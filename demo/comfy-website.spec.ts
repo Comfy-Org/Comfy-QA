@@ -73,5 +73,5 @@ test("comfy.org website tour", async ({ page }) => {
     .outro({ text: "Comfy.org", subtitle: "www.comfy.org", durationMs: 2000 });
 
   await script.prepare(page);
-  await script.render(page, { baseName: "comfy-website", outputDir: ".comfy-qa/demos" });
+  await script.render(page, { baseName: "comfy-website", outputDir: ".comfy-qa/.demos" });
 });

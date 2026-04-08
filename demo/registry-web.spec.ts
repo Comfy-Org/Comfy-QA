@@ -38,5 +38,5 @@ test("comfy registry tour", async ({ page }) => {
     .outro({ text: "Comfy Registry", subtitle: "registry.comfy.org", durationMs: 1500 });
 
   await script.prepare(page);
-  await script.render(page, { baseName: "registry-web", outputDir: ".comfy-qa/demos" });
+  await script.render(page, { baseName: "registry-web", outputDir: ".comfy-qa/.demos" });
 });

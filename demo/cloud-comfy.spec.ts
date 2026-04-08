@@ -258,6 +258,6 @@ test("cloud comfyui tour", async ({ page }) => {
   await script.prepare(page);
   await script.render(page, {
     baseName: "cloud-comfy",
-    outputDir: ".comfy-qa/demos",
+    outputDir: ".comfy-qa/.demos",
   });
 });

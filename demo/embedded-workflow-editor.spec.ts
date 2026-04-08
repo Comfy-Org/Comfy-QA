@@ -57,6 +57,6 @@ test("embedded workflow editor tour", async ({ page }) => {
   await script.prepare(page);
   await script.render(page, {
     baseName: "embedded-workflow-editor",
-    outputDir: ".comfy-qa/demos",
+    outputDir: ".comfy-qa/.demos",
   });
 });
