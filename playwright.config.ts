@@ -26,5 +26,5 @@ export default defineConfig({
   outputDir: path.resolve(__dirname, ".comfy-qa", ".tmp", "demos"),
   testDir: path.resolve(__dirname, "demo"),
   testMatch: "*.spec.ts",
-  reporter: [["list"]],
+  reporter: [["list"], ["./demo/fixtures/mux-reporter.ts"]],
 });
