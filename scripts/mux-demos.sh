@@ -9,6 +9,8 @@ PREPARED_DIR="${2:-.comfy-qa/demos/tmp}"
 OUTPUT_DIR="${3:-.comfy-qa/demos}"
 
 mkdir -p "$OUTPUT_DIR"
+# Ensure output stays untracked
+printf '*\n!.gitignore\n' > .comfy-qa/.gitignore 2>/dev/null || true
 found=0
 
 for wav in "$PREPARED_DIR"/*.wav; do
