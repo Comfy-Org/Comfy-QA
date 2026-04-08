@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Load .env.local manually so GEMINI_API_KEY is available for the TTS provider
-const envPath = path.resolve(__dirname, "..", ".env.local");
+const envPath = path.resolve(__dirname, ".env.local");
 if (fs.existsSync(envPath)) {
   for (const line of fs.readFileSync(envPath, "utf-8").split("\n")) {
     const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
@@ -23,8 +23,8 @@ export default defineConfig({
     headless: true, // qa-hud captures audio via Web Audio API tap, works headless
   },
   projects: [{ name: "chromium" }],
-  outputDir: path.resolve(__dirname, "..", ".comfy-qa", ".tmp", "demos"),
-  testDir: __dirname,
+  outputDir: path.resolve(__dirname, ".comfy-qa", ".tmp", "demos"),
+  testDir: path.resolve(__dirname, "demo"),
   testMatch: "*.spec.ts",
   reporter: [["list"]],
 });

@@ -13,7 +13,7 @@
  *  9. Settings panel
  * 10. Help center
  */
-import { test, safeMove } from "./fixture";
+import { test, safeMove } from "./fixtures/fixture";
 import { createVideoScript } from "../lib/demowright/dist/index.mjs";
 
 const CLOUD_URL = "https://cloud.comfy.org";

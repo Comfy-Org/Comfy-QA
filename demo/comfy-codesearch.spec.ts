@@ -1,4 +1,4 @@
-import { test, safeMove } from "./fixture";
+import { test, safeMove } from "./fixtures/fixture";
 import { createVideoScript } from "../lib/demowright/dist/index.mjs";
 import { typeKeys } from "../lib/demowright/dist/helpers.mjs";
 

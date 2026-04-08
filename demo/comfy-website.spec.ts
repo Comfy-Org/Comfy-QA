@@ -1,4 +1,4 @@
-import { test } from "./fixture";
+import { test } from "./fixtures/fixture";
 import { createVideoScript } from "../lib/demowright/dist/index.mjs";
 
 // Note: www.comfy.org is a Nuxt SSR site whose page.evaluate calls hang
