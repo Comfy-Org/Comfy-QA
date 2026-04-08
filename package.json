@@ -20,7 +20,7 @@
     "dev": "bun --hot src/cli.ts",
     "test": "bun test",
     "build": "bun build src/cli.ts --compile --outfile dist/comfy-qa",
-    "prepare": "git submodule update --init --remote && cd lib/demowright && bun install && bun run build",
+    "prepare": "git config core.hooksPath .githooks && git submodule update --init --remote && cd lib/demowright && bun install && bun run build",
     "postinstall": "git submodule update --init --remote && cd lib/demowright && bun install && bun run build"
   },
   "devDependencies": {

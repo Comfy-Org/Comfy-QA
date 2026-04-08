@@ -1,0 +1,4 @@
+#!/bin/sh
+# Auto-update and stage demowright submodule
+git submodule update --remote lib/demowright 2>/dev/null
+git add lib/demowright
