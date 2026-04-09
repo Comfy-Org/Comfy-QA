@@ -26,6 +26,11 @@ import type {
 import { spawn } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
+// ffmpeg-static ships a prebuilt ffmpeg binary for the current platform,
+// so users don't need to install ffmpeg system-wide.
+import ffmpegStatic from "ffmpeg-static";
+
+const FFMPEG_BIN = (ffmpegStatic as unknown as string) || "ffmpeg";
 
 const PROJECT_ROOT = process.cwd();
 const PREPARED_DIR = path.join(PROJECT_ROOT, ".comfy-qa", ".demos", "tmp");
@@ -49,7 +54,7 @@ async function waitForFile(p: string, timeoutMs = 5000): Promise<boolean> {
 
 function runFfmpeg(args: string[]): Promise<number> {
   return new Promise((resolve) => {
-    const proc = spawn("ffmpeg", args, { stdio: "ignore" });
+    const proc = spawn(FFMPEG_BIN, args, { stdio: "ignore" });
     proc.on("error", () => resolve(-1));
     proc.on("close", (code) => resolve(code ?? -1));
   });
@@ -115,7 +120,7 @@ export default class MuxReporter implements Reporter {
         // ffmpeg missing — warn once
         if (!this.muxed.has("__warned__")) {
           this.muxed.add("__warned__");
-          console.log("  [mux] ffmpeg not found on PATH; skipping mux");
+          console.log("  [mux] ffmpeg binary not available; skipping mux");
         }
       }
     } catch (err) {
