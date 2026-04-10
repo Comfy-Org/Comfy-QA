@@ -126,7 +126,20 @@ If you get "Requiring @playwright/test second time", delete `lib/demowright/node
 
 ### Known issues & next steps
 
-**Current baseline: 7 demos passing, average 9/10 quality.**
+**Current baseline: 10 specs (9 headless, 1 skip). Coverage ranges from 50% to 100% per demo.**
+
+| Demo | URL | Coverage | Notes |
+|------|-----|----------|-------|
+| cloud-comfy | cloud.comfy.org | 100% (21/21) | skip: WebGL headless |
+| comfyui-frontend | cloud.comfy.org | 100% (17/17) | UI-only tour |
+| registry-web | registry.comfy.org | 41% (33/81) | homepage only |
+| registry-node-detail | registry.comfy.org/nodes/* | 85% (11/13) | NEW: detail page |
+| comfy-docs | docs.comfy.org | 48% (40/84) | landing page only |
+| comfy-docs-tutorial | docs.comfy.org/tutorials/* | 83% (10/12) | NEW: sub-page deep dive |
+| download-data | comfyui-download-statistics.vercel.app | 100% (8/8) | all 4 time ranges |
+| embedded-workflow-editor | comfyui-embedded-workflow-editor.vercel.app | 89% (8/9) | no actual file editing |
+| comfy-website | www.comfy.org | 79% (15/19) | JS blocked (SSR) |
+| comfy-vibe | comfy-vibe.vercel.app | 100% (2/2) | minimal site |
 
 **Skipped:**
 - `cloud-comfy`: Auto-skipped in headless mode — WebGL canvas renders blank white. Requires `headed: true` in playwright config + `CLOUD_USERNAME`/`CLOUD_PASSWORD` in `.env.local`. Needs a CI setup with Xvfb or a headed runner.
@@ -136,7 +149,6 @@ If you get "Requiring @playwright/test second time", delete `lib/demowright/node
 - `custom-node-licenses`: Google sign-in required.
 
 **Next improvements:**
-- Add more demos for other Comfy-Org products as they become publicly accessible.
 - Cache TTS wav files across runs to avoid re-generating identical narrations.
 - Demowright's built-in ffmpeg subtitles filter fails on macOS (path quoting) — the mux-reporter works around this but demowright itself should be fixed upstream.
 - The Anthropic SDK uses `ANTHROPIC_API_KEY_QA` (with `_QA` suffix) to avoid conflicting with other tools, falling back to `ANTHROPIC_API_KEY`.

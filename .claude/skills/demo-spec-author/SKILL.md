@@ -215,6 +215,45 @@ test("comfy code search tour", async ({ page }) => {
 
 The narration text in `.segment(...)` calls **must reference VIDEO_SCRIPT** (e.g., `VIDEO_SCRIPT[1].narration`) rather than being inlined as string literals. This guarantees the rendered audio matches the script of record.
 
+## Coverage scoring (non-negotiable principle)
+
+Never evaluate demo quality as simple "pass/fail". Instead, enumerate every possible operation on the target site and score coverage as a ratio.
+
+### How to score
+
+1. **Enumerate all operations** — List every CRUD operation, route, UI component, and interactive feature the site exposes. Sources (in priority order):
+   - OpenAPI spec or TypeDefs (if source code is available)
+   - YAML checklist (`demo/checklists/*.yaml`)
+   - Route/URL enumeration from the live site
+   - Component/feature counting from `demo/stories/*.story.md`
+
+2. **Map demo coverage** — For each operation, mark whether the demo actually demonstrates it:
+   - A full CRUD entity = 4 operations (Create, Read, Update, Delete)
+   - A video showing CRU but not D = 3/4
+   - A read-only page with 5 sections, demo shows 3 = 3/5
+
+3. **Calculate ratio** — `demonstrated / total_possible`
+
+4. **Report line by line** — Never summarize as a single number. Show the full matrix so gaps are visible.
+
+### Example
+
+```
+## registry.comfy.org coverage: 14/22 (64%)
+
+| Feature              | C | R | U | D | Notes           |
+|----------------------|---|---|---|---|-----------------|
+| Search nodes         |   | ✅ |   |   | types + results |
+| Node detail page     |   | ✅ |   |   |                 |
+| Publish a node       | ❌ | ❌ | ❌ | ❌ | auth required   |
+| Filter by OS         |   | ✅ |   |   |                 |
+| Sort results         |   | ✅ |   |   |                 |
+| Pagination           |   | ✅ |   |   |                 |
+| ...                  |   |   |   |   |                 |
+```
+
+This principle applies to all phases: story writing (phase 2 must acknowledge total surface area), video scripting (phase 3 must justify what's omitted), and project status reporting.
+
 ## Hard rules (non-negotiable)
 
 These are encoded in past commit history and bug reports:
