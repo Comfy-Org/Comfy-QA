@@ -3,9 +3,10 @@ import type { PRInfo, IssueInfo } from "../utils/github";
 
 /** Call Claude via CLI (already authenticated) or SDK if ANTHROPIC_API_KEY is set */
 async function callClaude(prompt: string): Promise<string> {
-  if (process.env.ANTHROPIC_API_KEY) {
+  const apiKey = process.env.ANTHROPIC_API_KEY_QA ?? process.env.ANTHROPIC_API_KEY;
+  if (apiKey) {
     const Anthropic = (await import("@anthropic-ai/sdk")).default;
-    const client = new Anthropic();
+    const client = new Anthropic({ apiKey });
     const response = await client.messages.create({
       model: "claude-opus-4-6",
       max_tokens: 4096,

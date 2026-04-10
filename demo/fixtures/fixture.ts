@@ -77,14 +77,23 @@ async function geminiTTS(text: string): Promise<Buffer> {
   if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not set");
   if (cache.has(text)) return cache.get(text)!;
 
-  // Retry up to 3 times, return silent buffer on persistent failure
-  for (let attempt = 0; attempt < 3; attempt++) {
+  // Exponential backoff: retry for up to ~10 minutes on 503/rate-limit errors
+  const MAX_ATTEMPTS = 12;
+  const BASE_DELAY_MS = 1000;
+  const MAX_DELAY_MS = 60_000;
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     try {
       const wav = await geminiTTSOnce(text);
       cache.set(text, wav);
       return wav;
     } catch (err) {
-      console.log(`  [tts] attempt ${attempt + 1} failed: ${String(err).slice(0, 80)}`);
+      const msg = String(err).slice(0, 120);
+      const isRetryable = /503|429|rate|timeout|aborted/i.test(msg);
+      console.log(`  [tts] attempt ${attempt + 1}/${MAX_ATTEMPTS} failed: ${msg}`);
+      if (!isRetryable || attempt === MAX_ATTEMPTS - 1) break;
+      const delay = Math.min(BASE_DELAY_MS * 2 ** attempt, MAX_DELAY_MS);
+      console.log(`  [tts] retrying in ${(delay / 1000).toFixed(0)}s...`);
+      await new Promise((r) => setTimeout(r, delay));
     }
   }
 

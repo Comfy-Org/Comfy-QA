@@ -436,7 +436,10 @@ import { createVideoScript } from "../lib/demowright/dist/index.mjs";
 
 const CLOUD_URL = "https://cloud.comfy.org";
 
-test("cloud comfyui tour", async ({ page }) => {
+test("cloud comfyui tour", async ({ page, browserName }, testInfo) => {
+  // The cloud editor uses WebGL canvas rendering that requires a real GPU.
+  // Headless Chromium renders a blank white screen, making the demo useless.
+  test.skip(testInfo.project.use?.headless !== false, "cloud editor requires headed mode (WebGL)");
   test.setTimeout(10 * 60_000);
 
   // ── Login (heavy work — done outside script.render so it doesn't overrun) ──

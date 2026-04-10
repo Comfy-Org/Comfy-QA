@@ -104,3 +104,45 @@ bun --hot ./index.ts
 ```
 
 For more information, read the Bun API docs in `node_modules/bun-types/docs/**.mdx`.
+
+## Demo Videos
+
+Automated browser demo videos live in `demo/*.spec.ts`. Each spec uses the fixture at `demo/fixtures/fixture.ts` which applies demowright HUD (cursor, keyboard overlay, TTS narration) and records video.
+
+### Running demos
+
+```sh
+bunx playwright test                    # run all demos
+bunx playwright test demo/comfy-docs.spec.ts  # run one demo
+bun demo/evaluate-demos.ts              # evaluate output videos with Gemini
+```
+
+Output goes to `.comfy-qa/.demos/` (git-ignored). The mux-reporter at `demo/fixtures/mux-reporter.ts` automatically combines video + narration audio + subtitles into mp4 after each test.
+
+### Submodule: demowright
+
+`lib/demowright` is a git submodule. After pulling, run `bun run prepare` to sync it.
+If you get "Requiring @playwright/test second time", delete `lib/demowright/node_modules/playwright` and `lib/demowright/node_modules/@playwright` — the root node_modules copy must be the only one.
+
+### Known issues & next steps
+
+**Current baseline: 7 demos passing, average 9/10 quality.**
+
+**Skipped:**
+- `cloud-comfy`: Auto-skipped in headless mode — WebGL canvas renders blank white. Requires `headed: true` in playwright config + `CLOUD_USERNAME`/`CLOUD_PASSWORD` in `.env.local`. Needs a CI setup with Xvfb or a headed runner.
+
+**Removed (auth-walled, no public access):**
+- `comfy-codesearch` / `sign-in-sourcegraph`: Sourcegraph login required, no public API.
+- `custom-node-licenses`: Google sign-in required.
+
+**Next improvements:**
+- Add more demos for other Comfy-Org products as they become publicly accessible.
+- Cache TTS wav files across runs to avoid re-generating identical narrations.
+- Demowright's built-in ffmpeg subtitles filter fails on macOS (path quoting) — the mux-reporter works around this but demowright itself should be fixed upstream.
+- The Anthropic SDK uses `ANTHROPIC_API_KEY_QA` (with `_QA` suffix) to avoid conflicting with other tools, falling back to `ANTHROPIC_API_KEY`.
+
+### Environment variables (.env.local)
+
+- `GEMINI_API_KEY` — required for TTS narration in demos
+- `ANTHROPIC_API_KEY_QA` — for the research agent (Claude SDK)
+- `CLOUD_USERNAME` / `CLOUD_PASSWORD` — for cloud-comfy demo (optional)
