@@ -25,6 +25,7 @@ interface FeatureItem {
   description: string;
   action?: string;
   narration_hint: string;
+  success_hint?: string;
 }
 
 interface Chapter {
@@ -189,6 +190,14 @@ You are currently demonstrating a feature. Your job is to:
 2. Decide what Playwright actions to take to demonstrate the feature.
 3. Report whether you've successfully demonstrated the feature.
 
+CRITICAL RULES FOR "done":
+- Set "done": true as soon as you have NARRATED the feature and it is VISIBLE on the page. You do NOT need to click every element.
+- If the relevant content is already visible in the screenshot or accessibility tree, narrate it and set "done": true immediately.
+- Scrolling to see content and narrating it IS a successful demonstration. You don't need to interact further.
+- If you've already narrated the feature on a previous attempt, set "done": true.
+- Do NOT keep trying different selectors if the content is already visible. Just narrate and finish.
+- Maximum 2 actions per response. Prefer scroll + wait over complex click sequences.
+
 IMPORTANT: You are in a headless browser — there is NO URL bar. To navigate to a different page, use {"type": "navigate", "text": "https://full-url-here"}. Do NOT try to use keyboard shortcuts like Ctrl+L or type URLs into input fields.
 
 Respond with ONLY a JSON object (no markdown):
@@ -215,7 +224,9 @@ Chapter: ${chapter.name} — ${chapter.goal}
 Feature: ${feature.id} — ${feature.description}
 ${feature.action ? `Suggested action: ${feature.action}` : ""}
 Narration hint: ${feature.narration_hint}
+${feature.success_hint ? `Success criteria: ${feature.success_hint}` : ""}
 Attempt: ${attempt}/3
+${attempt > 1 ? "IMPORTANT: If you can see the relevant content on the page, just narrate it and set done=true. Do not keep retrying." : ""}
 
 ## Page State
 URL: ${pageState.url}

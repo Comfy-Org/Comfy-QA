@@ -1,9 +1,15 @@
 /**
- * Demo Editor Agent — reads actions.jsonl from research, scores segments,
- * and assembles a final polished MP4 using ffmpeg.
+ * Demo Editor Agent — reads actions.jsonl from research, extracts active
+ * bursts (narration + surrounding actions), removes LLM thinking gaps,
+ * and assembles a tight final MP4 using ffmpeg.
+ *
+ * Key improvement: instead of keeping whole feature segments (which include
+ * 15-30s LLM response wait times), we extract only the "activity bursts"
+ * — windows around narrations and actions where something is actually
+ * happening on screen.
  *
  * Output:
- *   - final_demo.mp4    (polished video with cuts + cards)
+ *   - final_demo.mp4    (polished video with idle time removed)
  *   - edit_plan.json     (the editing decisions made)
  *
  * Usage:
@@ -43,19 +49,21 @@ interface Segment {
   retryCount: number;
 }
 
-interface EditDecision {
-  segment: Segment;
-  action: "keep" | "trim" | "cut";
-  reason: string;
-  trimStartMs?: number;
-  trimEndMs?: number;
+/** A burst is a tight window of activity within a segment */
+interface Burst {
+  feature: string;
+  chapter: string;
+  startMs: number;
+  endMs: number;
+  hasNarration: boolean;
+  eventCount: number;
 }
 
 interface EditPlan {
   product: string;
   totalRawMs: number;
-  segments: EditDecision[];
-  finalSegments: EditDecision[];
+  segments: { feature: string; chapter: string; success: boolean; durationMs: number; action: string; reason: string }[];
+  bursts: Burst[];
   estimatedFinalMs: number;
 }
 
@@ -117,155 +125,227 @@ function groupIntoSegments(entries: ActionLogEntry[]): Segment[] {
 }
 
 // ---------------------------------------------------------------------------
-// Score and decide
+// Extract activity bursts from segments
 // ---------------------------------------------------------------------------
 
-/** Find the first narration timestamp in a segment's actions */
-function findFirstNarration(seg: Segment): ActionLogEntry | undefined {
-  return seg.actions.find((a) => a.type === "narrate");
+const BURST_PAD_BEFORE = 1000;  // 1s padding before first event in burst
+const BURST_PAD_AFTER = 1500;   // 1.5s padding after last event in burst
+const MIN_BURST_MS = 3000;      // Minimum burst duration
+
+interface TimedEvent {
+  offsetMs: number;
+  endMs: number;
+  type: string;
+  text?: string;
 }
 
-/** Find the last narration timestamp in a segment's actions */
-function findLastNarration(seg: Segment): ActionLogEntry | undefined {
-  return [...seg.actions].reverse().find((a) => a.type === "narrate");
-}
+/**
+ * Extract activity bursts from a segment.
+ *
+ * For narrations, we estimate end time as the time of the next event
+ * (since the agent waits for TTS playback before proceeding).
+ * For actions, we use a small duration (500ms).
+ *
+ * Events that overlap or are close (within GAP_TOLERANCE) form one burst.
+ * Gaps longer than that (typically LLM thinking time) are cut.
+ */
+function extractBursts(seg: Segment): Burst[] {
+  // Collect all meaningful events (narrate, action, screenshot)
+  const rawEvents = seg.actions.filter(
+    (a) => a.type === "narrate" || (a.type === "action" && a.success !== false),
+  );
 
-function scoreSegment(seg: Segment): EditDecision {
-  const durationMs = seg.endMs - seg.startMs;
-  const firstNarration = findFirstNarration(seg);
+  if (rawEvents.length === 0) return [];
 
-  // Failed entirely
-  if (!seg.success) {
-    return { segment: seg, action: "cut", reason: "Feature demonstration failed" };
-  }
+  // Build timed events: narration endMs = next event's timestamp (TTS plays until then)
+  const events: TimedEvent[] = [];
+  for (let i = 0; i < rawEvents.length; i++) {
+    const a = rawEvents[i];
+    if (a.type === "narrate") {
+      // Estimate TTS duration from word count (~150 wpm)
+      const words = (a.text ?? "").split(/\s+/).length;
+      const ttsDurMs = Math.max(2500, (words / 150) * 60 * 1000);
 
-  // Too short (likely just a hover)
-  if (durationMs < 1500) {
-    return { segment: seg, action: "cut", reason: "Too short to be meaningful" };
-  }
+      // Also find the next meaningful event timestamp
+      const idx = seg.actions.indexOf(a);
+      let nextTs = Infinity;
+      for (let j = idx + 1; j < seg.actions.length; j++) {
+        const n = seg.actions[j];
+        if (n.type === "narrate" || n.type === "action") {
+          nextTs = n.offsetMs;
+          break;
+        }
+      }
 
-  // Perfect: succeeded on first try, has narration, reasonable duration
-  if (!seg.hasError && seg.narration && durationMs > 2000 && durationMs < 30000) {
-    // Trim leading silence: start from 1s before first narration instead of segment start
-    if (firstNarration && (firstNarration.offsetMs - seg.startMs) > 2000) {
-      const trimStart = Math.max(seg.startMs, firstNarration.offsetMs - 1000);
-      return {
-        segment: seg,
-        action: "trim",
-        reason: "Clean success, trimming leading silence before narration",
-        trimStartMs: trimStart,
-        trimEndMs: seg.endMs,
-      };
+      // Use the SHORTER of: estimated TTS duration, or time until next event.
+      // This avoids including LLM thinking time that happens after TTS finishes.
+      const endMs = a.offsetMs + Math.min(ttsDurMs, nextTs === Infinity ? ttsDurMs : nextTs - a.offsetMs);
+      events.push({ offsetMs: a.offsetMs, endMs, type: "narrate", text: a.text });
+    } else {
+      events.push({ offsetMs: a.offsetMs, endMs: a.offsetMs + 500, type: "action" });
     }
-    return { segment: seg, action: "keep", reason: "Clean success with narration" };
   }
 
-  // Success but had errors (retries) — trim to last successful narration
-  if (seg.hasError) {
-    const lastNarrate = findLastNarration(seg);
-    if (lastNarrate) {
-      // Start 1s before the last narration for visual context
-      const trimStart = Math.max(seg.startMs, lastNarrate.offsetMs - 1000);
-      return {
-        segment: seg,
-        action: "trim",
-        reason: `Had ${seg.retryCount} retries, trimming to last successful narration`,
-        trimStartMs: trimStart,
-        trimEndMs: seg.endMs,
-      };
+  events.sort((a, b) => a.offsetMs - b.offsetMs);
+
+  // Merge events into bursts. Gap tolerance: 3s (covers visual pause between actions).
+  // Anything longer = LLM thinking time, which we want to cut.
+  const GAP_TOLERANCE = 3000;
+  const groups: TimedEvent[][] = [[events[0]]];
+  let groupEnd = events[0].endMs;
+
+  for (let i = 1; i < events.length; i++) {
+    if (events[i].offsetMs <= groupEnd + GAP_TOLERANCE) {
+      groups[groups.length - 1].push(events[i]);
+      groupEnd = Math.max(groupEnd, events[i].endMs);
+    } else {
+      groups.push([events[i]]);
+      groupEnd = events[i].endMs;
     }
-    return { segment: seg, action: "keep", reason: "Success with retries, keeping full" };
   }
 
-  // Too long (agent got stuck) — trim starting from first narration
-  if (durationMs > 45000) {
-    const trimStart = firstNarration
-      ? Math.max(seg.startMs, firstNarration.offsetMs - 1000)
-      : seg.startMs;
+  return groups.map((g) => {
+    const firstStart = g[0].offsetMs;
+    const lastEnd = Math.max(...g.map((e) => e.endMs));
+    const startMs = Math.max(seg.startMs, firstStart - BURST_PAD_BEFORE);
+    const endMs = Math.min(seg.endMs, lastEnd + BURST_PAD_AFTER);
+    const hasNarration = g.some((e) => e.type === "narrate");
     return {
-      segment: seg,
-      action: "trim",
-      reason: "Too long — trimming from first narration",
-      trimStartMs: trimStart,
-      trimEndMs: Math.min(seg.endMs, trimStart + 25000),
+      feature: seg.feature,
+      chapter: seg.chapter,
+      startMs,
+      endMs: Math.max(endMs, startMs + MIN_BURST_MS),
+      hasNarration,
+      eventCount: g.length,
     };
-  }
-
-  return { segment: seg, action: "keep", reason: "Default keep" };
+  });
 }
+
+// ---------------------------------------------------------------------------
+// Build edit plan
+// ---------------------------------------------------------------------------
 
 function createEditPlan(entries: ActionLogEntry[]): EditPlan {
   const segments = groupIntoSegments(entries);
-  const decisions = segments.map(scoreSegment);
-  const finalSegments = decisions.filter((d) => d.action !== "cut");
   const totalRawMs = entries.length > 0 ? entries[entries.length - 1].offsetMs : 0;
-  const estimatedFinalMs = finalSegments.reduce((acc, d) => {
-    if (d.action === "trim" && d.trimStartMs !== undefined && d.trimEndMs !== undefined) {
-      return acc + (d.trimEndMs - d.trimStartMs);
+
+  const segmentReports: EditPlan["segments"] = [];
+  const allBursts: Burst[] = [];
+
+  for (const seg of segments) {
+    const durationMs = seg.endMs - seg.startMs;
+
+    if (!seg.success) {
+      segmentReports.push({
+        feature: seg.feature,
+        chapter: seg.chapter,
+        success: false,
+        durationMs,
+        action: "cut",
+        reason: "Feature demonstration failed",
+      });
+      continue;
     }
-    return acc + (d.segment.endMs - d.segment.startMs);
-  }, 0);
+
+    if (durationMs < 1500) {
+      segmentReports.push({
+        feature: seg.feature,
+        chapter: seg.chapter,
+        success: true,
+        durationMs,
+        action: "cut",
+        reason: "Too short to be meaningful",
+      });
+      continue;
+    }
+
+    const bursts = extractBursts(seg);
+    // Only keep bursts that have narration (visual-only bursts are usually noise)
+    const goodBursts = bursts.filter((b) => b.hasNarration);
+
+    if (goodBursts.length === 0) {
+      // Fallback: keep all bursts if none have narration
+      const fallback = bursts.length > 0 ? bursts : [];
+      allBursts.push(...fallback);
+      segmentReports.push({
+        feature: seg.feature,
+        chapter: seg.chapter,
+        success: true,
+        durationMs,
+        action: fallback.length > 0 ? "burst" : "cut",
+        reason: fallback.length > 0
+          ? `No narrated bursts, keeping ${fallback.length} action bursts`
+          : "No usable bursts",
+      });
+    } else {
+      allBursts.push(...goodBursts);
+      const burstMs = goodBursts.reduce((a, b) => a + (b.endMs - b.startMs), 0);
+      const saved = durationMs - burstMs;
+      segmentReports.push({
+        feature: seg.feature,
+        chapter: seg.chapter,
+        success: true,
+        durationMs,
+        action: "burst",
+        reason: `${goodBursts.length} burst(s), ${(burstMs / 1000).toFixed(1)}s kept, ${(saved / 1000).toFixed(1)}s idle removed`,
+      });
+    }
+  }
+
+  const estimatedFinalMs = allBursts.reduce((a, b) => a + (b.endMs - b.startMs), 0);
 
   return {
     product: "",
     totalRawMs,
-    segments: decisions,
-    finalSegments,
+    segments: segmentReports,
+    bursts: allBursts,
     estimatedFinalMs,
   };
 }
 
 // ---------------------------------------------------------------------------
-// Generate ffmpeg cut list
+// Generate ffmpeg script
 // ---------------------------------------------------------------------------
 
 function generateFfmpegScript(plan: EditPlan, rawVideoPath: string, outputPath: string): string {
-  // Build a concat filter with segments
-  const parts: string[] = [];
-
-  for (let i = 0; i < plan.finalSegments.length; i++) {
-    const d = plan.finalSegments[i];
-    const startSec = ((d.action === "trim" && d.trimStartMs !== undefined ? d.trimStartMs : d.segment.startMs) / 1000).toFixed(3);
-    const endSec = ((d.action === "trim" && d.trimEndMs !== undefined ? d.trimEndMs : d.segment.endMs) / 1000).toFixed(3);
-    parts.push(`-ss ${startSec} -to ${endSec} -i "${rawVideoPath}"`);
-  }
-
-  // If we have audio
   const audioPath = rawVideoPath.replace("raw_video.webm", "narration.wav");
   const hasAudio = fs.existsSync(audioPath);
 
-  if (plan.finalSegments.length === 0) {
-    return `# No segments to keep\necho "No usable segments found"`;
+  if (plan.bursts.length === 0) {
+    return `#!/bin/bash\necho "No usable bursts found"`;
   }
 
-  // Simple approach: use ffmpeg concat demuxer
   const concatListPath = outputPath.replace(".mp4", "-segments.txt");
   const segmentCmds: string[] = [];
 
-  // Cut each segment from BOTH video and audio at the same timestamps
-  for (let i = 0; i < plan.finalSegments.length; i++) {
-    const d = plan.finalSegments[i];
-    const startSec = ((d.action === "trim" && d.trimStartMs !== undefined ? d.trimStartMs : d.segment.startMs) / 1000).toFixed(3);
-    const endSec = ((d.action === "trim" && d.trimEndMs !== undefined ? d.trimEndMs : d.segment.endMs) / 1000).toFixed(3);
+  for (let i = 0; i < plan.bursts.length; i++) {
+    const b = plan.bursts[i];
+    const startSec = (b.startMs / 1000).toFixed(3);
+    const endSec = (b.endMs / 1000).toFixed(3);
     const segFile = outputPath.replace(".mp4", `-seg${i}.mp4`);
 
     if (hasAudio) {
-      // Cut video + audio at the SAME timestamps, then mux together — keeps sync
       segmentCmds.push(
-        `ffmpeg -y -ss ${startSec} -to ${endSec} -i "${rawVideoPath}" -ss ${startSec} -to ${endSec} -i "${audioPath}" ` +
-        `-map 0:v -map 1:a -c:v libx264 -preset fast -c:a aac -b:a 128k -shortest "${segFile}"`
+        `ffmpeg -y -ss ${startSec} -to ${endSec} -i "${rawVideoPath}" ` +
+        `-ss ${startSec} -to ${endSec} -i "${audioPath}" ` +
+        `-map 0:v -map 1:a -c:v libx264 -preset fast -c:a aac -b:a 128k -shortest "${segFile}"`,
       );
     } else {
-      segmentCmds.push(`ffmpeg -y -ss ${startSec} -to ${endSec} -i "${rawVideoPath}" -c:v libx264 -preset fast "${segFile}"`);
+      segmentCmds.push(
+        `ffmpeg -y -ss ${startSec} -to ${endSec} -i "${rawVideoPath}" ` +
+        `-c:v libx264 -preset fast "${segFile}"`,
+      );
     }
   }
 
-  const concatEntries = plan.finalSegments.map((_, i) => `file '${outputPath.replace(".mp4", `-seg${i}.mp4`)}'`);
+  const concatEntries = plan.bursts.map((_, i) =>
+    `file '${outputPath.replace(".mp4", `-seg${i}.mp4`)}'`,
+  );
 
   return `#!/bin/bash
 set -e
 
-# Cut individual segments (video + audio synced at same timestamps)
+# Cut individual bursts (video + audio synced at same timestamps)
 ${segmentCmds.join("\n")}
 
 # Create concat list
@@ -273,13 +353,13 @@ cat > "${concatListPath}" << 'CONCAT'
 ${concatEntries.join("\n")}
 CONCAT
 
-# Concatenate all segments into final video
+# Concatenate all bursts into final video
 ffmpeg -y -f concat -safe 0 -i "${concatListPath}" -c copy "${outputPath}"
 
-echo "✅ Final video: ${outputPath}"
+echo "Final video: ${outputPath}"
 
 # Cleanup
-rm -f ${plan.finalSegments.map((_, i) => `"${outputPath.replace(".mp4", `-seg${i}.mp4`)}"`).join(" ")}
+rm -f ${plan.bursts.map((_, i) => `"${outputPath.replace(".mp4", `-seg${i}.mp4`)}"`).join(" ")}
 rm -f "${concatListPath}"
 `;
 }
@@ -295,23 +375,25 @@ export async function editDemoResearch(researchDir: string) {
     process.exit(1);
   }
 
-  console.log(`\n✂️  Editor Agent: processing ${researchDir}\n`);
+  console.log(`\n  Editor Agent: processing ${researchDir}\n`);
 
   // Parse and plan
   const entries = parseLog(logPath);
   const plan = createEditPlan(entries);
 
-  console.log(`  📊 Raw footage: ${(plan.totalRawMs / 1000).toFixed(1)}s`);
-  console.log(`  📊 Segments found: ${plan.segments.length}`);
-  console.log(`  ✅ Keep: ${plan.segments.filter((d) => d.action === "keep").length}`);
-  console.log(`  ✂️  Trim: ${plan.segments.filter((d) => d.action === "trim").length}`);
-  console.log(`  ❌ Cut: ${plan.segments.filter((d) => d.action === "cut").length}`);
-  console.log(`  📊 Estimated final: ${(plan.estimatedFinalMs / 1000).toFixed(1)}s`);
+  const rawSec = (plan.totalRawMs / 1000).toFixed(1);
+  const finalSec = (plan.estimatedFinalMs / 1000).toFixed(1);
+  const ratio = plan.totalRawMs > 0 ? ((1 - plan.estimatedFinalMs / plan.totalRawMs) * 100).toFixed(0) : "0";
+
+  console.log(`  Raw footage:  ${rawSec}s`);
+  console.log(`  Final video:  ${finalSec}s  (${ratio}% idle removed)`);
+  console.log(`  Bursts:       ${plan.bursts.length}`);
+  console.log(`  Segments:     ${plan.segments.length} features`);
 
   // Save edit plan
   const planPath = path.join(researchDir, "edit_plan.json");
   fs.writeFileSync(planPath, JSON.stringify(plan, null, 2));
-  console.log(`  📋 Plan: ${planPath}`);
+  console.log(`  Plan: ${planPath}`);
 
   // Generate ffmpeg script
   const rawVideoPath = path.join(researchDir, "raw_video.webm");
@@ -321,27 +403,32 @@ export async function editDemoResearch(researchDir: string) {
     const scriptPath = path.join(researchDir, "edit.sh");
     const script = generateFfmpegScript(plan, rawVideoPath, outputPath);
     fs.writeFileSync(scriptPath, script, { mode: 0o755 });
-    console.log(`  🎬 Script: ${scriptPath}`);
-    console.log(`\n  Run: bash ${scriptPath}\n`);
+    console.log(`  Script: ${scriptPath}\n`);
 
-    // Auto-run if possible
     try {
-      console.log("  ⏳ Running ffmpeg...");
+      console.log("  Running ffmpeg...");
       await $`bash ${scriptPath}`.quiet();
-      console.log(`  ✅ Final video: ${outputPath}`);
+      console.log(`  Done: ${outputPath}`);
     } catch (err: any) {
-      console.log(`  ⚠ ffmpeg failed — run manually: bash ${scriptPath}`);
+      console.log(`  ffmpeg failed — run manually: bash ${scriptPath}`);
     }
   } else {
-    console.log(`  ⚠ No raw_video.webm found — skipping video assembly`);
+    console.log(`  No raw_video.webm found — skipping video assembly`);
   }
 
   // Print segment report
-  console.log("\n  ─── Segment Report ───");
-  for (const d of plan.segments) {
-    const dur = ((d.segment.endMs - d.segment.startMs) / 1000).toFixed(1);
-    const icon = d.action === "keep" ? "✅" : d.action === "trim" ? "✂️" : "❌";
-    console.log(`  ${icon} [${dur}s] ${d.segment.chapter} / ${d.segment.feature}: ${d.reason}`);
+  console.log("\n  --- Segment Report ---");
+  for (const s of plan.segments) {
+    const dur = (s.durationMs / 1000).toFixed(1);
+    const icon = s.action === "cut" ? "X" : "OK";
+    console.log(`  [${icon}] [${dur}s] ${s.chapter} / ${s.feature}: ${s.reason}`);
+  }
+
+  // Print burst details
+  console.log("\n  --- Burst Detail ---");
+  for (const b of plan.bursts) {
+    const dur = ((b.endMs - b.startMs) / 1000).toFixed(1);
+    console.log(`  [${dur}s] ${b.chapter} / ${b.feature} (${b.eventCount} events${b.hasNarration ? ", narrated" : ""})`);
   }
   console.log("");
 }
