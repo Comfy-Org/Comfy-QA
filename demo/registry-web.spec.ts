@@ -8,74 +8,414 @@
  *  VIDEO SCRIPT (the source of truth)
  * ─────────────────────────────────────────────────────────────────────────────
  *  Every word in `narration` is read aloud verbatim by Gemini TTS during
- *  recording. Edit this constant first, run it through your head as a
- *  voiceover, and only then touch the Playwright code below.
+ *  recording. This is a comprehensive >5 minute narrated walkthrough of the
+ *  entire Comfy Registry home page.
  *
  *  Rules:
  *    1. First person, present tense, conversational pace.
  *    2. Connect segments with transitional phrases — never bullet-points.
  *    3. Explain WHY, not just WHAT.
- *    4. Each segment ~6–10 seconds at 140 wpm => 14–24 words is the sweet spot.
- *    5. Total: ~30 segments across 8 chapters, video ~8–10 min.
- *
- *  Structure:
- *    Intro              — title card + 2 segments
- *    Ch 1: Landing Page — title card + 3 segments
- *    Ch 2: Searching    — title card + 4 segments
- *    Ch 3: Filters      — title card + 3 segments
- *    Ch 4: Node Detail  — title card + 5 segments
- *    Ch 5: Publisher    — title card + 3 segments
- *    Ch 6: Docs         — title card + 2 segments
- *    Outro              — 1 segment + conclusion card
+ *    4. Each segment ~6–10 seconds at 140 wpm ⇒ 14–24 words is the sweet spot.
+ *    5. Total: 52 segments, video ~5+ minutes.
  */
+const VIDEO_SCRIPT = [
+  // ── Title ──
+  {
+    kind: "title",
+    text: "Comfy Registry",
+    subtitle: "The central hub for ComfyUI custom nodes",
+    durationMs: 2000,
+  },
 
-const VS = [
-  // ── Intro (0–2) ──
-  /* 0  */ { kind: "title", text: "Comfy Registry", subtitle: "The official package manager for ComfyUI custom nodes", narration: "Welcome to the Comfy Registry — the central hub for every custom node in the ComfyUI ecosystem.", durationMs: 3000 },
-  /* 1  */ { kind: "segment", narration: "If you've ever spent an hour digging through GitHub repos trying to find the right custom node, you know the pain. Broken links, outdated code, no install instructions." },
-  /* 2  */ { kind: "segment", narration: "The Comfy Registry solves all of that. Verified packages, semantic versioning, one-command installs. Let me give you the full tour." },
+  // ── Chapter 1: First impressions & hero (segments 1–6) ──
+  {
+    kind: "segment",
+    narration:
+      "Welcome to the Comfy Registry — the official, curated home for every custom node in the ComfyUI ecosystem. " +
+      "Without a place like this, you'd be digging through random GitHub repos and hoping the code actually works.",
+    visuals: ["safeMove h1"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Right away, the hero section tells you exactly what this site does. " +
+      "It says Welcome to ComfyUI Registry — clear, direct, no guessing.",
+    visuals: ["safeMove h1", "safeMove main"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Up in the top-left corner, you can see the Comfy Registry logo. " +
+      "That's your anchor — click it from anywhere on the site to get back to this home page.",
+    visuals: ["safeMove nav a:first-child"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "The design is intentionally clean and minimal. " +
+      "They want you focused on finding nodes, not wading through clutter.",
+    visuals: ["safeMove header"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Let me point out the navigation bar across the top. " +
+      "You've got three main links — the home page, Documentation, and a link to the Discord community.",
+    visuals: ["safeMove nav"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Below the hero there's a Get Started call-to-action. " +
+      "If you're brand new to ComfyUI custom nodes, that button takes you straight to the onboarding docs.",
+    visuals: ["safeMove main a, main button"],
+  },
 
-  // ── Chapter 1: Landing Page Tour (3–6) ──
-  /* 3  */ { kind: "title", text: "Landing Page Tour", subtitle: "Your front door to the ComfyUI ecosystem", durationMs: 2000 },
-  /* 4  */ { kind: "segment", narration: "The hero section puts the search bar front and center — it's the most-used feature on the entire site, and for good reason." },
-  /* 5  */ { kind: "segment", narration: "Scroll down and you'll see trending nodes. These are the packages the community is installing right now — a great way to discover what's popular." },
-  /* 6  */ { kind: "segment", narration: "Below that, ecosystem stats show total nodes, publishers, and downloads. This registry is growing fast — thousands of packages and counting." },
+  // ── Chapter 2: The search experience (segments 7–13) ──
+  {
+    kind: "segment",
+    narration:
+      "Now let's talk about the single most important feature on this entire page — the search bar. " +
+      "It's right at the top with a placeholder that reads Search Nodes.",
+    visuals: ["safeMove input[placeholder*='Search']"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "I'm going to click into the search box now. " +
+      "Notice how it highlights and gets ready for input — it's inviting you to start typing.",
+    visuals: ["safeMove input[placeholder*='Search']"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Let me type controlnet — that's by far the most common thing people search for here. " +
+      "ControlNet is the backbone of guided image generation in ComfyUI.",
+    visuals: ["typeKeys 'controlnet'"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Watch the results update as I type. " +
+      "The registry searches across package names, descriptions, and tags to find the most relevant matches.",
+    visuals: ["pause"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Each result card shows you the essentials at a glance — the package name, a short description, " +
+      "and who published it. You can evaluate a node in seconds without clicking into it.",
+    visuals: ["wheel +300"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Let me scroll down a bit more to see the full range of ControlNet-related packages. " +
+      "There are multiple options from different authors, each solving slightly different problems.",
+    visuals: ["wheel +300"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "This is what makes a registry so valuable — you're not locked into one person's implementation. " +
+      "You can compare alternatives and pick the one that fits your workflow best.",
+    visuals: ["wheel +200"],
+  },
 
-  // ── Chapter 2: Searching for Nodes (7–11) ──
-  /* 7  */ { kind: "title", text: "Searching for Nodes", subtitle: "Algolia-powered instant search across every package", durationMs: 2000 },
-  /* 8  */ { kind: "segment", narration: "I'll click the search bar and type SUPIR — a popular image upscaling model. Watch how results stream in as I type each letter." },
-  /* 9  */ { kind: "segment", narration: "The live suggestions narrow down instantly. Algolia powers this search, so it's fast even across thousands of packages." },
-  /* 10 */ { kind: "segment", narration: "Each result card shows the package name, latest version, publisher, download count, and tags. Enough to decide at a glance." },
-  /* 11 */ { kind: "segment", narration: "I can scroll through to compare alternatives. The ecosystem has dozens of upscaling nodes, and the registry makes it easy to evaluate them side by side." },
+  // ── Chapter 3: Browsing the node catalog (segments 14–21) ──
+  {
+    kind: "segment",
+    narration:
+      "Let me clear the search and go back to browsing the full catalog. " +
+      "I want to show you what the default view looks like when you first land on the page.",
+    visuals: ["clear search", "scroll to top"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Here's the main catalog — the most popular custom nodes in the entire ecosystem. " +
+      "These are the packages that thousands of people rely on every day.",
+    visuals: ["safeMove main"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Right at the top you'll see KJNodes — one of the most versatile utility packs out there. " +
+      "It adds dozens of helper nodes that make complex workflows much easier to build.",
+    visuals: ["hover first card"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Next to it is rgthree's ComfyUI Nodes — another essential toolkit. " +
+      "This one is known for its quality-of-life improvements and clean UI widgets.",
+    visuals: ["hover second card"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Let me scroll down to see more of these popular packages. " +
+      "Every single one of them is here because the community has validated it through real usage.",
+    visuals: ["wheel +350"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Here's VideoHelperSuite — absolutely essential if you're doing any kind of video generation. " +
+      "And Impact Pack right below it, which is one of the most downloaded packs of all time.",
+    visuals: ["hover cards"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Scrolling further, I can see ControlNet Auxiliary Preprocessors and the GGUF node. " +
+      "GGUF lets you run quantized models, which is a lifesaver if you have limited GPU memory.",
+    visuals: ["wheel +350"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "What I love about this catalog is the diversity. " +
+      "You've got image processing, video generation, LLM integration, model optimization — the full spectrum of what ComfyUI can do.",
+    visuals: ["wheel +300"],
+  },
 
-  // ── Chapter 3: Filters and Sorting (12–15) ──
-  /* 12 */ { kind: "title", text: "Filters and Sorting", subtitle: "Narrow results by OS, accelerator, and sort order", durationMs: 2000 },
-  /* 13 */ { kind: "segment", narration: "Let me head to the browse page. Here I can filter by operating system — Windows, macOS, or Linux — to see only compatible nodes." },
-  /* 14 */ { kind: "segment", narration: "There's also an accelerator filter for CUDA, ROCm, or MPS. If you're on an AMD GPU, this saves you from installing nodes that only work with NVIDIA." },
-  /* 15 */ { kind: "segment", narration: "I'll change the sort order to most downloads. Pagination keeps things snappy — even with thousands of results, each page loads instantly." },
+  // ── Chapter 4: Deep dive into node cards (segments 22–25) ──
+  {
+    kind: "segment",
+    narration:
+      "Let me scroll back up and take a closer look at how these node cards are designed. " +
+      "There's a lot of useful information packed into each one.",
+    visuals: ["scroll to top"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Each card shows the package name in bold, followed by a brief description of what it does. " +
+      "Below that, you'll see the version number, install count, GitHub stars, and node count.",
+    visuals: ["hover card"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "The @author name is always visible too — that's important for trust. " +
+      "You can see exactly who built each node and how active they are.",
+    visuals: ["hover card"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "The visual layout is deliberately information-dense but scannable. " +
+      "You can evaluate twenty packages in the time it would take to read one GitHub README.",
+    visuals: ["safeMove main"],
+  },
 
-  // ── Chapter 4: Node Detail Page (16–21) ──
-  /* 16 */ { kind: "title", text: "Node Detail Page", subtitle: "Everything you need to evaluate before you install", durationMs: 2000 },
-  /* 17 */ { kind: "segment", narration: "I'll click into the top result. The header shows the node icon, name, publisher badge, and tags — trust signals you can verify at a glance." },
-  /* 18 */ { kind: "segment", narration: "Scrolling down, the README explains what this node does, what models it supports, and how to configure it. This is documentation that used to be scattered across GitHub wikis." },
-  /* 19 */ { kind: "segment", narration: "Here's the install command. I'll hover the copy button — paste this into your terminal and the node installs automatically. No git cloning required." },
-  /* 20 */ { kind: "segment", narration: "The version history shows every release with a changelog. Frequent updates mean active maintenance — that's a strong trust signal." },
-  /* 21 */ { kind: "segment", narration: "Further down, I can see dependencies, supported operating systems, accelerators, GitHub link, license info, and the list of contained ComfyUI nodes." },
+  // ── Chapter 5: Pagination (segments 26–30) ──
+  {
+    kind: "segment",
+    narration:
+      "Now let me scroll all the way to the bottom of the page to show you the pagination controls. " +
+      "The registry has hundreds of packages, so they're organized across multiple pages.",
+    visuals: ["wheel to bottom"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Here at the bottom you can see page numbers — one through five — plus Next and Previous buttons. " +
+      "Standard pagination that makes browsing a large catalog completely manageable.",
+    visuals: ["safeMove pagination"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "If I hover over page two, I can see there's a whole other batch of nodes waiting to be discovered. " +
+      "Some real hidden gems live on pages two and three.",
+    visuals: ["hover page 2"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "And page three has even more. " +
+      "The ecosystem is genuinely massive — we're talking about thousands of custom nodes across all these pages.",
+    visuals: ["hover page 3"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "The Previous and Next buttons at the edges make it easy to navigate sequentially. " +
+      "For most people, just browsing page by page is the most natural way to explore.",
+    visuals: ["hover Next button"],
+  },
 
-  // ── Chapter 5: Publisher Ecosystem (22–25) ──
-  /* 22 */ { kind: "title", text: "Publisher Ecosystem", subtitle: "Meet the people behind the nodes", durationMs: 2000 },
-  /* 23 */ { kind: "segment", narration: "Back at the top, clicking the publisher name takes me to their profile page. Here I can see their logo, bio, and member list." },
-  /* 24 */ { kind: "segment", narration: "Below the profile, all of their published nodes are listed. If I trust one package from a publisher, I'm likely to trust their others too." },
-  /* 25 */ { kind: "segment", narration: "Verified publishers have gone through a review process. That badge means the code has been checked and meets quality standards." },
+  // ── Chapter 6: Navigation & documentation (segments 31–34) ──
+  {
+    kind: "segment",
+    narration:
+      "Let me scroll back up to the navigation bar — I want to talk about the Documentation link. " +
+      "This is where the registry really helps node authors, not just consumers.",
+    visuals: ["scroll to top", "safeMove nav"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "The Documentation link takes you to comprehensive guides on how to package, publish, and version your own custom nodes. " +
+      "It covers everything from your first node pack to setting up automated CI publishing.",
+    visuals: ["hover Documentation link"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Right next to that is the Discord link. " +
+      "The Discord server is where the community discusses nodes, reports bugs, shares workflows, and helps each other out.",
+    visuals: ["hover Discord link"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Between the docs and Discord, a new publisher has everything they need to go from zero to their first published node. " +
+      "That's a really well-thought-out onboarding funnel.",
+    visuals: ["safeMove nav"],
+  },
 
-  // ── Chapter 6: Docs Integration (26–28) ──
-  /* 26 */ { kind: "title", text: "Docs Integration", subtitle: "From browsing to building — publish your own node", durationMs: 2000 },
-  /* 27 */ { kind: "segment", narration: "In the footer, there's a link to the registry documentation. This covers API endpoints, publishing workflows, and packaging requirements." },
-  /* 28 */ { kind: "segment", narration: "If you're building custom nodes, the docs walk you through publishing step by step. Your node gets its own page, version tracking, and download stats." },
+  // ── Chapter 7: Authentication & publishing (segments 35–38) ──
+  {
+    kind: "segment",
+    narration:
+      "Now let's look at the authentication buttons in the top-right corner. " +
+      "You'll see Login and Signup — these are primarily for node publishers.",
+    visuals: ["safeMove Login button"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "The Login button is for existing publishers returning to manage their packages — " +
+      "update versions, check download stats, respond to issues.",
+    visuals: ["hover Login"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "And the Signup button is for new node authors who want to join the ecosystem. " +
+      "Creating an account is the first step to publishing your own custom nodes.",
+    visuals: ["hover Signup"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Authentication matters because it ensures every package has a verified author behind it. " +
+      "That accountability is what separates a registry from a random file-sharing site.",
+    visuals: ["safeMove header"],
+  },
 
-  // ── Outro (29–30) ──
-  /* 29 */ { kind: "segment", narration: "That's the full Comfy Registry experience. Search, filter, evaluate, install — the whole flow takes under a minute for any node in the ecosystem." },
-  /* 30 */ { kind: "outro", text: "Comfy Registry", subtitle: "registry.comfy.org", narration: "With the Comfy Registry you get instant search, OS and accelerator filters, verified publishers, one-command installs, version tracking, and a growing library of community nodes. Start exploring at registry.comfy.org.", durationMs: 3000 },
+  // ── Chapter 8: Language & accessibility (segments 39–41) ──
+  {
+    kind: "segment",
+    narration:
+      "Let me point out one more feature that's easy to miss — the language selector. " +
+      "The ComfyUI community is genuinely global, with huge user bases in China, Japan, Korea, and Europe.",
+    visuals: ["safeMove language selector"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Having the registry available in multiple languages makes it accessible to everyone, " +
+      "not just English speakers. That's a big deal for an open-source ecosystem.",
+    visuals: ["hover language selector"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Internationalization might seem like a small detail, but it's one of the reasons ComfyUI " +
+      "has grown so fast — they meet users where they are, literally.",
+    visuals: ["safeMove header"],
+  },
+
+  // ── Chapter 9: Second search — "video" (segments 42–47) ──
+  {
+    kind: "segment",
+    narration:
+      "Let me do one more search to show you the breadth of this registry. " +
+      "I'm going to search for video, since video generation is one of the hottest areas in AI right now.",
+    visuals: ["safeMove search bar"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "First let me clear the search box so we can start fresh with a new query.",
+    visuals: ["clear search"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Now I'm typing video — and watch how the results change immediately. " +
+      "The search is fast and responsive, even across thousands of packages.",
+    visuals: ["typeKeys 'video'"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Right away I can see VideoHelperSuite at the top — that's the go-to package for video workflows. " +
+      "It handles frame extraction, interpolation, and export.",
+    visuals: ["pause"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Below that there are more specialized video nodes — some for animation, some for motion transfer, " +
+      "some for specific video models like AnimateDiff or CogVideo.",
+    visuals: ["wheel +300"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "This is exactly why a search function matters so much. " +
+      "In thirty seconds, I've gone from wondering what's available to having a shortlist of exactly the packages I need.",
+    visuals: ["wheel +200"],
+  },
+
+  // ── Chapter 10: Wrapping up (segments 48–52) ──
+  {
+    kind: "segment",
+    narration:
+      "Let me scroll back to the top of the page for a final look at everything we've covered.",
+    visuals: ["scroll to top"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "We started with the hero and branding, explored the search bar with two different queries, " +
+      "browsed through dozens of popular nodes, and checked out the pagination.",
+    visuals: ["safeMove h1"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "We looked at the navigation links — Documentation and Discord — " +
+      "the Login and Signup buttons for publishers, and the language selector for international users.",
+    visuals: ["safeMove nav"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "The Comfy Registry is the backbone of the ComfyUI custom node ecosystem. " +
+      "Thousands of nodes from hundreds of publishers, all in one trusted place.",
+    visuals: ["safeMove main"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Whether you're installing nodes built by the community or publishing your own for the first time, " +
+      "this is where the ecosystem lives. Head to registry.comfy.org and start exploring.",
+    visuals: ["safeMove h1"],
+  },
+
+  // ── Outro ──
+  {
+    kind: "outro",
+    text: "Comfy Registry",
+    subtitle: "registry.comfy.org",
+    durationMs: 2000,
+  },
 ] as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -88,443 +428,298 @@ import { typeKeys } from "../lib/demowright/dist/helpers.mjs";
 test("comfy registry tour", async ({ page }) => {
   test.setTimeout(10 * 60_000);
 
-  const REGISTRY_URL = process.env.REGISTRY_URL ?? "https://registry.comfy.org/";
-  await page.goto(REGISTRY_URL, { waitUntil: "domcontentloaded" });
-  await page.waitForTimeout(2000);
-
-  // Track URLs for navigation between segments
-  let detailUrl = "";
-  let publisherUrl = "";
+  // Pre-navigate (heavy work BEFORE script.render — see hard rules in skill)
+  await page.goto("https://registry.comfy.org/", { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(3000);
 
   const script = createVideoScript()
-
-    // ═══════════════════════════════════════════════════════════════════════
-    //  INTRO
-    // ═══════════════════════════════════════════════════════════════════════
-
-    .title(VS[0].text, {
-      subtitle: VS[0].subtitle,
-      narration: VS[0].narration,
-      durationMs: VS[0].durationMs,
+    // ── Title ──
+    .title(VIDEO_SCRIPT[0].text, {
+      subtitle: VIDEO_SCRIPT[0].subtitle,
+      durationMs: VIDEO_SCRIPT[0].durationMs,
     })
 
-    // Segment 1 — The pain of finding custom nodes manually
-    .segment(VS[1].narration, async (pace) => {
+    // ── Chapter 1: First impressions & hero ──
+    .segment(VIDEO_SCRIPT[1].narration, async (pace) => {
+      await safeMove(page, "h1");
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[2].narration, async (pace) => {
       await safeMove(page, "h1");
       await pace();
       await safeMove(page, "main");
       await pace();
     })
-
-    // Segment 2 — The registry solves it
-    .segment(VS[2].narration, async (pace) => {
-      await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" })).catch(() => {});
+    .segment(VIDEO_SCRIPT[3].narration, async (pace) => {
+      await safeMove(page, "nav a");
       await pace();
-      await safeMove(page, 'input[type="search"], input[placeholder*="Search"], input[placeholder*="search"]');
+    })
+    .segment(VIDEO_SCRIPT[4].narration, async (pace) => {
+      await safeMove(page, "header");
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[5].narration, async (pace) => {
+      await safeMove(page, "nav");
+      await pace();
+      await page.mouse.move(800, 60);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[6].narration, async (pace) => {
+      await safeMove(page, "main a");
       await pace();
     })
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  CHAPTER 1: Landing Page Tour
-    // ═══════════════════════════════════════════════════════════════════════
-
-    .title(VS[3].text, {
-      subtitle: VS[3].subtitle,
-      durationMs: VS[3].durationMs,
-    })
-
-    // Segment 4 — Hero and search bar prominence
-    .segment(VS[4].narration, async (pace) => {
-      await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" })).catch(() => {});
-      await pace();
-      await safeMove(page, 'input[type="search"], input[placeholder*="Search"], input[placeholder*="search"]');
-      await pace();
-      await safeMove(page, "h1");
+    // ── Chapter 2: The search experience ──
+    .segment(VIDEO_SCRIPT[7].narration, async (pace) => {
+      await safeMove(page, 'input[placeholder*="Search"]');
       await pace();
     })
-
-    // Segment 5 — Trending / featured nodes
-    .segment(VS[5].narration, async (pace) => {
-      await page.mouse.wheel(0, 400);
+    .segment(VIDEO_SCRIPT[8].narration, async (pace) => {
+      await safeMove(page, 'input[placeholder*="Search"]');
       await pace();
-      await page.mouse.wheel(0, 300);
-      await pace();
-      // Hover over a trending node card
-      await safeMove(page, 'a[href*="/nodes/"]');
-      await pace();
-    })
-
-    // Segment 6 — Ecosystem stats
-    .segment(VS[6].narration, async (pace) => {
-      await page.mouse.wheel(0, 400);
-      await pace();
-      await page.mouse.wheel(0, 300);
-      await pace();
-      await page.mouse.wheel(0, 300);
-      await pace();
-    })
-
-    // ═══════════════════════════════════════════════════════════════════════
-    //  CHAPTER 2: Searching for Nodes
-    // ═══════════════════════════════════════════════════════════════════════
-
-    .title(VS[7].text, {
-      subtitle: VS[7].subtitle,
-      durationMs: VS[7].durationMs,
-    });
-
-  // Navigate back to top for search
-  const scrollToTopAndFocusSearch = async () => {
-    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" })).catch(() => {});
-    await page.waitForTimeout(500);
-  };
-
-  script
-    // Segment 8 — Type SUPIR into search
-    .segment(VS[8].narration, async (pace) => {
-      await scrollToTopAndFocusSearch();
-      await safeMove(page, 'input[type="search"], input[placeholder*="Search"], input[placeholder*="search"]');
-      await pace();
-      const search = page.locator('input[type="search"], input[placeholder*="Search"], input[placeholder*="search"]').first();
+      const search = page.locator('input[placeholder*="Search"]').first();
       if (await search.isVisible().catch(() => false)) {
-        await search.click().catch(() => {});
-        await typeKeys(page, "SUPIR", 120);
+        await search.focus().catch(() => {});
       }
       await pace();
     })
-
-    // Segment 9 — Live suggestions streaming in
-    .segment(VS[9].narration, async (pace) => {
-      const resultLink = page.locator('a[href*="/nodes/"]').first();
-      await resultLink.waitFor({ state: "visible", timeout: 5000 }).catch(() => {});
-      await pace();
-      await safeMove(page, 'a[href*="/nodes/"]');
+    .segment(VIDEO_SCRIPT[9].narration, async (pace) => {
+      await typeKeys(page, "controlnet", 90);
       await pace();
     })
-
-    // Segment 10 — Result card anatomy
-    .segment(VS[10].narration, async (pace) => {
-      const resultLink = page.locator('a[href*="/nodes/"]').first();
-      // Capture the first result URL for later navigation
-      detailUrl = await resultLink.getAttribute("href").catch(() => "") ?? "";
-      if (detailUrl && !detailUrl.startsWith("http")) {
-        detailUrl = new URL(detailUrl, REGISTRY_URL).href;
-      }
-      await safeMove(page, 'a[href*="/nodes/"]');
-      await pace();
-      // Hover over second result for comparison
-      const secondResult = page.locator('a[href*="/nodes/"]').nth(1);
-      if (await secondResult.isVisible().catch(() => false)) {
-        const box = await secondResult.boundingBox().catch(() => null);
-        if (box) await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-      }
+    .segment(VIDEO_SCRIPT[10].narration, async (pace) => {
+      await page.waitForTimeout(1500);
       await pace();
     })
-
-    // Segment 11 — Scroll to compare alternatives
-    .segment(VS[11].narration, async (pace) => {
+    .segment(VIDEO_SCRIPT[11].narration, async (pace) => {
       await page.mouse.wheel(0, 300);
       await pace();
+    })
+    .segment(VIDEO_SCRIPT[12].narration, async (pace) => {
       await page.mouse.wheel(0, 300);
       await pace();
+    })
+    .segment(VIDEO_SCRIPT[13].narration, async (pace) => {
       await page.mouse.wheel(0, 200);
       await pace();
     })
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  CHAPTER 3: Filters and Sorting
-    // ═══════════════════════════════════════════════════════════════════════
-
-    .title(VS[12].text, {
-      subtitle: VS[12].subtitle,
-      durationMs: VS[12].durationMs,
-    });
-
-  // Navigate to browse page between segments
-  const navigateToBrowse = async () => {
-    await page.goto(REGISTRY_URL + "nodes", { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(2000);
-  };
-
-  script
-    // Segment 13 — OS filter
-    .segment(VS[13].narration, async (pace) => {
-      await navigateToBrowse();
-      await pace();
-      // Look for OS filter controls
-      const osFilter = page.locator('text=/[Ww]indows|[Ll]inux|[Mm]ac[Oo][Ss]|[Oo]perating/').first();
-      if (await osFilter.isVisible().catch(() => false)) {
-        const box = await osFilter.boundingBox().catch(() => null);
-        if (box) await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    // ── Chapter 3: Browsing the node catalog ──
+    .segment(VIDEO_SCRIPT[14].narration, async (pace) => {
+      // Clear search by triple-clicking and deleting
+      const search = page.locator('input[placeholder*="Search"]').first();
+      if (await search.isVisible().catch(() => false)) {
+        await search.focus().catch(() => {});
+        await page.keyboard.press("Control+A").catch(() => {});
+        await page.keyboard.press("Backspace").catch(() => {});
       }
-      await pace();
-      await page.mouse.wheel(0, 100);
+      await page.mouse.wheel(0, -2000);
       await pace();
     })
-
-    // Segment 14 — Accelerator filter
-    .segment(VS[14].narration, async (pace) => {
-      const accFilter = page.locator('text=/CUDA|ROCm|MPS|[Aa]ccelerator/').first();
-      if (await accFilter.isVisible().catch(() => false)) {
-        const box = await accFilter.boundingBox().catch(() => null);
-        if (box) await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-      }
-      await pace();
-      await page.mouse.wheel(0, 100);
+    .segment(VIDEO_SCRIPT[15].narration, async (pace) => {
+      await safeMove(page, "main");
       await pace();
     })
-
-    // Segment 15 — Sort by downloads + pagination
-    .segment(VS[15].narration, async (pace) => {
-      const sortControl = page.locator('text=/[Ss]ort|[Dd]ownloads|[Mm]ost [Pp]opular/').first();
-      if (await sortControl.isVisible().catch(() => false)) {
-        const box = await sortControl.boundingBox().catch(() => null);
-        if (box) await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-      }
+    .segment(VIDEO_SCRIPT[16].narration, async (pace) => {
+      // Hover over first node card
+      await page.mouse.move(400, 400);
       await pace();
-      await page.mouse.wheel(0, 400);
-      await pace();
-      await page.mouse.wheel(0, 400);
+      await page.mouse.move(400, 420);
       await pace();
     })
-
-    // ═══════════════════════════════════════════════════════════════════════
-    //  CHAPTER 4: Node Detail Page
-    // ═══════════════════════════════════════════════════════════════════════
-
-    .title(VS[16].text, {
-      subtitle: VS[16].subtitle,
-      durationMs: VS[16].durationMs,
-    });
-
-  // Navigate to detail page between segments
-  const navigateToDetail = async () => {
-    if (detailUrl) {
-      await page.goto(detailUrl, { waitUntil: "domcontentloaded" });
-    } else {
-      // Fallback: click first node link on current page
-      const link = page.locator('a[href*="/nodes/"]').first();
-      if (await link.isVisible().catch(() => false)) {
-        const href = await link.getAttribute("href").catch(() => "") ?? "";
-        if (href) {
-          const fullUrl = href.startsWith("http") ? href : new URL(href, REGISTRY_URL).href;
-          await page.goto(fullUrl, { waitUntil: "domcontentloaded" });
-        }
-      }
-    }
-    await page.waitForTimeout(2000);
-  };
-
-  script
-    // Segment 17 — Header info + publisher badge + tags
-    .segment(VS[17].narration, async (pace) => {
-      await navigateToDetail();
-      await safeMove(page, "h1");
+    .segment(VIDEO_SCRIPT[17].narration, async (pace) => {
+      // Hover over second card area
+      await page.mouse.move(700, 400);
       await pace();
-      // Hover publisher badge area
-      const publisherEl = page.locator('a[href*="/publishers/"], a[href*="/publisher/"], text=/[Pp]ublish/').first();
-      if (await publisherEl.isVisible().catch(() => false)) {
-        publisherUrl = await publisherEl.getAttribute("href").catch(() => "") ?? "";
-        if (publisherUrl && !publisherUrl.startsWith("http")) {
-          publisherUrl = new URL(publisherUrl, REGISTRY_URL).href;
-        }
-        const box = await publisherEl.boundingBox().catch(() => null);
-        if (box) await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-      }
+      await page.mouse.move(700, 420);
       await pace();
     })
-
-    // Segment 18 — README content
-    .segment(VS[18].narration, async (pace) => {
+    .segment(VIDEO_SCRIPT[18].narration, async (pace) => {
+      await page.mouse.wheel(0, 350);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[19].narration, async (pace) => {
+      // Hover over cards in the next row
+      await page.mouse.move(400, 400);
+      await pace();
+      await page.mouse.move(400, 500);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[20].narration, async (pace) => {
+      await page.mouse.wheel(0, 350);
+      await pace();
+      await page.mouse.move(500, 400);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[21].narration, async (pace) => {
       await page.mouse.wheel(0, 300);
       await pace();
-      await page.mouse.wheel(0, 300);
-      await pace();
-      await page.mouse.wheel(0, 200);
+      await page.mouse.move(640, 400);
       await pace();
     })
 
-    // Segment 19 — Install command + copy button
-    .segment(VS[19].narration, async (pace) => {
-      // Look for install command area
-      const installArea = page.locator('text=/install/i, text=/comfy node/i, text=/comfy-cli/i').first();
-      if (await installArea.isVisible().catch(() => false)) {
-        const box = await installArea.boundingBox().catch(() => null);
-        if (box) await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-      }
+    // ── Chapter 4: Deep dive into node cards ──
+    .segment(VIDEO_SCRIPT[22].narration, async (pace) => {
+      await page.mouse.wheel(0, -2000);
       await pace();
-      // Hover copy button
-      const copyBtn = page.locator('button:has-text("Copy"), button[aria-label*="opy"], button[aria-label*="copy"]').first();
-      if (await copyBtn.isVisible().catch(() => false)) {
-        const box = await copyBtn.boundingBox().catch(() => null);
-        if (box) await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-      }
+    })
+    .segment(VIDEO_SCRIPT[23].narration, async (pace) => {
+      // Hover over a card to inspect details
+      await page.mouse.move(400, 450);
+      await pace();
+      await page.mouse.move(420, 470);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[24].narration, async (pace) => {
+      await page.mouse.move(400, 490);
+      await pace();
+      await page.mouse.move(420, 500);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[25].narration, async (pace) => {
+      await safeMove(page, "main");
       await pace();
     })
 
-    // Segment 20 — Version history + changelog
-    .segment(VS[20].narration, async (pace) => {
-      await page.mouse.wheel(0, 400);
+    // ── Chapter 5: Pagination ──
+    .segment(VIDEO_SCRIPT[26].narration, async (pace) => {
+      await page.mouse.wheel(0, 2000);
       await pace();
-      const versionArea = page.locator('text=/[Vv]ersion/').first();
-      if (await versionArea.isVisible().catch(() => false)) {
-        const box = await versionArea.boundingBox().catch(() => null);
-        if (box) await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-      }
+      await page.mouse.wheel(0, 500);
       await pace();
-      await page.mouse.wheel(0, 300);
+    })
+    .segment(VIDEO_SCRIPT[27].narration, async (pace) => {
+      await safeMove(page, 'nav[aria-label*="pagination"], ul:has(> li > a[href*="page"]), .pagination, [class*="pagination"]');
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[28].narration, async (pace) => {
+      // Hover over page 2 link
+      await safeMove(page, 'a[href*="page=2"], button:has-text("2")');
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[29].narration, async (pace) => {
+      // Hover over page 3 link
+      await safeMove(page, 'a[href*="page=3"], button:has-text("3")');
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[30].narration, async (pace) => {
+      // Hover over Next button
+      await safeMove(page, 'a:has-text("Next"), button:has-text("Next")');
       await pace();
     })
 
-    // Segment 21 — Dependencies + compatibility + GitHub link + license
-    .segment(VS[21].narration, async (pace) => {
-      await page.mouse.wheel(0, 400);
+    // ── Chapter 6: Navigation & documentation ──
+    .segment(VIDEO_SCRIPT[31].narration, async (pace) => {
+      await page.mouse.wheel(0, -3000);
       await pace();
-      await page.mouse.wheel(0, 300);
+      await safeMove(page, "nav");
       await pace();
-      // Look for GitHub link or license info
-      const ghLink = page.locator('a[href*="github.com"]').first();
-      if (await ghLink.isVisible().catch(() => false)) {
-        const box = await ghLink.boundingBox().catch(() => null);
-        if (box) await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-      }
+    })
+    .segment(VIDEO_SCRIPT[32].narration, async (pace) => {
+      await safeMove(page, 'a[href*="doc"], a:has-text("Documentation"), a:has-text("Docs")');
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[33].narration, async (pace) => {
+      await safeMove(page, 'a[href*="discord"], a:has-text("Discord")');
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[34].narration, async (pace) => {
+      await safeMove(page, "nav");
       await pace();
     })
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  CHAPTER 5: Publisher Ecosystem
-    // ═══════════════════════════════════════════════════════════════════════
-
-    .title(VS[22].text, {
-      subtitle: VS[22].subtitle,
-      durationMs: VS[22].durationMs,
-    });
-
-  // Navigate to publisher page between segments
-  const navigateToPublisher = async () => {
-    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" })).catch(() => {});
-    await page.waitForTimeout(500);
-    if (publisherUrl) {
-      await page.goto(publisherUrl, { waitUntil: "domcontentloaded" });
-    } else {
-      // Fallback: click first publisher link on detail page
-      const pubLink = page.locator('a[href*="/publishers/"], a[href*="/publisher/"]').first();
-      if (await pubLink.isVisible().catch(() => false)) {
-        const href = await pubLink.getAttribute("href").catch(() => "") ?? "";
-        if (href) {
-          const fullUrl = href.startsWith("http") ? href : new URL(href, REGISTRY_URL).href;
-          await page.goto(fullUrl, { waitUntil: "domcontentloaded" });
-        }
-      }
-    }
-    await page.waitForTimeout(2000);
-  };
-
-  script
-    // Segment 23 — Publisher profile page
-    .segment(VS[23].narration, async (pace) => {
-      await navigateToPublisher();
-      await safeMove(page, "h1");
+    // ── Chapter 7: Authentication & publishing ──
+    .segment(VIDEO_SCRIPT[35].narration, async (pace) => {
+      await safeMove(page, 'a:has-text("Login"), button:has-text("Login"), a:has-text("Log in"), button:has-text("Log in")');
       await pace();
-      await page.mouse.wheel(0, 200);
+    })
+    .segment(VIDEO_SCRIPT[36].narration, async (pace) => {
+      await safeMove(page, 'a:has-text("Login"), button:has-text("Login"), a:has-text("Log in"), button:has-text("Log in")');
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[37].narration, async (pace) => {
+      await safeMove(page, 'a:has-text("Sign"), button:has-text("Sign")');
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[38].narration, async (pace) => {
+      await safeMove(page, "header");
       await pace();
     })
 
-    // Segment 24 — Browse publisher's other nodes
-    .segment(VS[24].narration, async (pace) => {
-      await page.mouse.wheel(0, 300);
+    // ── Chapter 8: Language & accessibility ──
+    .segment(VIDEO_SCRIPT[39].narration, async (pace) => {
+      await safeMove(page, 'select[class*="lang"], button[class*="lang"], [class*="language"], [aria-label*="language"], [aria-label*="Language"]');
       await pace();
-      // Hover over their published nodes
-      const nodeCard = page.locator('a[href*="/nodes/"]').first();
-      if (await nodeCard.isVisible().catch(() => false)) {
-        const box = await nodeCard.boundingBox().catch(() => null);
-        if (box) await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-      }
+    })
+    .segment(VIDEO_SCRIPT[40].narration, async (pace) => {
+      await safeMove(page, 'select[class*="lang"], button[class*="lang"], [class*="language"], [aria-label*="language"], [aria-label*="Language"]');
       await pace();
-      await page.mouse.wheel(0, 200);
+    })
+    .segment(VIDEO_SCRIPT[41].narration, async (pace) => {
+      await safeMove(page, "header");
       await pace();
     })
 
-    // Segment 25 — Publisher verification badge
-    .segment(VS[25].narration, async (pace) => {
-      await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" })).catch(() => {});
-      await pace();
-      // Hover near verified badge area
-      const badge = page.locator('text=/[Vv]erif/, [class*="badge"], [class*="verified"]').first();
-      if (await badge.isVisible().catch(() => false)) {
-        const box = await badge.boundingBox().catch(() => null);
-        if (box) await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-      }
-      await pace();
-      await safeMove(page, "h1");
+    // ── Chapter 9: Second search — "video" ──
+    .segment(VIDEO_SCRIPT[42].narration, async (pace) => {
+      await safeMove(page, 'input[placeholder*="Search"]');
       await pace();
     })
-
-    // ═══════════════════════════════════════════════════════════════════════
-    //  CHAPTER 6: Docs Integration
-    // ═══════════════════════════════════════════════════════════════════════
-
-    .title(VS[26].text, {
-      subtitle: VS[26].subtitle,
-      durationMs: VS[26].durationMs,
-    });
-
-  // Navigate back to landing page for footer
-  const navigateToLanding = async () => {
-    await page.goto(REGISTRY_URL, { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(1500);
-  };
-
-  script
-    // Segment 27 — Registry docs link in footer
-    .segment(VS[27].narration, async (pace) => {
-      await navigateToLanding();
-      // Scroll all the way to footer
-      await page.evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })).catch(() => {});
+    .segment(VIDEO_SCRIPT[43].narration, async (pace) => {
+      const search = page.locator('input[placeholder*="Search"]').first();
+      if (await search.isVisible().catch(() => false)) {
+        await search.focus().catch(() => {});
+        await page.keyboard.press("Control+A").catch(() => {});
+        await page.keyboard.press("Backspace").catch(() => {});
+      }
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[44].narration, async (pace) => {
+      await typeKeys(page, "video", 100);
+      await pace();
       await page.waitForTimeout(1000);
       await pace();
-      const docsLink = page.locator('footer a[href*="docs"], footer a:has-text("Docs"), footer a:has-text("Documentation")').first();
-      if (await docsLink.isVisible().catch(() => false)) {
-        const box = await docsLink.boundingBox().catch(() => null);
-        if (box) await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-      }
+    })
+    .segment(VIDEO_SCRIPT[45].narration, async (pace) => {
+      await page.waitForTimeout(800);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[46].narration, async (pace) => {
+      await page.mouse.wheel(0, 300);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[47].narration, async (pace) => {
+      await page.mouse.wheel(0, 200);
       await pace();
     })
 
-    // Segment 28 — How to publish your own node
-    .segment(VS[28].narration, async (pace) => {
-      // Hover GitHub / social links in footer
-      const ghFooter = page.locator('footer a[href*="github"], footer a:has-text("GitHub")').first();
-      if (await ghFooter.isVisible().catch(() => false)) {
-        const box = await ghFooter.boundingBox().catch(() => null);
-        if (box) await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-      }
-      await pace();
-      await page.mouse.wheel(0, -200);
+    // ── Chapter 10: Wrapping up ──
+    .segment(VIDEO_SCRIPT[48].narration, async (pace) => {
+      await page.mouse.wheel(0, -3000);
       await pace();
     })
-
-    // ═══════════════════════════════════════════════════════════════════════
-    //  OUTRO
-    // ═══════════════════════════════════════════════════════════════════════
-
-    // Segment 29 — Wrap-up narration
-    .segment(VS[29].narration, async (pace) => {
-      await page.evaluate(() => window.scrollTo({ top: 0, behavior: "smooth" })).catch(() => {});
-      await page.waitForTimeout(500);
-      await pace();
+    .segment(VIDEO_SCRIPT[49].narration, async (pace) => {
       await safeMove(page, "h1");
       await pace();
-      await safeMove(page, 'input[type="search"], input[placeholder*="Search"], input[placeholder*="search"]');
+    })
+    .segment(VIDEO_SCRIPT[50].narration, async (pace) => {
+      await safeMove(page, "nav");
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[51].narration, async (pace) => {
+      await safeMove(page, "main");
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[52].narration, async (pace) => {
+      await safeMove(page, "h1");
       await pace();
     })
 
-    // Conclusion card
+    // ── Outro ──
     .outro({
-      text: VS[30].text,
-      subtitle: VS[30].subtitle,
-      narration: VS[30].narration,
-      durationMs: VS[30].durationMs,
+      text: VIDEO_SCRIPT[53].text,
+      subtitle: VIDEO_SCRIPT[53].subtitle,
+      durationMs: VIDEO_SCRIPT[53].durationMs,
     });
 
   await script.prepare(page);

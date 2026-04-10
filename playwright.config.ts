@@ -21,8 +21,12 @@ export default defineConfig({
     viewport: { width: 1280, height: 720 },
     screenshot: "on",
     headless: true, // qa-hud captures audio via Web Audio API tap, works headless
+    // Chrome-specific args; Firefox ignores them but they shouldn't cause harm
+    launchOptions: {
+      args: [],
+    },
   },
-  projects: [{ name: "chromium" }],
+  projects: [{ name: "firefox", use: { browserName: "firefox" } }],
   outputDir: path.resolve(__dirname, ".comfy-qa", ".tmp", "demos"),
   testDir: path.resolve(__dirname, "demo"),
   testMatch: "*.spec.ts",

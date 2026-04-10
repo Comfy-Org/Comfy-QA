@@ -1,56 +1,459 @@
 /**
- * ComfyUI Cloud — cloud.comfy.org
+ * Comprehensive demo of https://cloud.comfy.org/ — the hosted ComfyUI editor.
  *
  * Story:  demo/stories/cloud-comfy.story.md
  * Output: .comfy-qa/.demos/cloud-comfy.mp4
  *
- * ---------------------------------------------------------------------------
- *  VIDEO SCRIPT — 8 chapters, ~40 segments, targeting 8–10 minute runtime
- * ---------------------------------------------------------------------------
+ * ─────────────────────────────────────────────────────────────────────────────
+ *  VIDEO SCRIPT (the source of truth)
+ * ─────────────────────────────────────────────────────────────────────────────
  *  Every word in `narration` is read aloud verbatim by Gemini TTS during
- *  recording. Edit this constant first, run it through your head as a
- *  voiceover, and only then touch the Playwright code below.
+ *  recording. This is a comprehensive >5 minute narrated walkthrough of the
+ *  entire ComfyUI Cloud editor.
  *
  *  Rules:
  *    1. First person, present tense, conversational pace.
  *    2. Connect segments with transitional phrases — never bullet-points.
- *    3. Explain WHY and user benefit for every feature.
- *    4. Each segment ~6–10 seconds at 140 wpm => 14–24 words is the sweet spot.
- *    5. Total: 8 chapters, ~40 segments, video ~8–10 minutes.
- *
- *  Chapter overview:
- *    Ch 1 – Intro + Login (4 segments)
- *    Ch 2 – Canvas and Node Editor (6 segments)
- *    Ch 3 – Tab Bar and Workflow Management (5 segments)
- *    Ch 4 – Sidebar Panels (6 segments)
- *    Ch 5 – Templates (4 segments)
- *    Ch 6 – Running a Generation (5 segments)
- *    Ch 7 – App Mode and Sharing (5 segments)
- *    Ch 8 – Settings, Help, Workspace + Outro (5 segments)
+ *    3. Explain WHY, not just WHAT.
+ *    4. Each segment ~6–10 seconds at 140 wpm ⇒ 14–24 words is the sweet spot.
+ *    5. Total: 53 segments, video ~5+ minutes.
  */
+const VIDEO_SCRIPT = [
+  // ── Title ──
+  {
+    kind: "title",
+    text: "ComfyUI Cloud",
+    subtitle: "Hosted Node Editor Tour",
+    durationMs: 2000,
+  },
 
-// ---------------------------------------------------------------------------
-//  PLAYWRIGHT IMPLEMENTATION
-// ---------------------------------------------------------------------------
+  // ── Chapter 1: Welcome & canvas overview (segments 1–5) ──
+  {
+    kind: "segment",
+    narration:
+      "Welcome to ComfyUI Cloud — the hosted node editor for AI image generation. " +
+      "No install required, just open your browser and start creating.",
+    visuals: ["safeMove canvas"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "The center of the screen is a graph canvas where you build workflows visually. " +
+      "This is the core workspace where everything happens.",
+    visuals: ["mouse.move center"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "I can zoom in with the scroll wheel to get a closer look at individual nodes. " +
+      "Watch how the canvas scales smoothly as I scroll.",
+    visuals: ["wheel -200", "pause"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "And zoom back out to see the full workflow at a glance. " +
+      "Panning is just as easy — click and drag the background to move around.",
+    visuals: ["wheel +200", "pan"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Each box on the canvas is a node — model loaders, samplers, VAE decoders, and output nodes. " +
+      "They're the building blocks of every workflow.",
+    visuals: ["mouse.move nodes"],
+  },
+
+  // ── Chapter 2: Node connections & wires (segments 6–8) ──
+  {
+    kind: "segment",
+    narration:
+      "Now look at the colored wires connecting these nodes. " +
+      "Each wire carries data from one node's output to another node's input.",
+    visuals: ["mouse.move wire area"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "I can trace a connection from the model loader through the sampler to the output. " +
+      "This visual flow makes it intuitive to understand how data moves through your pipeline.",
+    visuals: ["mouse trace"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Different wire colors represent different data types — images, latents, conditioning, and models. " +
+      "The color coding helps you spot connection errors at a glance.",
+    visuals: ["mouse.move wires"],
+  },
+
+  // ── Chapter 3: Canvas interactions (segments 9–12) ──
+  {
+    kind: "segment",
+    narration:
+      "Let me show you some canvas interactions. " +
+      "I can click and drag any node to reposition it — the wires follow automatically.",
+    visuals: ["mouse.move node", "drag"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Right-clicking on the canvas opens a context menu with options to add nodes, copy, paste, and more. " +
+      "It's the fastest way to build out your graph.",
+    visuals: ["hover context area"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "The undo button in the toolbar steps back through your recent edits. " +
+      "Made a mistake? Just undo it and try again.",
+    visuals: ["safeMove undo"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "And of course the standard keyboard shortcuts work here — Ctrl+Z to undo, Ctrl+Y to redo. " +
+      "Power users will feel right at home.",
+    visuals: ["safeMove toolbar"],
+  },
+
+  // ── Chapter 4: Workflow tab management (segments 13–15) ──
+  {
+    kind: "segment",
+    narration:
+      "Up at the top, the tab bar shows all your open workflows. " +
+      "Switch between projects with a single click — just like browser tabs.",
+    visuals: ["safeMove tablist"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Click the plus button to create a new blank workflow whenever you need a fresh canvas. " +
+      "Your existing workflows stay open in their tabs.",
+    visuals: ["hover new workflow"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Having multiple workflows open simultaneously is incredibly useful. " +
+      "You can reference one workflow while building another, or A/B test different approaches.",
+    visuals: ["safeMove tablist"],
+  },
+
+  // ── Chapter 5: Sidebar panels (segments 16–26) ──
+  {
+    kind: "segment",
+    narration:
+      "On the left side of the screen you'll find the sidebar — five panels that organize everything you need. " +
+      "Let me walk through each one.",
+    visuals: ["safeMove nav"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "First up is the Assets panel — this is where your uploaded images, videos, and reference files live. " +
+      "Anything you want to use as input goes here.",
+    visuals: ["click Assets"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Files are organized so you can quickly find the reference images or videos you need. " +
+      "No more digging through local folders.",
+    visuals: ["pause"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Next is the Node Library — browse every available node by category, or search by name. " +
+      "It's your catalog of all the building blocks.",
+    visuals: ["click Nodes"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "The search bar inside the Node Library filters nodes instantly. " +
+      "Type a name and matching nodes appear — it's the fastest way to find what you need.",
+    visuals: ["pause"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "The Model Library is where you manage your checkpoints, LoRAs, VAEs, and other model files. " +
+      "Everything in one place, ready to use.",
+    visuals: ["click Models"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Each model entry shows its type, file size, and compatibility information. " +
+      "So you always pick the right model for your workflow.",
+    visuals: ["pause"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "The Workflows panel lets you save, load, organize, and export your workflow files. " +
+      "Think of it as your project manager.",
+    visuals: ["click Workflows"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Folders and tags keep dozens of workflows manageable. " +
+      "As your collection grows, you'll appreciate the organization.",
+    visuals: ["pause"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "At the bottom of the screen, a toolbar gives you quick access to Help, Console, Shortcuts, and Settings. " +
+      "These utilities are always one click away while you work.",
+    visuals: ["safeMove bottom toolbar"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "And finally, the Templates panel — pre-built workflow recipes you can clone and customize. " +
+      "They're perfect starting points when you don't want to build from scratch.",
+    visuals: ["click Templates"],
+  },
+
+  // ── Chapter 6: Running a generation (segments 27–30) ──
+  {
+    kind: "segment",
+    narration:
+      "Now let's talk about actually running your workflow. " +
+      "The Run button at the top queues your workflow for execution on cloud GPUs.",
+    visuals: ["hover Run"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Next to it, you can set the batch count to generate multiple variations from one queue. " +
+      "Want four different images? Set the batch to four and hit Run.",
+    visuals: ["safeMove batch"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Before running, you can choose which GPU tier to use. " +
+      "Faster GPUs cost more credits but finish your generation sooner — it's a speed versus cost trade-off.",
+    visuals: ["safeMove GPU selector"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Different machine tiers offer different amounts of VRAM and compute power. " +
+      "For demanding workflows with large models, you'll want the higher tiers.",
+    visuals: ["pause"],
+  },
+
+  // ── Chapter 7: Task queue & output (segments 31–34) ──
+  {
+    kind: "segment",
+    narration:
+      "Once a job is running, the task queue panel shows its progress in real time. " +
+      "You can see active, completed, and failed jobs at a glance.",
+    visuals: ["hover queue"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Filter by completed or failed to find specific runs in your history. " +
+      "It's like a job log that keeps track of everything you've generated.",
+    visuals: ["hover filter"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Generated images appear in the output area of the canvas. " +
+      "You can review results right here without leaving the editor or opening another app.",
+    visuals: ["mouse.move output area"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "The output node on the canvas also displays the generated image inline. " +
+      "So you always see your results in the context of the workflow that created them.",
+    visuals: ["mouse.move output node"],
+  },
+
+  // ── Chapter 8: App Mode & sharing (segments 35–38) ──
+  {
+    kind: "segment",
+    narration:
+      "App Mode is one of the coolest features here. " +
+      "It lets you preview your workflow as a simple end-user form, completely hiding the graph.",
+    visuals: ["hover App Mode"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "In App Mode, users see only the input fields and a generate button. " +
+      "It turns your complex workflow into a clean, focused tool that anyone can use.",
+    visuals: ["pause"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "The Share button generates a public link so others can run your workflow. " +
+      "Send it to a colleague, a client, or the whole community.",
+    visuals: ["hover Share"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Shared workflows make collaboration effortless. " +
+      "Your team can iterate on prompts and settings together without setting up their own environments.",
+    visuals: ["pause"],
+  },
+
+  // ── Chapter 9: Credits, billing & profile (segments 39–42) ──
+  {
+    kind: "segment",
+    narration:
+      "Let me show you the account side of things. " +
+      "Your remaining credits are visible in the interface so you always know your balance.",
+    visuals: ["safeMove credits"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "The billing area lets you check your usage history and purchase more credits when you're running low. " +
+      "No surprises on your next invoice.",
+    visuals: ["pause"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Your user profile shows account info, display name, and any connected integrations. " +
+      "It's straightforward to manage your identity here.",
+    visuals: ["safeMove profile"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "The notification area keeps you posted on system messages, job completions, and platform updates. " +
+      "So you never miss when a generation finishes.",
+    visuals: ["safeMove notifications"],
+  },
+
+  // ── Chapter 10: Settings & help (segments 43–47) ──
+  {
+    kind: "segment",
+    narration:
+      "Now let's open the settings. " +
+      "The settings dialog has hundreds of options covering keyboard shortcuts, themes, and editor behavior.",
+    visuals: ["hover Settings"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "You can switch between light and dark themes, or fine-tune colors to match your preference. " +
+      "A comfortable editor makes long sessions much more enjoyable.",
+    visuals: ["pause"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "The keyboard shortcut reference lists every available shortcut in one place. " +
+      "Spend five minutes here and you'll be navigating the editor twice as fast.",
+    visuals: ["pause"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "The help center gives you access to documentation, tutorials, and community links. " +
+      "If you ever get stuck, this is where you go first.",
+    visuals: ["hover Help"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "The documentation covers everything from basic workflow creation to advanced multi-model pipelines. " +
+      "It's thorough and well-organized.",
+    visuals: ["pause"],
+  },
+
+  // ── Chapter 11: Wrapping up (segments 48–53) ──
+  {
+    kind: "segment",
+    narration:
+      "Let me come back to the canvas for a final overview of everything we've covered today.",
+    visuals: ["mouse.move center"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "We explored the canvas — zooming, panning, and inspecting nodes and their wire connections. " +
+      "That's the foundation of every workflow.",
+    visuals: ["mouse.move canvas"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "We toured all five sidebar panels — Assets, Nodes, Models, Workflows, and Templates. " +
+      "Each one serves a specific purpose in your creative process.",
+    visuals: ["safeMove nav"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "We looked at running generations, monitoring the task queue, choosing GPU tiers, and reviewing outputs. " +
+      "The full execution pipeline from queue to preview.",
+    visuals: ["mouse.move top bar"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "And we covered sharing, App Mode, settings, credits, and the help center. " +
+      "Everything you need to go from zero to generating images in minutes.",
+    visuals: ["safeMove header"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "ComfyUI Cloud removes the install hassle entirely — sign up at cloud.comfy.org " +
+      "and start generating in seconds. No GPU? No problem.",
+    visuals: ["mouse.move center"],
+  },
+
+  // ── Outro ──
+  {
+    kind: "outro",
+    text: "ComfyUI Cloud",
+    subtitle: "cloud.comfy.org",
+    durationMs: 2000,
+  },
+] as const;
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  PLAYWRIGHT IMPLEMENTATION (consumes VIDEO_SCRIPT above)
+// ─────────────────────────────────────────────────────────────────────────────
 import { test, safeMove } from "./fixtures/fixture";
 import { createVideoScript } from "../lib/demowright/dist/index.mjs";
-import { typeKeys } from "../lib/demowright/dist/helpers.mjs";
 
-const CLOUD_URL = process.env.CLOUD_URL ?? "https://cloud.comfy.org";
+const CLOUD_URL = "https://cloud.comfy.org";
 
-test("cloud comfyui comprehensive tour", async ({ page }) => {
-  test.setTimeout(15 * 60_000);
+test("cloud comfyui tour", async ({ page, browserName }, testInfo) => {
+  // The cloud editor uses WebGL canvas rendering that requires a real GPU.
+  // Headless Chromium renders a blank white screen, making the demo useless.
+  test.skip(testInfo.project.use?.headless !== false, "cloud editor requires headed mode (WebGL)");
+  test.setTimeout(10 * 60_000);
 
-  // -- 1. Login (done outside script.render so TTS wait is not recorded) -----
+  // ── Login (heavy work — done outside script.render so it doesn't overrun) ──
   await page.goto(`${CLOUD_URL}/login`, { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(3000);
 
+  // Click "Use email instead"
   const emailBtn = page.getByRole("button", { name: /use email instead/i });
   if (await emailBtn.isVisible().catch(() => false)) {
     await emailBtn.click();
     await page.waitForTimeout(1500);
   }
 
+  // Fill credentials
   const email = process.env.CLOUD_USERNAME ?? "";
   const password = process.env.CLOUD_PASSWORD ?? "";
   if (!email || !password) {
@@ -60,671 +463,324 @@ test("cloud comfyui comprehensive tour", async ({ page }) => {
   await page.locator('input[name="password"]').fill(password);
   await page.getByRole("button", { name: /^sign in$/i }).click();
 
-  // Wait for the editor canvas to appear
+  // Wait for editor to load (canvas appears)
   await page.waitForSelector("canvas", { timeout: 60000 }).catch(() => {});
   await page.waitForTimeout(8000);
 
-  // -- 2. Build the narrated script ------------------------------------------
+  // ── Build the narrated script ──
   const script = createVideoScript()
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    //  CHAPTER 1 — Intro + Login
-    // ═══════════════════════════════════════════════════════════════════════════
-    .title("ComfyUI Cloud", {
-      subtitle: "Professional AI image generation — zero local setup",
-      durationMs: 3000,
+    // ── Title ──
+    .title(VIDEO_SCRIPT[0].text, {
+      subtitle: VIDEO_SCRIPT[0].subtitle,
+      durationMs: VIDEO_SCRIPT[0].durationMs,
     })
 
-    // 1-1: Why cloud
-    .segment(
-      "Setting up ComfyUI locally means installing Python, CUDA drivers, and downloading gigabytes of model files. Cloud removes all of that.",
-      async (pace) => {
-        await safeMove(page, "canvas");
-        await pace();
-        await page.mouse.move(640, 360);
-        await pace();
-      },
-    )
-
-    // 1-2: Email login flow
-    .segment(
-      "I signed in with just an email and password. No SSH keys, no terminal commands — just a browser and a login form.",
-      async (pace) => {
-        await page.mouse.move(640, 200);
-        await pace();
-        await page.mouse.move(640, 360);
-        await pace();
-      },
-    )
-
-    // 1-3: Editor first load — canvas with nodes
-    .segment(
-      "And here's the editor. The same powerful node-based workflow tool as the desktop version, but running entirely in my browser on cloud GPUs.",
-      async (pace) => {
-        await safeMove(page, "canvas");
-        await pace();
-        await page.mouse.move(500, 300);
-        await pace();
-        await page.mouse.move(780, 420);
-        await pace();
-      },
-    )
-
-    // 1-4: Quick orientation
-    .segment(
-      "Let me give you a full tour of everything ComfyUI Cloud has to offer. We'll start with the canvas and work through every panel.",
-      async (pace) => {
-        await page.mouse.move(640, 360);
-        await pace();
-        await page.mouse.move(400, 300);
-        await pace();
-      },
-    )
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    //  CHAPTER 2 — Canvas and Node Editor
-    // ═══════════════════════════════════════════════════════════════════════════
-    .title("The Node Editor", {
-      subtitle: "Build visual AI pipelines with drag-and-drop nodes",
-      durationMs: 2000,
+    // ── Chapter 1: Welcome & canvas overview ──
+    .segment(VIDEO_SCRIPT[1].narration, async (pace) => {
+      await safeMove(page, "canvas");
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[2].narration, async (pace) => {
+      await page.mouse.move(640, 360);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[3].narration, async (pace) => {
+      await page.mouse.wheel(0, -200);
+      await pace();
+      await page.waitForTimeout(500);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[4].narration, async (pace) => {
+      await page.mouse.wheel(0, 200);
+      await pace();
+      // Simulate pan by moving mouse across canvas
+      await page.mouse.move(400, 300);
+      await pace();
+      await page.mouse.move(700, 400);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[5].narration, async (pace) => {
+      await page.mouse.move(500, 300);
+      await pace();
+      await page.mouse.move(700, 400);
+      await pace();
     })
 
-    // 2-1: Canvas overview
-    .segment(
-      "The canvas is where everything happens. Each box is a node — model loaders, prompt encoders, samplers, and output nodes all connected like a flowchart.",
-      async (pace) => {
-        await safeMove(page, "canvas");
-        await pace();
-        await page.mouse.move(300, 280);
-        await pace();
-        await page.mouse.move(600, 350);
-        await pace();
-        await page.mouse.move(850, 300);
-        await pace();
-      },
-    )
-
-    // 2-2: Zoom and pan navigation
-    .segment(
-      "I can zoom in with the scroll wheel to inspect individual nodes in detail, or zoom out to see the entire pipeline at a glance.",
-      async (pace) => {
-        await page.mouse.wheel(0, -400);
-        await pace();
-        await page.mouse.move(640, 360);
-        await pace();
-        await page.mouse.wheel(0, 500);
-        await pace();
-        await page.mouse.wheel(0, -100);
-        await pace();
-      },
-    )
-
-    // 2-3: Node selection and SelectionToolbox
-    .segment(
-      "Clicking a node selects it and reveals the selection toolbox. From here I can delete, bypass, recolor, group into a subgraph, or inspect node details.",
-      async (pace) => {
-        await page.mouse.move(400, 300);
-        await pace();
-        await page.mouse.click(400, 300);
-        await pace();
-        await page.mouse.move(400, 260);
-        await pace();
-      },
-    )
-
-    // 2-4: Node search — double-click canvas
-    .segment(
-      "Double-clicking the canvas opens the node search popover. I can type any node name to find and add it instantly — much faster than browsing menus.",
-      async (pace) => {
-        await page.mouse.dblclick(640, 450);
-        await pace();
-        await page.waitForTimeout(800);
-        await page.mouse.move(640, 350);
-        await pace();
-        // Close the search by pressing Escape
-        await page.keyboard.press("Escape");
-        await pace();
-      },
-    )
-
-    // 2-5: Node context menu — right-click
-    .segment(
-      "Right-clicking a node opens a context menu with advanced options like converting widgets to inputs, collapsing the node, or copying its configuration.",
-      async (pace) => {
-        await page.mouse.click(500, 320, { button: "right" });
-        await pace();
-        await page.mouse.move(520, 380);
-        await pace();
-        // Dismiss the context menu
-        await page.keyboard.press("Escape");
-        await pace();
-      },
-    )
-
-    // 2-6: Minimap panel
-    .segment(
-      "In the bottom-right corner, the minimap gives me a bird's-eye view of the entire workflow. I can click anywhere on it to jump to that section instantly.",
-      async (pace) => {
-        await page.mouse.move(1100, 650);
-        await pace();
-        await page.mouse.move(1150, 680);
-        await pace();
-        await page.mouse.move(640, 360);
-        await pace();
-      },
-    )
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    //  CHAPTER 3 — Tab Bar and Workflow Management
-    // ═══════════════════════════════════════════════════════════════════════════
-    .title("Workflow Management", {
-      subtitle: "Organize multiple workflows like browser tabs",
-      durationMs: 2000,
+    // ── Chapter 2: Node connections & wires ──
+    .segment(VIDEO_SCRIPT[6].narration, async (pace) => {
+      await page.mouse.move(550, 350);
+      await pace();
+      await page.mouse.move(600, 370);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[7].narration, async (pace) => {
+      // Trace from left to right across the canvas
+      await page.mouse.move(300, 350);
+      await pace();
+      await page.mouse.move(500, 350);
+      await pace();
+      await page.mouse.move(700, 350);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[8].narration, async (pace) => {
+      await page.mouse.move(450, 320);
+      await pace();
+      await page.mouse.move(600, 380);
+      await pace();
     })
 
-    // 3-1: Tab bar overview
-    .segment(
-      "The tab bar at the top works just like a browser. Each tab is a separate workflow, so I can switch between projects without losing my place.",
-      async (pace) => {
-        await page.mouse.move(300, 40);
-        await pace();
-        await page.mouse.move(500, 40);
-        await pace();
-        await page.mouse.move(700, 40);
-        await pace();
-      },
-    )
-
-    // 3-2: Create new workflow
-    .segment(
-      "The plus button creates a fresh workflow tab instantly. I use this when I want to experiment without touching my current working pipeline.",
-      async (pace) => {
-        const newBtn = page.locator(
-          'button:has-text("New"), button:has-text("Create"), button:has-text("+")',
-        ).first();
-        if (await newBtn.isVisible().catch(() => false)) {
-          await newBtn.hover().catch(() => {});
-        }
-        await pace();
-        await page.mouse.move(640, 40);
-        await pace();
-      },
-    )
-
-    // 3-3: Rename workflow — double-click tab
-    .segment(
-      "Double-clicking a tab name lets me rename it inline, using the title editor. Descriptive names keep my workspace organized when I have many workflows open.",
-      async (pace) => {
-        await page.mouse.move(400, 40);
-        await pace();
-        await page.mouse.move(400, 40);
-        await pace();
-      },
-    )
-
-    // 3-4: Workflow overflow menu
-    .segment(
-      "Each tab has an overflow menu with options to duplicate, export as JSON, or delete the workflow. Exporting is great for sharing pipelines with teammates.",
-      async (pace) => {
-        await page.mouse.move(450, 40);
-        await pace();
-        await page.mouse.move(460, 40);
-        await pace();
-      },
-    )
-
-    // 3-5: Workflows sidebar panel
-    .segment(
-      "The Workflows sidebar panel gives me a list view of all saved workflows. I can search, sort, and manage everything from one place.",
-      async (pace) => {
-        const wfBtn = page
-          .locator(
-            'button[aria-label*="工作流"], button[aria-label*="Workflows"]',
-          )
-          .first();
-        if (await wfBtn.isVisible().catch(() => false)) {
-          await wfBtn.click().catch(() => {});
-          await page.waitForTimeout(1000);
-        }
-        await page.mouse.move(200, 300);
-        await pace();
-        await page.mouse.move(200, 400);
-        await pace();
-        await page.mouse.move(200, 500);
-        await pace();
-      },
-    )
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    //  CHAPTER 4 — Sidebar Panels
-    // ═══════════════════════════════════════════════════════════════════════════
-    .title("Sidebar Panels", {
-      subtitle: "Node library, models, assets, and more",
-      durationMs: 2000,
+    // ── Chapter 3: Canvas interactions ──
+    .segment(VIDEO_SCRIPT[9].narration, async (pace) => {
+      await page.mouse.move(500, 350);
+      await pace();
+      // Simulate drag motion
+      await page.mouse.move(520, 340);
+      await pace();
+      await page.mouse.move(540, 330);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[10].narration, async (pace) => {
+      // Hover over an empty area of canvas where context menu would appear
+      await page.mouse.move(640, 400);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[11].narration, async (pace) => {
+      await safeMove(page, 'button[aria-label*="撤销"], button[aria-label*="Undo"], button[title*="Undo"]');
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[12].narration, async (pace) => {
+      await safeMove(page, '[class*="toolbar"], [class*="Toolbar"], header');
+      await pace();
     })
 
-    // 4-1: Sidebar overview
-    .segment(
-      "The left sidebar has an icon toolbar that opens different panels. Each panel focuses on one part of the creative workflow — nodes, models, assets, and apps.",
-      async (pace) => {
-        await page.mouse.move(30, 200);
-        await pace();
-        await page.mouse.move(30, 300);
-        await pace();
-        await page.mouse.move(30, 400);
-        await pace();
-        await page.mouse.move(30, 500);
-        await pace();
-      },
-    )
-
-    // 4-2: Node Library
-    .segment(
-      "The Node Library organizes nodes into categories: Essentials, All, Custom, and Blueprints. I can drag any node directly onto the canvas to add it to my workflow.",
-      async (pace) => {
-        const nodesBtn = page
-          .locator(
-            'button[aria-label*="节点"], button[aria-label*="Nodes"]',
-          )
-          .first();
-        if (await nodesBtn.isVisible().catch(() => false)) {
-          await nodesBtn.click().catch(() => {});
-          await page.waitForTimeout(1000);
-        }
-        await page.mouse.move(180, 250);
-        await pace();
-        await page.mouse.move(180, 350);
-        await pace();
-        await page.mouse.move(180, 450);
-        await pace();
-      },
-    )
-
-    // 4-3: Model Library
-    .segment(
-      "The Model Library shows all available checkpoints, LoRAs, and VAEs. On the cloud, these are pre-downloaded — no more waiting for multi-gigabyte downloads.",
-      async (pace) => {
-        const modelsBtn = page
-          .locator(
-            'button[aria-label*="模型"], button[aria-label*="Models"]',
-          )
-          .first();
-        if (await modelsBtn.isVisible().catch(() => false)) {
-          await modelsBtn.click().catch(() => {});
-          await page.waitForTimeout(1000);
-        }
-        await page.mouse.move(180, 250);
-        await pace();
-        await page.mouse.move(180, 350);
-        await pace();
-        await page.mouse.move(180, 450);
-        await pace();
-      },
-    )
-
-    // 4-4: Assets panel
-    .segment(
-      "The Assets panel shows all my generated outputs. I can switch between grid and list views, filter by type — images, videos, audio, 3D models, or text — and sort by date or name.",
-      async (pace) => {
-        const assetsBtn = page
-          .locator(
-            'button[aria-label*="资产"], button[aria-label*="Assets"]',
-          )
-          .first();
-        if (await assetsBtn.isVisible().catch(() => false)) {
-          await assetsBtn.click().catch(() => {});
-          await page.waitForTimeout(1000);
-        }
-        await page.mouse.move(180, 200);
-        await pace();
-        await page.mouse.move(180, 350);
-        await pace();
-        await page.mouse.move(180, 500);
-        await pace();
-      },
-    )
-
-    // 4-5: Asset upload dialog
-    .segment(
-      "I can also upload my own images to use as inputs. The upload dialog supports drag-and-drop or file browsing, making it easy to bring reference images into my pipeline.",
-      async (pace) => {
-        await page.mouse.move(180, 180);
-        await pace();
-        await page.mouse.move(200, 200);
-        await pace();
-      },
-    )
-
-    // 4-6: Apps tab
-    .segment(
-      "The Apps tab lists published workflow applications. These are simplified interfaces built from workflows — perfect for non-technical users who just want to generate.",
-      async (pace) => {
-        const appsBtn = page
-          .locator(
-            'button[aria-label*="应用"], button[aria-label*="Apps"]',
-          )
-          .first();
-        if (await appsBtn.isVisible().catch(() => false)) {
-          await appsBtn.click().catch(() => {});
-          await page.waitForTimeout(1000);
-        }
-        await page.mouse.move(180, 300);
-        await pace();
-        await page.mouse.move(180, 400);
-        await pace();
-      },
-    )
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    //  CHAPTER 5 — Templates
-    // ═══════════════════════════════════════════════════════════════════════════
-    .title("Templates", {
-      subtitle: "Start from pre-built, production-ready workflows",
-      durationMs: 2000,
+    // ── Chapter 4: Workflow tab management ──
+    .segment(VIDEO_SCRIPT[13].narration, async (pace) => {
+      await safeMove(page, '[role="tablist"], .workflow-tabs, header');
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[14].narration, async (pace) => {
+      const newBtn = page
+        .getByRole("button", { name: /创建空白工作流|new workflow|create blank/i })
+        .first();
+      if (await newBtn.isVisible().catch(() => false)) {
+        await newBtn.hover().catch(() => {});
+      }
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[15].narration, async (pace) => {
+      await safeMove(page, '[role="tablist"], .workflow-tabs, header');
+      await pace();
     })
 
-    // 5-1: Templates panel open
-    .segment(
-      "Instead of building from scratch, the Templates panel offers professionally designed workflows. Let me open it and browse what's available.",
-      async (pace) => {
-        const templatesBtn = page
-          .locator(
-            'button[aria-label*="模板"], button[aria-label*="Templates"]',
-          )
-          .first();
-        if (await templatesBtn.isVisible().catch(() => false)) {
-          await templatesBtn.click().catch(() => {});
-          await page.waitForTimeout(1500);
-        }
-        await page.mouse.move(200, 300);
-        await pace();
-      },
-    )
-
-    // 5-2: Browse template cards
-    .segment(
-      "Each card previews a workflow category — text-to-image, inpainting, upscaling, style transfer, and more. The most popular tasks are one click away.",
-      async (pace) => {
-        await page.mouse.move(200, 280);
-        await pace();
-        await page.mouse.move(200, 380);
-        await pace();
-        await page.mouse.move(200, 480);
-        await pace();
-        await page.mouse.move(200, 580);
-        await pace();
-      },
-    )
-
-    // 5-3: Open a template
-    .segment(
-      "I'll select a template to load it. All nodes are already wired up with sensible defaults — checkpoint loaders, CLIP encoders, samplers, and output nodes, all preconfigured.",
-      async (pace) => {
-        await page.mouse.move(200, 350);
-        await pace();
-        // Click the first visible template card
-        await page.mouse.click(200, 350);
-        await page.waitForTimeout(2000);
-        await pace();
-        await safeMove(page, "canvas");
-        await pace();
-      },
-    )
-
-    // 5-4: Edit prompt in text widget
-    .segment(
-      "Now I just need to change the prompt text. I'll type my own description and the workflow is ready to run. That's the beauty of templates — zero setup, full customization.",
-      async (pace) => {
-        await page.mouse.move(500, 350);
-        await pace();
-        await page.mouse.move(500, 380);
-        await pace();
-      },
-    )
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    //  CHAPTER 6 — Running a Generation
-    // ═══════════════════════════════════════════════════════════════════════════
-    .title("Running a Generation", {
-      subtitle: "Cloud GPUs handle the heavy lifting",
-      durationMs: 2000,
+    // ── Chapter 5: Sidebar panels ──
+    .segment(VIDEO_SCRIPT[16].narration, async (pace) => {
+      await safeMove(page, "nav");
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[17].narration, async (pace) => {
+      const assetsBtn = page.locator('button[aria-label*="资产"], button[aria-label*="Assets"]').first();
+      if (await assetsBtn.isVisible().catch(() => false)) {
+        await assetsBtn.click().catch(() => {});
+      }
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[18].narration, async (pace) => {
+      await page.waitForTimeout(500);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[19].narration, async (pace) => {
+      const nodesBtn = page.locator('button[aria-label*="节点"], button[aria-label*="Nodes"]').first();
+      if (await nodesBtn.isVisible().catch(() => false)) {
+        await nodesBtn.click().catch(() => {});
+      }
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[20].narration, async (pace) => {
+      await safeMove(page, '[class*="search"] input, [placeholder*="Search"], [placeholder*="搜索"]');
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[21].narration, async (pace) => {
+      const modelsBtn = page.locator('button[aria-label*="模型"], button[aria-label*="Models"]').first();
+      if (await modelsBtn.isVisible().catch(() => false)) {
+        await modelsBtn.click().catch(() => {});
+      }
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[22].narration, async (pace) => {
+      await page.waitForTimeout(500);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[23].narration, async (pace) => {
+      const workflowsBtn = page.locator('button[aria-label*="工作流"], button[aria-label*="Workflows"]').first();
+      if (await workflowsBtn.isVisible().catch(() => false)) {
+        await workflowsBtn.click().catch(() => {});
+      }
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[24].narration, async (pace) => {
+      await page.waitForTimeout(500);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[25].narration, async (pace) => {
+      await safeMove(page, '[class*="bottom-bar"], [class*="statusbar"], footer, [class*="toolbar"]:last-child');
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[26].narration, async (pace) => {
+      const templatesBtn = page.locator('button[aria-label*="模板"], button[aria-label*="Templates"]').first();
+      if (await templatesBtn.isVisible().catch(() => false)) {
+        await templatesBtn.click().catch(() => {});
+      }
+      await pace();
     })
 
-    // 6-1: Run button and batch count
-    .segment(
-      "The Run button in the top bar queues my workflow for execution. I can set the batch count to generate multiple variations in a single run for comparison.",
-      async (pace) => {
-        const runBtn = page
-          .locator('button:has-text("Run"), button:has-text("运行")')
-          .first();
-        if (await runBtn.isVisible().catch(() => false)) {
-          await runBtn.hover().catch(() => {});
-        }
-        await pace();
-        await page.mouse.move(640, 60);
-        await pace();
-      },
-    )
-
-    // 6-2: Queue progress overlay
-    .segment(
-      "Once submitted, a progress overlay appears showing real-time status. The progress bar updates as each node executes, so I always know exactly where my generation stands.",
-      async (pace) => {
-        await page.mouse.move(640, 100);
-        await pace();
-        await page.mouse.move(640, 150);
-        await pace();
-      },
-    )
-
-    // 6-3: Queue sidebar
-    .segment(
-      "The Queue sidebar tracks everything — active jobs, completed runs, and failed attempts. I can filter by status to quickly find what I need.",
-      async (pace) => {
-        const queueBtn = page
-          .locator(
-            'button[aria-label*="队列"], button[aria-label*="Queue"]',
-          )
-          .first();
-        if (await queueBtn.isVisible().catch(() => false)) {
-          await queueBtn.click().catch(() => {});
-          await page.waitForTimeout(1000);
-        }
-        await page.mouse.move(200, 300);
-        await pace();
-        await page.mouse.move(200, 400);
-        await pace();
-        await page.mouse.move(200, 500);
-        await pace();
-      },
-    )
-
-    // 6-4: Job details popover
-    .segment(
-      "Clicking a completed job opens its details — generated assets, total runtime, GPU usage, and any error messages. It's a full audit trail for every generation.",
-      async (pace) => {
-        await page.mouse.move(200, 350);
-        await pace();
-        await page.mouse.move(300, 350);
-        await pace();
-      },
-    )
-
-    // 6-5: Output preview in node
-    .segment(
-      "The generated image appears directly in the output node on the canvas. No hunting through file directories — results are right where I expect them.",
-      async (pace) => {
-        await safeMove(page, "canvas");
-        await pace();
-        await page.mouse.move(700, 400);
-        await pace();
-        await page.mouse.move(750, 420);
-        await pace();
-      },
-    )
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    //  CHAPTER 7 — App Mode and Sharing
-    // ═══════════════════════════════════════════════════════════════════════════
-    .title("App Mode and Sharing", {
-      subtitle: "Simplify workflows for any audience",
-      durationMs: 2000,
+    // ── Chapter 6: Running a generation ──
+    .segment(VIDEO_SCRIPT[27].narration, async (pace) => {
+      const runBtn = page.getByRole("button", { name: /^运行$|^Run$/i }).first();
+      if (await runBtn.isVisible().catch(() => false)) {
+        await runBtn.hover().catch(() => {});
+      }
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[28].narration, async (pace) => {
+      await safeMove(page, 'input[type="number"], [role="spinbutton"]');
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[29].narration, async (pace) => {
+      await safeMove(page, 'button[class*="gpu"], button[class*="machine"], [class*="GPU"], [aria-label*="GPU"], [aria-label*="Machine"]');
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[30].narration, async (pace) => {
+      await page.waitForTimeout(500);
+      await pace();
     })
 
-    // 7-1: Canvas mode selector
-    .segment(
-      "ComfyUI Cloud has three canvas modes — Graph, Linear, and Builder. The mode selector lets me switch between them depending on my audience and use case.",
-      async (pace) => {
-        await page.mouse.move(640, 60);
-        await pace();
-        await page.mouse.move(700, 60);
-        await pace();
-      },
-    )
-
-    // 7-2: Linear View
-    .segment(
-      "Linear View strips away the graph complexity and presents a clean, form-based interface. It's perfect for non-technical users who just want to fill in a prompt and hit generate.",
-      async (pace) => {
-        await page.mouse.move(640, 300);
-        await pace();
-        await page.mouse.move(640, 400);
-        await pace();
-        await page.mouse.move(640, 500);
-        await pace();
-      },
-    )
-
-    // 7-3: Builder Mode
-    .segment(
-      "Builder Mode goes further — it lets me customize the app layout, choose which parameters to expose, and design the experience my users will actually see.",
-      async (pace) => {
-        await page.mouse.move(400, 300);
-        await pace();
-        await page.mouse.move(600, 300);
-        await pace();
-        await page.mouse.move(800, 300);
-        await pace();
-      },
-    )
-
-    // 7-4: Share button
-    .segment(
-      "The Share button generates a public link in one click. Anyone with the link can view my workflow, try it out, or even remix it as their own starting point.",
-      async (pace) => {
-        const shareBtn = page
-          .locator('button:has-text("Share")')
-          .first();
-        if (await shareBtn.isVisible().catch(() => false)) {
-          await shareBtn.hover().catch(() => {});
-        }
-        await pace();
-        await page.mouse.move(640, 200);
-        await pace();
-      },
-    )
-
-    // 7-5: Publish to ComfyHub
-    .segment(
-      "For wider distribution, I can publish to ComfyHub. The wizard walks me through adding a thumbnail, writing a description, uploading example outputs, and confirming the listing.",
-      async (pace) => {
-        await page.mouse.move(640, 300);
-        await pace();
-        await page.mouse.move(640, 400);
-        await pace();
-      },
-    )
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    //  CHAPTER 8 — Settings, Help, Workspace + Outro
-    // ═══════════════════════════════════════════════════════════════════════════
-    .title("Settings and Workspace", {
-      subtitle: "Customize your environment and collaborate with your team",
-      durationMs: 2000,
+    // ── Chapter 7: Task queue & output ──
+    .segment(VIDEO_SCRIPT[31].narration, async (pace) => {
+      const queueBtn = page.getByRole("button", { name: /任务队列|task queue|queue/i }).first();
+      if (await queueBtn.isVisible().catch(() => false)) {
+        await queueBtn.hover().catch(() => {});
+      }
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[32].narration, async (pace) => {
+      const allBtn = page.getByRole("button", { name: /^全部$|^All$/i }).first();
+      if (await allBtn.isVisible().catch(() => false)) {
+        await allBtn.hover().catch(() => {});
+      }
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[33].narration, async (pace) => {
+      await page.mouse.move(800, 400);
+      await pace();
+      await page.mouse.move(850, 450);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[34].narration, async (pace) => {
+      await page.mouse.move(750, 400);
+      await pace();
     })
 
-    // 8-1: Settings dialog
-    .segment(
-      "The Settings dialog lets me customize my experience — toggle between light and dark themes, switch keybind presets, configure default values, and manage API keys.",
-      async (pace) => {
-        const settingsBtn = page
-          .locator(
-            'button[aria-label*="设置"], button[aria-label*="Settings"]',
-          )
-          .first();
-        if (await settingsBtn.isVisible().catch(() => false)) {
-          await settingsBtn.click().catch(() => {});
-          await page.waitForTimeout(1500);
-        }
-        await page.mouse.move(640, 300);
-        await pace();
-        await page.mouse.move(640, 400);
-        await pace();
-        // Close settings
-        await page.keyboard.press("Escape");
-        await page.waitForTimeout(500);
-        await pace();
-      },
-    )
+    // ── Chapter 8: App Mode & sharing ──
+    .segment(VIDEO_SCRIPT[35].narration, async (pace) => {
+      const appModeBtn = page.getByRole("button", { name: /进入应用模式|app mode/i }).first();
+      if (await appModeBtn.isVisible().catch(() => false)) {
+        await appModeBtn.hover().catch(() => {});
+      }
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[36].narration, async (pace) => {
+      await page.waitForTimeout(500);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[37].narration, async (pace) => {
+      const shareBtn = page.getByRole("button", { name: /share|分享/i }).first();
+      if (await shareBtn.isVisible().catch(() => false)) {
+        await shareBtn.hover().catch(() => {});
+      }
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[38].narration, async (pace) => {
+      await page.waitForTimeout(500);
+      await pace();
+    })
 
-    // 8-2: Help center
-    .segment(
-      "The Help center links to documentation, video tutorials, and a keyboard shortcut reference. If I ever get stuck, the answers are always one click away.",
-      async (pace) => {
-        const helpBtn = page
-          .locator(
-            'button[aria-label*="帮助"], button[aria-label*="Help"]',
-          )
-          .first();
-        if (await helpBtn.isVisible().catch(() => false)) {
-          await helpBtn.hover().catch(() => {});
-        }
-        await pace();
-        await page.mouse.move(640, 360);
-        await pace();
-      },
-    )
+    // ── Chapter 9: Credits, billing & profile ──
+    .segment(VIDEO_SCRIPT[39].narration, async (pace) => {
+      await safeMove(page, '[class*="credit"], [class*="Credit"], [class*="balance"], [aria-label*="credit"], [aria-label*="Credit"]');
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[40].narration, async (pace) => {
+      await page.waitForTimeout(500);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[41].narration, async (pace) => {
+      await safeMove(page, '[class*="profile"], [class*="avatar"], [class*="user"], img[alt*="avatar"], img[alt*="Avatar"]');
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[42].narration, async (pace) => {
+      await safeMove(page, '[class*="notification"], [class*="bell"], [aria-label*="notification"], [aria-label*="Notification"]');
+      await pace();
+    })
 
-    // 8-3: Workspace and team management
-    .segment(
-      "Workspace management supports team collaboration. I can invite members, share assets and workflows across the team, and manage permissions — all from a single dashboard.",
-      async (pace) => {
-        await page.mouse.move(640, 200);
-        await pace();
-        await page.mouse.move(640, 300);
-        await pace();
-        await page.mouse.move(640, 400);
-        await pace();
-      },
-    )
+    // ── Chapter 10: Settings & help ──
+    .segment(VIDEO_SCRIPT[43].narration, async (pace) => {
+      const settingsBtn = page.getByRole("button", { name: /设置|settings/i }).first();
+      if (await settingsBtn.isVisible().catch(() => false)) {
+        await settingsBtn.hover().catch(() => {});
+      }
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[44].narration, async (pace) => {
+      await page.waitForTimeout(500);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[45].narration, async (pace) => {
+      await page.waitForTimeout(500);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[46].narration, async (pace) => {
+      const helpBtn = page.getByRole("button", { name: /帮助中心|help center|help/i }).first();
+      if (await helpBtn.isVisible().catch(() => false)) {
+        await helpBtn.hover().catch(() => {});
+      }
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[47].narration, async (pace) => {
+      await page.waitForTimeout(500);
+      await pace();
+    })
 
-    // 8-4: Summary narration
-    .segment(
-      "That covers the full ComfyUI Cloud experience. From the powerful node editor to templates, cloud GPU execution, sharing, app mode, and team collaboration — everything in one browser tab.",
-      async (pace) => {
-        await safeMove(page, "canvas");
-        await pace();
-        await page.mouse.move(640, 360);
-        await pace();
-      },
-    )
+    // ── Chapter 11: Wrapping up ──
+    .segment(VIDEO_SCRIPT[48].narration, async (pace) => {
+      await page.mouse.move(640, 360);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[49].narration, async (pace) => {
+      await safeMove(page, "canvas");
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[50].narration, async (pace) => {
+      await safeMove(page, "nav");
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[51].narration, async (pace) => {
+      await page.mouse.move(640, 80);
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[52].narration, async (pace) => {
+      await safeMove(page, "header");
+      await pace();
+    })
+    .segment(VIDEO_SCRIPT[53].narration, async (pace) => {
+      await page.mouse.move(640, 360);
+      await pace();
+    })
 
-    // 8-5: Conclusion
-    .segment(
-      "No Python installs, no CUDA drivers, no model downloads. Just log in, build your workflow, and start generating. ComfyUI Cloud makes AI image creation truly accessible.",
-      async (pace) => {
-        await page.mouse.move(640, 360);
-        await pace();
-      },
-    )
-
-    // ── Outro card ──
+    // ── Outro ──
     .outro({
-      text: "ComfyUI Cloud",
-      subtitle: "cloud.comfy.org",
-      narration:
-        "ComfyUI Cloud gives you the full power of ComfyUI in your browser — cloud GPUs, a rich node editor, pre-built templates, real-time queue tracking, one-click sharing, app mode for any audience, and zero local setup. Try it today at cloud dot comfy dot org.",
-      durationMs: 3000,
+      text: VIDEO_SCRIPT[54].text,
+      subtitle: VIDEO_SCRIPT[54].subtitle,
+      durationMs: VIDEO_SCRIPT[54].durationMs,
     });
 
   await script.prepare(page);

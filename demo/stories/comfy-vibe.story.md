@@ -1,34 +1,46 @@
-# Comfy Vibe — User Story
+# Comfy Vibe (ComfyUI Prototypes) — Landing Page Story
 
 ## Who
-Someone casually exploring the Comfy ecosystem who wants to see what Comfy products look and feel like — the design language, interaction patterns, and visual identity.
+A ComfyUI community member — developer, artist, or curious observer — who has heard about Comfy Vibe and wants to see what the project looks like today. They may be checking in on early-stage progress or evaluating whether to follow the project.
 
 ## Goal
-Experience the Comfy design system in action and get a feel for the aesthetic and interaction quality that runs through all Comfy products.
+Visit the comfy-vibe.vercel.app landing page, observe its current minimal state, and discuss what "ComfyUI Prototypes" signals about the direction of the ComfyUI ecosystem.
 
 ## Happy path
 
-1. **Land on the page** — Open Comfy Vibe. The page immediately establishes the visual identity with bold typography and smooth entrance animations.
-2. **Take in the hero** — The hero section sets the tone — clean layout, intentional color choices, and confident spacing define the Comfy aesthetic.
-3. **Scroll to feature sections** — Each section below the hero demonstrates a different aspect of the design system: layout grids, spacing rhythms, and motion.
-4. **Notice the micro-interactions** — Hover states, transitions, and subtle animations reward attention. These details are what make a UI feel polished.
-5. **Continue through content sections** — Further down, the design system scales across different content types, proving it works beyond a single template.
-6. **Reflect on the whole** — Scroll back to the top. The cohesion from hero to footer is the point — every element serves the same visual language.
+### Chapter 1 — Arriving at the page
+1. **Navigate to the site** — Open comfy-vibe.vercel.app in the browser. The page loads quickly to a minimal view.
+2. **Read the title** — "ComfyUI Prototypes" is displayed as the primary heading. This is the entirety of the visible content.
+3. **Notice the simplicity** — There is no sidebar, no dashboard, no search bar, no navigation — just the title text on the page.
+
+### Chapter 2 — Understanding the prototype stage
+4. **Absorb the blank canvas** — The minimal page is intentional. This is a prototype landing point, not a shipped product. The name itself says "Prototypes."
+5. **Consider the branding** — The "ComfyUI Prototypes" title ties this directly to the ComfyUI ecosystem. This is an official staging ground for new ideas.
+6. **Check for any additional elements** — Scan the page for hidden navigation, footer links, or interactive elements. The page is deliberately bare.
+
+### Chapter 3 — Speculating on future direction
+7. **Reflect on the name "Vibe"** — The project name suggests a focus on experience and feel — possibly a workspace, dashboard, or companion tool for ComfyUI users.
+8. **Consider what prototypes might land here** — Workflow management, template browsing, community sharing, or collaboration features are all plausible directions given the ComfyUI ecosystem's needs.
+9. **Note the deployment** — The site is live on Vercel, which means the infrastructure is in place for rapid iteration once features begin to ship.
+
+### Chapter 4 — Wrapping up
+10. **Summarize the current state** — Comfy Vibe is in its earliest visible stage: a deployed page with a title and nothing else yet.
+11. **Set expectations** — This is a project to watch, not a product to use today. The "Prototypes" label is honest about where things stand.
 
 ## Key features to demo
-- Hero section with bold typography and entrance animations
-- Feature sections demonstrating layout and spacing
-- Hover states and micro-interactions
-- Motion design (transitions, scroll-triggered animations)
-- Consistent design language across all sections
+- The "ComfyUI Prototypes" title text
+- The minimal, content-free page state
+- The live Vercel deployment (proof the project exists and is accessible)
 
-## Implicit narration (what the voiceover should explain)
-- WHY design systems matter (consistency, trust, polish)
-- HOW the visual language works (typography, color, spacing, motion)
-- WHAT makes it feel intentional (micro-interactions, hover states)
-- WHERE this design thinking shows up (across all Comfy products)
+## Implicit narration
+- WHY this matters (the ComfyUI ecosystem is growing and official prototype spaces signal investment in new tooling)
+- WHAT "Prototypes" means (this is exploratory work, not a finished product — and that's fine)
+- HOW to read an early-stage project (presence of a deployed domain means someone is actively working on this)
+- WHO should care (anyone following ComfyUI development or interested in what companion tools may emerge)
 
 ## Out of scope for this demo
-- The underlying CSS/code implementation
-- Design tokens or Figma files
-- Comparison with other design systems
+- Any interactive features (none exist on the page today)
+- Workflow editing, template browsing, or dashboard navigation
+- Login or authentication flows
+- Comparison to other ComfyUI tools or products
+- Speculating on specific ship dates or roadmaps
