@@ -11,11 +11,11 @@ import { promisify } from "util";
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
-import { applyHud } from "../lib/demowright/dist/setup.mjs";
+import { applyHud } from "../../lib/demowright/dist/setup.mjs";
 
 const execFileP = promisify(execFile);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PROJECT_ROOT = path.resolve(__dirname, "..");
+const PROJECT_ROOT = path.resolve(__dirname, "../..");
 const COMFY_QA_DIR = path.join(PROJECT_ROOT, ".comfy-qa");
 // demowright joins outputDir with cwd → use a relative path
 const DEMOS_OUTPUT_DIR_REL = ".comfy-qa/.demos";
@@ -107,7 +107,7 @@ export async function safeMove(page: any, selector: string): Promise<void> {
       new Promise<boolean>((resolve) => setTimeout(() => resolve(false), TIMEOUT_MS)),
     ]);
     if (!exists) return;
-    const { moveToEl } = await import("../lib/demowright/dist/helpers.mjs");
+    const { moveToEl } = await import("../../lib/demowright/dist/helpers.mjs");
     await Promise.race([
       moveToEl(page, selector),
       new Promise((resolve) => setTimeout(resolve, TIMEOUT_MS)),
