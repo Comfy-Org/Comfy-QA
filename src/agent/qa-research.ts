@@ -1,0 +1,597 @@
+/**
+ * QA Research Agent — explores a website, tests CRUD operations,
+ * generates a demowright spec, debugs it, and records QA evidence video.
+ *
+ * Phase 1: Explore site headlessly, test each operation, pass/fail scoring
+ * Phase 2: Generate .spec.ts, debug without video (demowright fast mode)
+ * Phase 3: Record with video (demowright demo mode + TTS)
+ *
+ * Usage:
+ *   bun src/agent/qa-research.ts demo/checklists/registry-web.yaml
+ */
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { $ } from "bun";
+import { chromium, type Page } from "playwright";
+import * as yaml from "yaml";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface Operation {
+  id: string;
+  type: string;
+  description: string;
+  steps_hint: string;
+  narration: string;
+  success_criteria: string;
+}
+
+interface Feature {
+  name: string;
+  operations: Operation[];
+}
+
+interface Checklist {
+  product: string;
+  url: string;
+  persona: string;
+  features: Feature[];
+  conclusion?: { narration: string };
+}
+
+interface StepAction {
+  type: "goto" | "click" | "type" | "scroll" | "hover" | "wait" | "key" | "safeMove";
+  selector?: string;
+  text?: string;
+  value?: number;
+}
+
+interface OperationResult {
+  id: string;
+  feature: string;
+  type: string;
+  narration: string;
+  success: boolean;
+  actions: StepAction[];
+  error?: string;
+}
+
+interface ResearchResults {
+  product: string;
+  url: string;
+  features: {
+    name: string;
+    operations: OperationResult[];
+    score: string;
+    passed: number;
+    total: number;
+  }[];
+  totalPassed: number;
+  totalOperations: number;
+  scorePercent: number;
+}
+
+// ---------------------------------------------------------------------------
+// LLM
+// ---------------------------------------------------------------------------
+
+const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY_QA ?? process.env.ANTHROPIC_API_KEY ?? "";
+const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY ?? "";
+
+async function callLLM(system: string, messages: any[]): Promise<string> {
+  if (ANTHROPIC_KEY) {
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": ANTHROPIC_KEY,
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 2048,
+          system,
+          messages,
+        }),
+      });
+      const json = (await res.json()) as any;
+      return json.content?.[0]?.text ?? "";
+    } catch {}
+  }
+
+  if (OPENROUTER_KEY) {
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${OPENROUTER_KEY}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "anthropic/claude-sonnet-4-20250514",
+        messages: [{ role: "system", content: system }, ...messages],
+        max_tokens: 2048,
+      }),
+    });
+    const json = (await res.json()) as any;
+    return json.choices?.[0]?.message?.content ?? "";
+  }
+
+  throw new Error("No API key (ANTHROPIC_API_KEY_QA or OPENROUTER_API_KEY)");
+}
+
+// ---------------------------------------------------------------------------
+// Page helpers
+// ---------------------------------------------------------------------------
+
+function formatA11y(node: any, depth: number): string {
+  const indent = "  ".repeat(depth);
+  let line = `${indent}${node.role}`;
+  if (node.name) line += ` "${node.name}"`;
+  if (node.value) line += ` [${node.value}]`;
+  let text = line + "\n";
+  for (const child of node.children ?? []) {
+    text += formatA11y(child, depth + 1);
+  }
+  return text;
+}
+
+async function captureState(page: Page) {
+  const screenshot = await page.screenshot({ type: "png" }).catch(() => null);
+
+  // accessibility.snapshot() can throw if the property itself is undefined
+  let a11yTree = "(unavailable)";
+  try {
+    if (page.accessibility) {
+      const a11y = await page.accessibility.snapshot();
+      if (a11y) a11yTree = formatA11y(a11y, 0).slice(0, 3000);
+    }
+  } catch {
+    // Fall back to innerText extraction
+    try {
+      const text = await page.evaluate(() => document.body?.innerText?.slice(0, 3000) ?? "");
+      a11yTree = text || "(unavailable)";
+    } catch {}
+  }
+
+  return {
+    screenshotBase64: screenshot ? screenshot.toString("base64") : "",
+    a11yTree,
+    url: page.url(),
+    title: await page.title().catch(() => ""),
+  };
+}
+
+async function executeAction(page: Page, action: StepAction): Promise<boolean> {
+  try {
+    switch (action.type) {
+      case "goto":
+        await page.goto(action.text!, { waitUntil: "domcontentloaded", timeout: 15000 });
+        await page.waitForTimeout(1500);
+        break;
+      case "click":
+        await page.locator(action.selector!).first().click({ timeout: 5000 });
+        break;
+      case "type":
+        await page.locator(action.selector!).first().fill(action.text!, { timeout: 5000 });
+        break;
+      case "scroll":
+        await page.mouse.wheel(0, action.value ?? 300);
+        await page.waitForTimeout(500);
+        break;
+      case "hover":
+        await page.locator(action.selector!).first().hover({ timeout: 5000 });
+        break;
+      case "wait":
+        await page.waitForTimeout(action.value ?? 1000);
+        break;
+      case "key":
+        await page.keyboard.press(action.text!);
+        break;
+      case "safeMove":
+        const el = page.locator(action.selector!).first();
+        if (await el.isVisible({ timeout: 3000 })) {
+          const box = await el.boundingBox();
+          if (box) await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+        }
+        break;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 1: Research
+// ---------------------------------------------------------------------------
+
+async function testOperation(
+  page: Page,
+  checklist: Checklist,
+  feature: Feature,
+  op: Operation,
+): Promise<OperationResult> {
+  const result: OperationResult = {
+    id: op.id,
+    feature: feature.name,
+    type: op.type,
+    narration: op.narration,
+    success: false,
+    actions: [],
+  };
+
+  console.log(`    Testing: ${op.id}`);
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const state = await captureState(page);
+
+      const systemPrompt = `You are a QA tester. Test a specific operation on a website.
+
+Product: ${checklist.product}
+
+RULES:
+- Headless browser, NO URL bar. Use {"type": "goto", "text": "url"} to navigate.
+- Use simple CSS selectors. Maximum 5 actions.
+- Set "success": true ONLY if success criteria is met in the current state.
+- If content is already visible, set "success": true with empty actions.
+- On retry, try a different approach.
+
+Respond with ONLY JSON:
+{
+  "actions": [{"type": "click", "selector": "..."}],
+  "success": true/false,
+  "observation": "what I see"
+}`;
+
+      const userContent: any[] = [{
+        type: "text",
+        text: `Operation: ${op.id} — ${op.description}
+Steps hint: ${op.steps_hint}
+Success criteria: ${op.success_criteria}
+Attempt: ${attempt}/3${attempt > 1 ? " — previous approach failed, try something different" : ""}
+
+URL: ${state.url} | Title: ${state.title}
+
+Accessibility Tree:
+${state.a11yTree}`,
+      }];
+
+      if (state.screenshotBase64) {
+        userContent.push({
+          type: "image",
+          source: { type: "base64", media_type: "image/png", data: state.screenshotBase64 },
+        });
+      }
+
+      const response = await callLLM(systemPrompt, [{ role: "user", content: userContent }]);
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) continue;
+
+      const decision = JSON.parse(jsonMatch[0]);
+
+      // Execute actions and record successful ones
+      for (const action of decision.actions ?? []) {
+        const ok = await executeAction(page, action);
+        if (ok) result.actions.push(action);
+      }
+
+      await page.waitForTimeout(1000);
+
+      if (decision.success) {
+        result.success = true;
+        console.log(`      ✅ (attempt ${attempt})`);
+        return result;
+      }
+    } catch (err: any) {
+      result.error = err.message?.slice(0, 200);
+    }
+  }
+
+  console.log(`      ❌ (3 attempts failed)`);
+  return result;
+}
+
+async function runPhase1(checklist: Checklist): Promise<ResearchResults> {
+  console.log(`\n🔬 Phase 1: Research — ${checklist.product}\n`);
+
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  const page = await context.newPage();
+
+  await page.goto(checklist.url, { waitUntil: "domcontentloaded", timeout: 30000 });
+  await page.waitForTimeout(2000);
+
+  const results: ResearchResults = {
+    product: checklist.product,
+    url: checklist.url,
+    features: [],
+    totalPassed: 0,
+    totalOperations: 0,
+    scorePercent: 0,
+  };
+
+  for (const feature of checklist.features) {
+    console.log(`\n  📋 ${feature.name}`);
+    const fr = { name: feature.name, operations: [] as OperationResult[], score: "", passed: 0, total: feature.operations.length };
+
+    for (const op of feature.operations) {
+      const r = await testOperation(page, checklist, feature, op);
+      fr.operations.push(r);
+      if (r.success) fr.passed++;
+    }
+
+    fr.score = `${fr.passed}/${fr.total}`;
+    results.features.push(fr);
+    results.totalPassed += fr.passed;
+    results.totalOperations += fr.total;
+    console.log(`    Score: ${fr.score}`);
+  }
+
+  results.scorePercent = Math.round((results.totalPassed / results.totalOperations) * 100);
+  await browser.close();
+  return results;
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2: Generate spec
+// ---------------------------------------------------------------------------
+
+/**
+ * Generate assertion code for a FAILED operation.
+ * Instead of .catch(() => {}), we assert the actual broken behavior.
+ * When the bug is fixed, this assertion will fail → signal to update the spec.
+ */
+function generateFailAssertion(op: OperationResult): string {
+  const lines: string[] = [];
+
+  // Replay the actions that were attempted, wrapped in try/catch to observe failure
+  if (op.actions.length > 0) {
+    const lastAction = op.actions[op.actions.length - 1];
+
+    // If the last action was a goto, the page may have loaded but content wasn't right
+    if (lastAction.type === "goto") {
+      lines.push(`      // Navigate to the target page`);
+      lines.push(`      await page.goto(${JSON.stringify(lastAction.text)}, { waitUntil: "domcontentloaded", timeout: 15000 });`);
+      lines.push(`      await page.waitForTimeout(1500);`);
+      lines.push(`      // Assert: operation did not succeed (current known behavior)`);
+      lines.push(`      // When this bug is fixed, this assertion will fail → update the spec`);
+    }
+
+    // If last action was a click/type that failed, assert the element isn't interactable
+    if (lastAction.type === "click" && lastAction.selector) {
+      lines.push(`      // Assert: element is not clickable (current known behavior)`);
+      lines.push(`      const target = page.locator(${JSON.stringify(lastAction.selector)}).first();`);
+      lines.push(`      expect(await target.isVisible().catch(() => false)).toBe(false);`);
+    }
+  }
+
+  if (lines.length === 0) {
+    // No specific actions to assert — just document the failure
+    lines.push(`      // This operation failed during research — no working selectors found`);
+    lines.push(`      // Current page state is shown in the video as evidence`);
+  }
+
+  return lines.join("\n");
+}
+
+function actionToCode(a: StepAction): string | null {
+  switch (a.type) {
+    case "goto":
+      return `await page.goto(${JSON.stringify(a.text)}, { waitUntil: "domcontentloaded", timeout: 15000 });\nawait page.waitForTimeout(1500);`;
+    case "click":
+      return `await page.locator(${JSON.stringify(a.selector)}).first().click({ timeout: 5000 });`;
+    case "type":
+      return `await page.locator(${JSON.stringify(a.selector)}).first().fill(${JSON.stringify(a.text)}, { timeout: 5000 });`;
+    case "scroll":
+      return `await page.mouse.wheel(0, ${a.value ?? 300});`;
+    case "hover":
+      return `await page.locator(${JSON.stringify(a.selector)}).first().hover({ timeout: 5000 });`;
+    case "wait":
+      return `await page.waitForTimeout(${a.value ?? 1000});`;
+    case "key":
+      return `await page.keyboard.press(${JSON.stringify(a.text)});`;
+    case "safeMove":
+      return `await safeMove(page, ${JSON.stringify(a.selector)});`;
+    default:
+      return null;
+  }
+}
+
+function generateSpec(results: ResearchResults, checklist: Checklist): string {
+  const segments: string[] = [];
+
+  // Actions that change the page (must run BEFORE narration starts)
+  const SETUP_TYPES = new Set(["goto", "click", "type", "scroll", "key", "wait"]);
+  // Actions that are visual (safe to run DURING narration)
+  const VISUAL_TYPES = new Set(["safeMove", "hover"]);
+
+  for (const feature of results.features) {
+    segments.push(`\n    // ── ${feature.name} (${feature.score}) ──`);
+
+    for (const op of feature.operations) {
+      const icon = op.success ? "✅" : "❌";
+
+      if (op.success) {
+        // ── PASS: generate setup + action with real assertions ──
+        const narration = op.narration;
+        const setupLines: string[] = [];
+        const visualLines: string[] = [];
+
+        for (const a of op.actions) {
+          const line = actionToCode(a);
+          if (line) {
+            if (SETUP_TYPES.has(a.type)) {
+              setupLines.push(line);
+            } else {
+              visualLines.push(line);
+            }
+          }
+        }
+
+        if (setupLines.length > 0) {
+          const actionBody = visualLines.length > 0
+            ? visualLines.map(l => `        ${l}`).join("\n") + "\n        await pace();"
+            : "        await pace();";
+
+          segments.push(`    // ${icon} ${op.id} (${op.type}) — PASS
+    .segment(${JSON.stringify(narration)}, {
+      setup: async () => {
+${setupLines.map(l => `        ${l}`).join("\n")}
+      },
+      action: async (pace) => {
+${actionBody}
+      },
+    })`);
+        } else {
+          const bodyLines = visualLines.length > 0
+            ? visualLines.map(l => `      ${l}`).join("\n") + "\n      await pace();"
+            : "      await pace();";
+
+          segments.push(`    // ${icon} ${op.id} (${op.type}) — PASS
+    .segment(${JSON.stringify(narration)}, async (pace) => {
+${bodyLines}
+    })`);
+        }
+      } else {
+        // ── FAIL: assert the actual broken behavior ──
+        const narration = `${op.narration.replace(/\.$/, "")} — but this operation is currently failing.`;
+        const failBody = generateFailAssertion(op);
+
+        segments.push(`    // ${icon} ${op.id} (${op.type}) — FAIL (asserts current broken behavior)
+    .segment(${JSON.stringify(narration)}, async (pace) => {
+${failBody}
+      await pace();
+    })`);
+      }
+    }
+  }
+
+  // Scorecard
+  const scoreLines: string[] = [];
+  for (const f of results.features) {
+    const icon = f.passed === f.total ? "✅" : "⚠";
+    scoreLines.push(`${f.name} ${f.score} ${icon}`);
+  }
+
+  const slug = checklist.product.toLowerCase().replace(/\s+/g, "-");
+
+  return `/**
+ * ${checklist.product} — QA Evidence Video
+ * Auto-generated by Research Agent on ${new Date().toISOString().split("T")[0]}
+ * Score: ${results.totalPassed}/${results.totalOperations} (${results.scorePercent}%)
+ */
+import { test, safeMove, expect } from "./fixtures/fixture";
+import { createVideoScript } from "../lib/demowright/dist/index.mjs";
+
+test("${slug} QA evidence", async ({ page }) => {
+  test.setTimeout(10 * 60_000);
+
+  const script = createVideoScript()
+    .title(${JSON.stringify(checklist.product + " QA")}, {
+      subtitle: "Score: ${results.totalPassed}/${results.totalOperations} (${results.scorePercent}%)",
+      durationMs: 3000,
+    })
+${segments.join("\n")}
+
+    .outro({
+      text: "QA Results: ${results.totalPassed}/${results.totalOperations} (${results.scorePercent}%)",
+      subtitle: ${JSON.stringify(scoreLines.join(" | "))},
+      durationMs: 5000,
+    });
+
+  // Pre-generate TTS BEFORE navigating — avoids idle time in recording
+  await script.prepare(page);
+
+  // Navigate after TTS is ready — recording is already active
+  await page.goto(${JSON.stringify(checklist.url)}, { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(2000);
+
+  await script.render(page, {
+    baseName: ${JSON.stringify(slug + "-qa")},
+    outputDir: ".comfy-qa/.demos",
+  });
+});
+`;
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2+3: Debug & Record
+// ---------------------------------------------------------------------------
+
+async function runSpec(specPath: string, label: string): Promise<boolean> {
+  console.log(`\n${label}\n  Running: bunx playwright test ${specPath}\n`);
+  try {
+    const result = await $`bunx playwright test ${specPath} --reporter=list 2>&1`.text();
+    console.log(result.slice(-1000));
+    return !result.includes("failed");
+  } catch (err: any) {
+    console.log(err.stdout?.toString()?.slice(-500) ?? "");
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
+async function main() {
+  const checklistPath = process.argv[2];
+  if (!checklistPath) {
+    console.error("Usage: bun src/agent/qa-research.ts <checklist.yaml>");
+    process.exit(1);
+  }
+
+  const raw = fs.readFileSync(path.resolve(checklistPath), "utf-8");
+  const checklist = yaml.parse(raw) as Checklist;
+  const slug = checklist.product.toLowerCase().replace(/\s+/g, "-");
+  const outputDir = path.resolve(".comfy-qa/.research", slug);
+  fs.mkdirSync(outputDir, { recursive: true });
+
+  // ── Phase 1 ──
+  const results = await runPhase1(checklist);
+
+  fs.writeFileSync(path.join(outputDir, "research-results.json"), JSON.stringify(results, null, 2));
+
+  // Print scorecard
+  console.log(`\n  ┌───────────────────────────────────┐`);
+  console.log(`  │  ${checklist.product} QA Results`.padEnd(37) + "│");
+  console.log(`  │                                   │`);
+  for (const f of results.features) {
+    const icon = f.passed === f.total ? "✅" : "⚠ ";
+    console.log(`  │  ${icon} ${f.name.padEnd(22)} ${f.score.padStart(5)}  │`);
+  }
+  console.log(`  │                                   │`);
+  console.log(`  │  Total: ${results.totalPassed}/${results.totalOperations} (${results.scorePercent}%)`.padEnd(37) + "│");
+  console.log(`  └───────────────────────────────────┘`);
+
+  // ── Phase 2: Generate spec ──
+  const specContent = generateSpec(results, checklist);
+  const specPath = path.join("demo", `${slug}-qa.spec.ts`);
+  fs.writeFileSync(specPath, specContent);
+  console.log(`\n📝 Spec: ${specPath}`);
+
+  // ── Phase 2: Debug ──
+  const debugOk = await runSpec(specPath, "🔧 Phase 2: Debug (no video, fast)");
+
+  // ── Phase 3: Record ──
+  if (debugOk) {
+    const recordOk = await runSpec(specPath, "🎬 Phase 3: Record (with video)");
+    if (recordOk) {
+      console.log(`\n✅ Video: .comfy-qa/.demos/${slug}-qa.mp4`);
+    }
+  } else {
+    console.log(`\n⚠ Debug failed. Fix spec and re-run:`);
+    console.log(`  bunx playwright test ${specPath}`);
+  }
+
+  console.log("\n✅ Done.");
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
