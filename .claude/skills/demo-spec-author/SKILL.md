@@ -141,12 +141,13 @@ const VIDEO_SCRIPT = [
 ### Narration writing rules
 
 1. **First person, present tense.** "I'm clicking the search box" not "User clicks search box".
-2. **Explain pace details when they matter.** "Now I'm typing slowly so you can see…", "Let me scroll down to find…", "I'll wait a moment while it loads…".
+2. **Every word of narration must pair with a visual action.** If the narrator is talking, the cursor must be moving, hovering, scrolling, or typing. Zero idle frames. A segment where the mouse sits still while the voiceover explains "why this matters" is a failed segment — rewrite it to hover related elements while explaining, or cut it.
 3. **Connect segments with transitional phrases.** "Let's start by…", "Next…", "While we're here…", "Before we wrap up…", "Finally…". This eliminates the choppy "label-label-label" feel.
 4. **Explain WHY, not just WHAT.** "Let me search for ControlNet because that's the most common feature people look for" beats "I'm searching for ControlNet."
 5. **Sentences read aloud should feel natural at 1× speed.** ~140 words per minute is normal speech. A 5-second segment fits ~12 words.
 6. **Avoid jargon the target audience wouldn't know** unless you immediately explain it.
 7. **End with a CTA or summary.** The outro should give the viewer somewhere to go next.
+8. **If a segment has nothing to show, cut it.** Pure commentary segments with no UI to demonstrate should be merged into adjacent segments that do have visual actions. Never write a segment whose `visuals` hint is just "pause" or "mouse.move center".
 
 ### `visuals` — light hints only
 
@@ -267,7 +268,9 @@ These are encoded in past commit history and bug reports:
 | **Pre-navigate BEFORE `script.render()`** | Wall clock counts toward segment timing once render starts |
 | **Always call `script.prepare(page)` first** | Pre-fetches ALL TTS in parallel — no API latency mid-test |
 | **Only `safeMove` / `mouse.wheel` / `mouse.move` / `hover` / `typeKeys` in segments** | These don't call `page.evaluate` which can hang on SSR sites ([demowright #3](https://github.com/snomiao/demowright/issues/3)) |
+| **No `element.focus()` inside segments** | `focus()` calls `page.evaluate()` internally → hangs on many sites. Use `mouse.click(boundingBox)` instead. |
 | **For SSR sites that hang anyway** (e.g., www.comfy.org) | Block all `<script>` resources via `page.route`, see `comfy-website.spec.ts` |
+| **ZERO idle frames — always move the mouse** | Every segment must have continuous visual action. Never let the cursor sit still while narrating. If you're explaining something, hover related elements. If there's nothing to show, shorten or cut the segment. |
 
 ## Output paths
 
