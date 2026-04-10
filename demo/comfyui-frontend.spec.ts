@@ -1,3 +1,15 @@
+/**
+ * ComfyUI Frontend — local development demo
+ *
+ * NOTE: This spec requires a locally running ComfyUI frontend + backend.
+ * There is no public staging URL. To run:
+ *   1. Clone the ComfyUI frontend repo
+ *   2. Start the backend locally
+ *   3. Update the URL below to your local address
+ *
+ * Currently points to docs.comfy.org as a placeholder.
+ * TODO: Update with actual local frontend demo once setup instructions are finalized.
+ */
 import { test, safeMove } from "./fixtures/fixture";
 import { createVideoScript } from "../lib/demowright/dist/index.mjs";
 

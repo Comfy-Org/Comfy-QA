@@ -1,0 +1,120 @@
+# Feature checklist for research agent demo recording
+# The agent explores the site and demonstrates each feature while narrating.
+
+product: Comfy Registry
+url: https://registry.comfy.org/
+staging_url_env: REGISTRY_URL
+persona: >
+  A ComfyUI user who wants to find, evaluate, and install custom nodes.
+  Speak in first person, present tense, conversational tone.
+  Explain WHY each feature matters, not just WHAT it does.
+
+narration_style:
+  voice: first_person
+  tense: present
+  tone: conversational
+  explain: why_not_what
+  pace: 140_wpm
+
+chapters:
+  - name: "Landing Page"
+    goal: "Show the hero section, search bar, trending nodes, and ecosystem stats"
+    features:
+      - id: hero_section
+        description: "Hero heading and branding"
+        narration_hint: "Welcome to the registry — explain what this site is for"
+      - id: search_bar
+        description: "The search bar — most used feature"
+        narration_hint: "Point out the search bar is front and center"
+      - id: trending_nodes
+        description: "Trending/featured node cards below the fold"
+        narration_hint: "These are what the community is installing right now"
+      - id: ecosystem_stats
+        description: "Total nodes, publishers, downloads counters"
+        narration_hint: "The ecosystem is growing — mention the numbers"
+
+  - name: "Searching for Nodes"
+    goal: "Search for SUPIR and demonstrate instant search"
+    features:
+      - id: type_search_query
+        description: "Type 'SUPIR' into search bar"
+        action: "click search input, type 'SUPIR'"
+        narration_hint: "I want image upscaling — searching for SUPIR"
+      - id: live_suggestions
+        description: "Results stream in as you type"
+        narration_hint: "Algolia-powered — results appear instantly"
+      - id: result_card_anatomy
+        description: "Show what info each result card contains"
+        narration_hint: "Name, version, publisher, downloads, tags — enough to decide at a glance"
+      - id: compare_alternatives
+        description: "Scroll through results to compare options"
+        narration_hint: "Dozens of upscaling options — easy to compare"
+
+  - name: "Filters and Sorting"
+    goal: "Show OS filter, accelerator filter, and sort options"
+    features:
+      - id: browse_page
+        description: "Navigate to /nodes browse page"
+        action: "navigate to /nodes"
+        narration_hint: "The browse page has all the filtering tools"
+      - id: os_filter
+        description: "Filter by operating system (Windows/macOS/Linux)"
+        narration_hint: "Only show nodes compatible with your OS"
+      - id: accelerator_filter
+        description: "Filter by GPU accelerator (CUDA/ROCm/MPS)"
+        narration_hint: "AMD GPU? Filter to ROCm-compatible nodes only"
+      - id: sort_options
+        description: "Sort by downloads, name, or last updated"
+        narration_hint: "Sort by downloads to find the most trusted tools"
+
+  - name: "Node Detail Page"
+    goal: "Click into a node and explore everything on the detail page"
+    features:
+      - id: node_header
+        description: "Node name, icon, publisher badge, tags"
+        action: "navigate to /nodes/comfyui-reactor-node"
+        narration_hint: "Trust signals you can verify at a glance"
+      - id: readme_content
+        description: "Markdown-rendered README documentation"
+        narration_hint: "Documentation that used to be scattered across GitHub wikis"
+      - id: install_command
+        description: "Install command with copy button"
+        action: "hover copy button"
+        narration_hint: "One command — paste into terminal and done"
+      - id: version_history
+        description: "Version list with changelogs"
+        narration_hint: "Frequent updates = active maintenance"
+      - id: metadata_sidebar
+        description: "Dependencies, OS support, accelerators, license, GitHub link"
+        narration_hint: "Everything you need to evaluate compatibility"
+
+  - name: "Publisher Ecosystem"
+    goal: "Visit a publisher profile and see their other nodes"
+    features:
+      - id: publisher_profile
+        description: "Publisher page with logo, bio, members"
+        action: "navigate to /publishers/comfyanonymous"
+        narration_hint: "Meet the people behind the nodes"
+      - id: publisher_nodes
+        description: "List of all nodes by this publisher"
+        narration_hint: "Trust one package, trust their others too"
+      - id: verified_badge
+        description: "Publisher verification status"
+        narration_hint: "Verified = code has been reviewed"
+
+  - name: "Documentation"
+    goal: "Show the docs link and publishing workflow"
+    features:
+      - id: docs_link
+        description: "Registry documentation overview"
+        action: "navigate to https://docs.comfy.org/registry/overview"
+        narration_hint: "API endpoints, publishing guides, packaging requirements"
+      - id: publish_workflow
+        description: "How to publish your own node"
+        narration_hint: "Your node gets its own page, version tracking, and stats"
+
+conclusion:
+  narration: >
+    With the Comfy Registry you get instant search, OS and accelerator filters,
+    verified publishers, one-command installs, version tracking, and a growing
+    library of community nodes. Start exploring at registry.comfy.org.
