@@ -477,9 +477,11 @@ test("comfy registry tour", async ({ page }) => {
     .segment(VIDEO_SCRIPT[8].narration, async (pace) => {
       await safeMove(page, 'input[placeholder*="Search"]');
       await pace();
+      // Click the search input to focus it (no page.evaluate — safe in segments)
       const search = page.locator('input[placeholder*="Search"]').first();
-      if (await search.isVisible().catch(() => false)) {
-        await search.focus().catch(() => {});
+      const box = await search.boundingBox().catch(() => null);
+      if (box) {
+        await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
       }
       await pace();
     })
@@ -506,10 +508,11 @@ test("comfy registry tour", async ({ page }) => {
 
     // ── Chapter 3: Browsing the node catalog ──
     .segment(VIDEO_SCRIPT[14].narration, async (pace) => {
-      // Clear search by triple-clicking and deleting
+      // Clear search by clicking into input then selecting all + delete
       const search = page.locator('input[placeholder*="Search"]').first();
-      if (await search.isVisible().catch(() => false)) {
-        await search.focus().catch(() => {});
+      const box = await search.boundingBox().catch(() => null);
+      if (box) {
+        await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
         await page.keyboard.press("Control+A").catch(() => {});
         await page.keyboard.press("Backspace").catch(() => {});
       }
@@ -667,8 +670,9 @@ test("comfy registry tour", async ({ page }) => {
     })
     .segment(VIDEO_SCRIPT[43].narration, async (pace) => {
       const search = page.locator('input[placeholder*="Search"]').first();
-      if (await search.isVisible().catch(() => false)) {
-        await search.focus().catch(() => {});
+      const box = await search.boundingBox().catch(() => null);
+      if (box) {
+        await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
         await page.keyboard.press("Control+A").catch(() => {});
         await page.keyboard.press("Backspace").catch(() => {});
       }
