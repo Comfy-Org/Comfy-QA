@@ -94,24 +94,35 @@ export default class MuxReporter implements Reporter {
       if (!(await waitForFile(webm))) return;
 
       const out = path.join(OUTPUT_DIR, `${slug}.mp4`);
-      const args = ["-y", "-i", webm, "-i", wav];
-      if (fs.existsSync(srt)) {
-        // ffmpeg's subtitles filter needs the path escaped for : on Windows drives
-        const escSrt = srt.replace(/\\/g, "/").replace(/:/g, "\\:");
-        args.push("-vf", `subtitles='${escSrt}'`);
-      }
-      args.push(
-        "-c:v", "libx264",
-        "-preset", "fast",
-        "-pix_fmt", "yuv420p",
-        "-c:a", "aac",
-        "-b:a", "128k",
-        "-ar", "44100",
-        "-shortest",
-        out,
-      );
 
-      const code = await runFfmpeg(args);
+      // Try with subtitles first, fall back to without if it fails
+      let code = -1;
+      if (fs.existsSync(srt)) {
+        const escSrt = srt.replace(/\\/g, "/").replace(/:/g, "\\:");
+        const argsWithSubs = [
+          "-y", "-i", webm, "-i", wav,
+          "-vf", `subtitles='${escSrt}'`,
+          "-c:v", "libx264", "-preset", "fast", "-pix_fmt", "yuv420p",
+          "-c:a", "aac", "-b:a", "128k", "-ar", "44100",
+          "-shortest", out,
+        ];
+        code = await runFfmpeg(argsWithSubs);
+        if (code !== 0 && code !== -1) {
+          // Subtitles filter failed (common on macOS) — retry without subtitles
+          console.log(`  [mux] subtitles filter failed for ${slug}, retrying without subs`);
+        }
+      }
+
+      if (code !== 0) {
+        const argsNoSubs = [
+          "-y", "-i", webm, "-i", wav,
+          "-c:v", "libx264", "-preset", "fast", "-pix_fmt", "yuv420p",
+          "-c:a", "aac", "-b:a", "128k", "-ar", "44100",
+          "-shortest", out,
+        ];
+        code = await runFfmpeg(argsNoSubs);
+      }
+
       if (code === 0) {
         this.muxed.add(slug);
         // eslint-disable-next-line no-console

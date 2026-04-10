@@ -522,16 +522,83 @@ ${segments.join("\n")}
 // Phase 2+3: Debug & Record
 // ---------------------------------------------------------------------------
 
-async function runSpec(specPath: string, label: string): Promise<boolean> {
+async function runSpec(specPath: string, label: string): Promise<{ ok: boolean; output: string }> {
   console.log(`\n${label}\n  Running: bunx playwright test ${specPath}\n`);
   try {
     const result = await $`bunx playwright test ${specPath} --reporter=list 2>&1`.text();
+    const ok = !result.includes("failed");
     console.log(result.slice(-1000));
-    return !result.includes("failed");
+    return { ok, output: result };
   } catch (err: any) {
-    console.log(err.stdout?.toString()?.slice(-500) ?? "");
-    return false;
+    const output = err.stdout?.toString() ?? err.message ?? "";
+    console.log(output.slice(-1000));
+    return { ok: false, output };
   }
+}
+
+/**
+ * Phase 2 debug loop: if spec fails, ask LLM to fix it, then re-run.
+ * Returns true if spec passes after fixes.
+ */
+async function debugLoop(specPath: string, maxRetries = 3): Promise<boolean> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const { ok, output } = await runSpec(specPath, `🔧 Phase 2: Debug (attempt ${attempt}/${maxRetries})`);
+    if (ok) return true;
+
+    if (attempt === maxRetries) {
+      console.log(`\n⚠ Spec still failing after ${maxRetries} debug attempts.`);
+      return false;
+    }
+
+    // Ask LLM to fix the spec
+    console.log(`\n🔧 Asking LLM to fix spec...`);
+    const specContent = fs.readFileSync(specPath, "utf-8");
+    const errorTail = output.slice(-2000);
+
+    const fixPrompt = `You are fixing a Playwright test spec that failed. Here is the spec and error output.
+
+RULES:
+- Only fix the specific error. Don't rewrite the whole spec.
+- Keep the same structure (title, segments, outro).
+- If a selector timed out, try a more robust selector or add .catch(() => {}).
+- If an import is wrong, fix it.
+- Return the COMPLETE fixed spec file (not just the diff).
+
+## Current spec:
+\`\`\`typescript
+${specContent}
+\`\`\`
+
+## Error output (last 2000 chars):
+\`\`\`
+${errorTail}
+\`\`\`
+
+Return ONLY the fixed TypeScript file content, no markdown fences.`;
+
+    try {
+      const fixed = await callLLM("You fix Playwright test specs. Return only the fixed file content.", [
+        { role: "user", content: fixPrompt },
+      ]);
+
+      // Extract TypeScript from response (strip markdown fences if present)
+      let fixedContent = fixed.trim();
+      if (fixedContent.startsWith("```")) {
+        fixedContent = fixedContent.replace(/^```\w*\n/, "").replace(/\n```$/, "");
+      }
+
+      // Basic sanity check
+      if (fixedContent.includes("import") && fixedContent.includes("test(")) {
+        fs.writeFileSync(specPath, fixedContent);
+        console.log(`  ✏️ Spec updated, retrying...`);
+      } else {
+        console.log(`  ⚠ LLM response doesn't look like a valid spec, skipping fix.`);
+      }
+    } catch (err: any) {
+      console.log(`  ⚠ LLM fix failed: ${err.message?.slice(0, 100)}`);
+    }
+  }
+  return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -574,17 +641,17 @@ async function main() {
   fs.writeFileSync(specPath, specContent);
   console.log(`\n📝 Spec: ${specPath}`);
 
-  // ── Phase 2: Debug ──
-  const debugOk = await runSpec(specPath, "🔧 Phase 2: Debug (no video, fast)");
+  // ── Phase 2: Debug loop (LLM fixes failing spec) ──
+  const debugOk = await debugLoop(specPath, 3);
 
   // ── Phase 3: Record ──
   if (debugOk) {
-    const recordOk = await runSpec(specPath, "🎬 Phase 3: Record (with video)");
+    const { ok: recordOk } = await runSpec(specPath, "🎬 Phase 3: Record (with video)");
     if (recordOk) {
       console.log(`\n✅ Video: .comfy-qa/.demos/${slug}-qa.mp4`);
     }
   } else {
-    console.log(`\n⚠ Debug failed. Fix spec and re-run:`);
+    console.log(`\n⚠ Debug failed after retries. Fix spec manually:`);
     console.log(`  bunx playwright test ${specPath}`);
   }
 

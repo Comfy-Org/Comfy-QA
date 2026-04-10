@@ -26,7 +26,17 @@ export default defineConfig({
       args: [],
     },
   },
-  projects: [{ name: "firefox", use: { browserName: "firefox" } }],
+  projects: [
+    { name: "firefox", use: { browserName: "firefox" }, testIgnore: "cloud-comfy.spec.ts" },
+    {
+      name: "chromium-webgl",
+      use: {
+        browserName: "chromium",
+        launchOptions: { args: ["--headless=new"] },
+      },
+      testMatch: "cloud-comfy.spec.ts",
+    },
+  ],
   outputDir: path.resolve(__dirname, ".comfy-qa", ".tmp", "demos"),
   testDir: path.resolve(__dirname, "demo"),
   testMatch: "*.spec.ts",

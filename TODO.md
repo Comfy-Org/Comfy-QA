@@ -13,8 +13,8 @@ Checklist YAML (feature x CRUD operations with point values)
 ## TODO
 
 ### 3. Research Agent Phase 2 — Debug loop
-- [ ] If spec fails, LLM reads error + spec → fixes spec → re-runs
-- [ ] Loop until spec passes or max retries (3)
+- [x] If spec fails, LLM reads error + spec → fixes spec → re-runs
+- [x] Loop until spec passes or max retries (3)
 - [ ] Handle common failures: selector changed, page didn't load, timeout
 
 ### 4. Research Agent Phase 3 — Record
