@@ -67,6 +67,32 @@ function findVideoWebm(dir: string): string | undefined {
   return undefined;
 }
 
+/**
+ * Get the number of seconds to trim from the start of the video.
+ * Video recording starts at page creation, but audio starts at script.render().
+ * The difference = dead time showing the raw site before the title card.
+ */
+async function getVideoTrimOffset(webm: string, wav: string): Promise<number> {
+  try {
+    const probe = (file: string): Promise<number> =>
+      new Promise((resolve) => {
+        const proc = spawn(FFMPEG_BIN.replace(/ffmpeg$/, "ffprobe"), [
+          "-v", "error", "-show_entries", "format=duration",
+          "-of", "csv=p=0", file,
+        ], { stdio: ["ignore", "pipe", "ignore"] });
+        let out = "";
+        proc.stdout.on("data", (d: Buffer) => { out += d; });
+        proc.on("close", () => resolve(parseFloat(out) || 0));
+        proc.on("error", () => resolve(0));
+      });
+    const [videoDur, audioDur] = await Promise.all([probe(webm), probe(wav)]);
+    if (videoDur > 0 && audioDur > 0 && videoDur > audioDur) {
+      return videoDur - audioDur;
+    }
+  } catch {}
+  return 0;
+}
+
 function runFfmpeg(args: string[]): Promise<number> {
   return new Promise((resolve) => {
     const proc = spawn(FFMPEG_BIN, args, { stdio: "ignore" });
@@ -147,12 +173,17 @@ export default class MuxReporter implements Reporter {
 
       const out = path.join(OUTPUT_DIR, `${slug}.mp4`);
 
+      // Compute trim offset: video starts at page creation, but audio starts
+      // at script.render(). Trim the silent gap so the title card is frame 1.
+      const trimSec = await getVideoTrimOffset(webm, wav);
+      const ssArgs = trimSec > 0.5 ? ["-ss", trimSec.toFixed(3)] : [];
+
       // Try with subtitles first, fall back to without if it fails
       let code = -1;
       if (fs.existsSync(srt)) {
         const escSrt = srt.replace(/\\/g, "/").replace(/:/g, "\\:");
         const argsWithSubs = [
-          "-y", "-i", webm, "-i", wav,
+          "-y", ...ssArgs, "-i", webm, "-i", wav,
           "-vf", `subtitles='${escSrt}'`,
           "-c:v", "libx264", "-preset", "fast", "-pix_fmt", "yuv420p",
           "-c:a", "aac", "-b:a", "128k", "-ar", "44100",
@@ -167,7 +198,7 @@ export default class MuxReporter implements Reporter {
 
       if (code !== 0) {
         const argsNoSubs = [
-          "-y", "-i", webm, "-i", wav,
+          "-y", ...ssArgs, "-i", webm, "-i", wav,
           "-c:v", "libx264", "-preset", "fast", "-pix_fmt", "yuv420p",
           "-c:a", "aac", "-b:a", "128k", "-ar", "44100",
           "-shortest", out,
