@@ -92,7 +92,7 @@ async function callLLM(system: string, messages: any[]): Promise<string> {
         },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
-          max_tokens: 2048,
+          max_tokens: 8192,
           system,
           messages,
         }),
@@ -509,7 +509,7 @@ function generateFailAssertion(op: OperationResult): string {
 function actionToCode(a: StepAction): string | null {
   switch (a.type) {
     case "goto":
-      return `await page.goto(${JSON.stringify(a.text)}, { waitUntil: "domcontentloaded", timeout: 15000 });\nawait page.waitForTimeout(1500);`;
+      return `await page.goto(${JSON.stringify(a.text)}, { waitUntil: "domcontentloaded", timeout: 15000 }); await page.waitForTimeout(1500);`;
     case "click":
       return `await page.locator(${JSON.stringify(a.selector)}).first().click({ timeout: 5000 });`;
     case "type":
@@ -731,12 +731,17 @@ Return ONLY the fixed TypeScript file content, no markdown fences.`;
         fixedContent = fixedContent.replace(/^```\w*\n/, "").replace(/\n```$/, "");
       }
 
-      // Basic sanity check
-      if (fixedContent.includes("import") && fixedContent.includes("test(")) {
+      // Sanity checks — reject truncated / incomplete LLM responses
+      const hasImport = fixedContent.includes("import");
+      const hasTest = fixedContent.includes("test(");
+      const hasEnd = /\}\s*\)\s*;?\s*$/.test(fixedContent);
+      const balancedBraces = (fixedContent.match(/\{/g)?.length ?? 0) === (fixedContent.match(/\}/g)?.length ?? 0);
+
+      if (hasImport && hasTest && hasEnd && balancedBraces) {
         fs.writeFileSync(specPath, fixedContent);
         console.log(`  ✏️ Spec updated, retrying...`);
       } else {
-        console.log(`  ⚠ LLM response doesn't look like a valid spec, skipping fix.`);
+        console.log(`  ⚠ LLM response incomplete (import=${hasImport}, test=${hasTest}, end=${hasEnd}, balanced=${balancedBraces}), keeping original.`);
       }
     } catch (err: any) {
       console.log(`  ⚠ LLM fix failed: ${err.message?.slice(0, 100)}`);
