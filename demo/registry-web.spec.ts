@@ -428,6 +428,23 @@ import { typeKeys } from "../lib/demowright/dist/helpers.mjs";
 test("comfy registry tour", async ({ page }) => {
   test.setTimeout(10 * 60_000);
 
+  // ── Login to registry (email/password from .env.local) ──
+  const regEmail = process.env.GOOGLE_USERNAME ?? "";
+  const regPass = process.env.GOOGLE_PASSWORD ?? "";
+  if (regEmail && regPass) {
+    await page.goto("https://registry.comfy.org/auth/login", { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(2000);
+    const emailBtn = page.locator('button:has-text("Sign In with Email")');
+    if (await emailBtn.isVisible().catch(() => false)) {
+      await emailBtn.click();
+      await page.waitForTimeout(1000);
+      await page.locator('input[type="email"]').fill(regEmail);
+      await page.locator('input[type="password"]').fill(regPass);
+      await page.locator('button:has-text("Sign In")').first().click();
+      await page.waitForTimeout(3000);
+    }
+  }
+
   // Pre-navigate (heavy work BEFORE script.render — see hard rules in skill)
   await page.goto("https://registry.comfy.org/", { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(3000);
