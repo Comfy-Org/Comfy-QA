@@ -13,15 +13,15 @@ import { createVideoScript } from "../lib/demowright/dist/index.mjs";
  * | Comfy Cloud CTA                      | ✅ | hover button                   |
  * | Trusted by teams (partner logos)     | ✅ | scroll + narrate               |
  * | Latest News & Updates                | ✅ | scroll + hover cards           |
- * | Designed for Control and Creativity  | ✅ | NEW: Full Control, Reusable, Live Preview |
- * | Open Source and Yours to Shape       | ✅ | NEW: open source, custom nodes, runs locally |
- * | Created with ComfyUI gallery         | ✅ | NEW: scroll + hover            |
- * | JOIN OUR TEAM / Careers              | ✅ | NEW: scroll + narrate          |
+ * | Designed for Control and Creativity  | ✅ | Full Control, Reusable, Live Preview |
+ * | Open Source and Yours to Shape       | ✅ | open source, custom nodes, runs locally |
+ * | Created with ComfyUI gallery         | ✅ | scroll + hover                 |
+ * | JOIN OUR TEAM / Careers              | ✅ | scroll + narrate               |
  * | Footer: Product links                | ✅ | Download, Cloud, Enterprise    |
- * | Footer: Resources links              | ✅ | NEW: Gallery, Hub, Blog        |
- * | Footer: Community links              | ✅ | NEW: Discord, GitHub, Docs, YouTube |
- * | Footer: Company links                | ✅ | NEW: About, Careers, Terms     |
- * | Footer: Contact/Support              | ✅ | NEW: email, support            |
+ * | Footer: Resources links              | ✅ | Gallery, Hub, Blog             |
+ * | Footer: Community links              | ✅ | Discord, GitHub, Docs, YouTube |
+ * | Footer: Company links                | ✅ | About, Careers, Terms          |
+ * | Footer: Contact/Support              | ✅ | email, support                 |
  * | Nav bar dropdowns                    | ❌ | JS blocked — dropdowns don't work |
  * | "Open Comfy Hub" link                | ❌ | requires JS navigation         |
  * | "Let's chat" enterprise button       | ❌ | requires JS navigation         |
@@ -39,7 +39,7 @@ const VIDEO_SCRIPT = [
     kind: "segment",
     narration:
       "Welcome to comfy.org — the home of ComfyUI, the most powerful open-source generative AI tool available today.",
-    visuals: ["mouse.move center of hero"],
+    visuals: ["safeMove hero heading", "mouse.move across hero area"],
   },
   {
     kind: "segment",
@@ -51,19 +51,19 @@ const VIDEO_SCRIPT = [
     kind: "segment",
     narration:
       "Scrolling down, you see trusted partners — Tencent, Nike, HP, Autodesk, and more. These are real production teams using ComfyUI in their workflows.",
-    visuals: ["scroll to partners section"],
+    visuals: ["scroll to partners section", "sweep across logos"],
   },
   {
     kind: "segment",
     narration:
       "The Latest News and Updates section showcases what is happening in the ComfyUI world right now. Each card links out to a blog post with full details.",
-    visuals: ["scroll to news", "hover cards"],
+    visuals: ["scroll to news", "hover card 1", "hover card 2"],
   },
   {
     kind: "segment",
     narration:
       "Now here is Designed for Control and Creativity — three pillars that define why people choose ComfyUI. Full Control with Nodes means you build exactly the pipeline you want, visually.",
-    visuals: ["scroll to features section", "hover Full Control"],
+    visuals: ["scroll to features section", "hover Full Control pillar"],
   },
   {
     kind: "segment",
@@ -75,37 +75,37 @@ const VIDEO_SCRIPT = [
     kind: "segment",
     narration:
       "Next up: Open Source and Yours to Shape. ComfyUI is fully open source, supports thousands of custom nodes, and runs locally so your data stays on your machine.",
-    visuals: ["scroll to Open Source section"],
+    visuals: ["scroll to Open Source section", "sweep across section"],
   },
   {
     kind: "segment",
     narration:
       "The Created with ComfyUI gallery shows real outputs from the community — proof that this tool produces professional-grade results across image, video, and 3D.",
-    visuals: ["scroll to gallery"],
+    visuals: ["scroll to gallery", "hover gallery item 1", "hover gallery item 2"],
   },
   {
     kind: "segment",
     narration:
       "They are also hiring. The Join Our Team section shows that Comfy.org is actively growing — a healthy signal for the project's longevity.",
-    visuals: ["scroll to careers"],
+    visuals: ["scroll to careers", "hover job listings area"],
   },
   {
     kind: "segment",
     narration:
       "The footer is organized into four columns: Product links like Download and Cloud, Resources like Gallery and Blog, Company pages, and Contact information including support.",
-    visuals: ["scroll to footer", "hover footer columns"],
+    visuals: ["scroll to footer", "sweep across footer columns"],
   },
   {
     kind: "segment",
     narration:
       "Social links at the bottom connect to Discord, X, Reddit, GitHub, LinkedIn, and Instagram — everywhere the community gathers.",
-    visuals: ["hover social icons"],
+    visuals: ["scroll to social icons", "sweep across icons"],
   },
   {
     kind: "segment",
     narration:
       "From the hero to the footer, comfy.org tells a clear story: ComfyUI is powerful, open, and backed by a real team. Everything you need is one click away.",
-    visuals: ["scroll to top"],
+    visuals: ["scroll to top", "hover hero heading", "hover Download CTA"],
   },
   {
     kind: "outro",
@@ -144,101 +144,129 @@ test("comfy.org website tour", async ({ page }) => {
       subtitle: VIDEO_SCRIPT[0].subtitle,
       durationMs: VIDEO_SCRIPT[0].durationMs,
     })
-    // Hero
+    // Seg 1: Hero
     .segment(VIDEO_SCRIPT[1].narration, async (pace) => {
-      await page.mouse.move(640, 300);
+      await safeMove(page, "h1, h2, [class*='hero']");
+      await pace();
+      await page.mouse.move(400, 250);
+      await pace();
+      await page.mouse.move(880, 300);
       await pace();
     })
-    // Download + Cloud CTAs
+    // Seg 2: Download + Cloud CTAs
     .segment(VIDEO_SCRIPT[2].narration, async (pace) => {
       await page.mouse.move(340, 450);
+      await pace();
+      await page.mouse.move(520, 450);
       await pace();
       await page.mouse.move(640, 450);
       await pace();
     })
-    // Trusted partners
+    // Seg 3: Trusted partners — scroll + sweep across logos
     .segment(VIDEO_SCRIPT[3].narration, async (pace) => {
       await page.mouse.wheel(0, 500);
+      await page.mouse.move(300, 400);
       await pace();
-      await page.mouse.wheel(0, 400);
-      await pace();
-    })
-    // Latest News
-    .segment(VIDEO_SCRIPT[4].narration, async (pace) => {
-      await page.mouse.wheel(0, 500);
-      await pace();
-      await page.mouse.move(400, 400);
+      await page.mouse.move(500, 400);
+      await page.mouse.wheel(0, 300);
       await pace();
       await page.mouse.move(700, 400);
       await pace();
-    })
-    // Designed for Control and Creativity — Full Control with Nodes
-    .segment(VIDEO_SCRIPT[5].narration, async (pace) => {
-      await page.mouse.wheel(0, 600);
-      await pace();
-      await page.mouse.move(400, 400);
+      await page.mouse.move(900, 400);
       await pace();
     })
-    // Reusable Workflows + Live Preview
-    .segment(VIDEO_SCRIPT[6].narration, async (pace) => {
+    // Seg 4: Latest News
+    .segment(VIDEO_SCRIPT[4].narration, async (pace) => {
+      await page.mouse.wheel(0, 500);
+      await page.mouse.move(350, 350);
+      await pace();
       await page.mouse.move(640, 400);
       await pace();
       await page.mouse.move(900, 400);
       await pace();
     })
-    // Open Source and Yours to Shape
+    // Seg 5: Designed for Control and Creativity — Full Control with Nodes
+    .segment(VIDEO_SCRIPT[5].narration, async (pace) => {
+      await page.mouse.wheel(0, 600);
+      await page.mouse.move(300, 350);
+      await pace();
+      await page.mouse.move(500, 400);
+      await pace();
+      await page.mouse.move(640, 450);
+      await pace();
+    })
+    // Seg 6: Reusable Workflows + Live Preview
+    .segment(VIDEO_SCRIPT[6].narration, async (pace) => {
+      await page.mouse.move(500, 400);
+      await pace();
+      await page.mouse.move(640, 380);
+      await pace();
+      await page.mouse.move(900, 400);
+      await pace();
+    })
+    // Seg 7: Open Source and Yours to Shape — scroll + sweep
     .segment(VIDEO_SCRIPT[7].narration, async (pace) => {
       await page.mouse.wheel(0, 600);
+      await page.mouse.move(400, 350);
       await pace();
       await page.mouse.move(640, 400);
       await pace();
+      await page.mouse.move(880, 400);
+      await pace();
     })
-    // Created with ComfyUI gallery
+    // Seg 8: Created with ComfyUI gallery — scroll + hover items
     .segment(VIDEO_SCRIPT[8].narration, async (pace) => {
       await page.mouse.wheel(0, 600);
-      await pace();
-      await page.mouse.move(400, 400);
-      await pace();
-      await page.mouse.move(800, 400);
-      await pace();
-    })
-    // JOIN OUR TEAM / Careers
-    .segment(VIDEO_SCRIPT[9].narration, async (pace) => {
-      await page.mouse.wheel(0, 600);
+      await page.mouse.move(350, 380);
       await pace();
       await page.mouse.move(640, 400);
       await pace();
+      await page.mouse.move(900, 380);
+      await pace();
     })
-    // Footer columns
+    // Seg 9: JOIN OUR TEAM / Careers — scroll + hover listings
+    .segment(VIDEO_SCRIPT[9].narration, async (pace) => {
+      await page.mouse.wheel(0, 600);
+      await page.mouse.move(400, 350);
+      await pace();
+      await page.mouse.move(640, 400);
+      await pace();
+      await page.mouse.move(800, 450);
+      await pace();
+    })
+    // Seg 10: Footer columns — scroll + sweep left to right
     .segment(VIDEO_SCRIPT[10].narration, async (pace) => {
       await page.mouse.wheel(0, 600);
+      await page.mouse.move(200, 550);
       await pace();
-      // Hover across footer columns left to right
-      await page.mouse.move(200, 600);
+      await page.mouse.move(400, 570);
       await pace();
-      await page.mouse.move(450, 600);
+      await page.mouse.move(650, 580);
       await pace();
-      await page.mouse.move(700, 600);
-      await pace();
-      await page.mouse.move(950, 600);
+      await page.mouse.move(900, 560);
       await pace();
     })
-    // Social links
+    // Seg 11: Social links — scroll + sweep across icons
     .segment(VIDEO_SCRIPT[11].narration, async (pace) => {
       await page.mouse.wheel(0, 300);
       await pace();
-      // Hover across social icons
-      for (const x of [300, 400, 500, 600, 700, 800]) {
+      for (const x of [300, 420, 540, 660, 780, 900]) {
         await page.mouse.move(x, 650);
-        await page.waitForTimeout(200);
+        await page.waitForTimeout(180);
       }
       await pace();
     })
-    // Wrap-up — scroll to top
+    // Seg 12: Wrap-up — scroll to top + hover hero + hover CTA
     .segment(VIDEO_SCRIPT[12].narration, async (pace) => {
-      await page.mouse.wheel(0, -5000);
-      await page.waitForTimeout(500);
-      await page.mouse.move(640, 360);
+      await page.mouse.wheel(0, -3000);
+      await page.waitForTimeout(300);
+      await page.mouse.wheel(0, -3000);
+      await page.waitForTimeout(300);
+      await safeMove(page, "h1, h2, [class*='hero']");
+      await pace();
+      await page.mouse.move(400, 450);
+      await pace();
+      await page.mouse.move(640, 300);
       await pace();
     })
     .outro({

@@ -133,13 +133,13 @@ If you get "Requiring @playwright/test second time", delete `lib/demowright/node
 | cloud-comfy | cloud.comfy.org | 100% (21/21) | skip: WebGL headless |
 | comfyui-frontend | cloud.comfy.org | 100% (17/17) | UI-only tour |
 | registry-web | registry.comfy.org | 41% (33/81) | homepage only |
-| registry-node-detail | registry.comfy.org/nodes/* | 85% (11/13) | NEW: detail page |
+| registry-node-detail | registry.comfy.org/nodes/* | 100% (13/13) | detail page |
 | comfy-docs | docs.comfy.org | 48% (40/84) | landing page only |
-| comfy-docs-tutorial | docs.comfy.org/tutorials/* | 83% (10/12) | NEW: sub-page deep dive |
+| comfy-docs-tutorial | docs.comfy.org/tutorials/* | 100% (14/14) | sub-page deep dive |
 | download-data | comfyui-download-statistics.vercel.app | 100% (8/8) | all 4 time ranges |
 | embedded-workflow-editor | comfyui-embedded-workflow-editor.vercel.app | 89% (8/9) | no actual file editing |
 | comfy-website | www.comfy.org | 79% (15/19) | JS blocked (SSR) |
-| comfy-vibe | comfy-vibe.vercel.app | 100% (2/2) | minimal site |
+| comfy-vibe | comfy-vibe.vercel.app | 100% (22/22) | full workspace app |
 
 **Skipped:**
 - `cloud-comfy`: Auto-skipped in headless mode — WebGL canvas renders blank white. Requires `headed: true` in playwright config + `CLOUD_USERNAME`/`CLOUD_PASSWORD` in `.env.local`. Needs a CI setup with Xvfb or a headed runner.
