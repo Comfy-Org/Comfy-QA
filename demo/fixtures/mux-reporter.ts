@@ -52,6 +52,21 @@ async function waitForFile(p: string, timeoutMs = 5000): Promise<boolean> {
   return false;
 }
 
+function findVideoWebm(dir: string): string | undefined {
+  try {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const e of entries) {
+      const p = path.join(dir, e.name);
+      if (e.isFile() && e.name.endsWith(".webm")) return p;
+      if (e.isDirectory()) {
+        const nested = findVideoWebm(p);
+        if (nested) return nested;
+      }
+    }
+  } catch {}
+  return undefined;
+}
+
 function runFfmpeg(args: string[]): Promise<number> {
   return new Promise((resolve) => {
     const proc = spawn(FFMPEG_BIN, args, { stdio: "ignore" });
@@ -81,17 +96,54 @@ export default class MuxReporter implements Reporter {
 
       const wav = path.join(PREPARED_DIR, `${slug}.wav`);
       const srt = path.join(PREPARED_DIR, `${slug}.srt`);
-      if (!fs.existsSync(wav)) return;
+      if (!fs.existsSync(wav)) {
+        console.log(`  [mux] skip ${slug}: wav missing at ${wav}`);
+        return;
+      }
 
-      // Find the webm: prefer Playwright's reported attachment, fall back to result.outputDir
+      // Find the webm: try multiple locations since Playwright moves videos
+      // from .playwright-artifacts-N/ to the test output dir after the test ends.
       let webm: string | undefined;
+
+      // 1. Preferred: result.attachments (most accurate)
       const videoAttachment = result.attachments.find(
         (a) => a.name === "video" && a.path,
       );
-      if (videoAttachment?.path) webm = videoAttachment.path;
+      if (videoAttachment?.path && fs.existsSync(videoAttachment.path)) {
+        webm = videoAttachment.path;
+      }
 
-      if (!webm) return;
-      if (!(await waitForFile(webm))) return;
+      // 2. Fallback: scan the test's output dir for video.webm
+      if (!webm) {
+        try {
+          const testOutputDir = result.outputDir ?? test.outputDir;
+          if (testOutputDir && fs.existsSync(testOutputDir)) {
+            const found = findVideoWebm(testOutputDir);
+            if (found) webm = found;
+          }
+        } catch {}
+      }
+
+      // 3. Fallback: scan .comfy-qa/.tmp/demos for any matching test dir
+      if (!webm) {
+        const tmpDemos = path.join(PROJECT_ROOT, ".comfy-qa", ".tmp", "demos");
+        if (fs.existsSync(tmpDemos)) {
+          const dirs = fs.readdirSync(tmpDemos).filter((d) => d.startsWith(slug));
+          for (const d of dirs) {
+            const candidate = findVideoWebm(path.join(tmpDemos, d));
+            if (candidate) { webm = candidate; break; }
+          }
+        }
+      }
+
+      if (!webm) {
+        console.log(`  [mux] skip ${slug}: webm not found (attachments=${result.attachments.length})`);
+        return;
+      }
+      if (!(await waitForFile(webm))) {
+        console.log(`  [mux] skip ${slug}: webm empty/missing: ${webm}`);
+        return;
+      }
 
       const out = path.join(OUTPUT_DIR, `${slug}.mp4`);
 

@@ -1,0 +1,40 @@
+# QA Checklist: ComfyUI Embedded Workflow Editor
+product: Embedded Workflow Editor
+url: https://comfyui-embedded-workflow-editor.vercel.app/
+
+persona: >
+  A user extracting and editing workflows embedded in images/videos.
+  First person, present tense.
+
+features:
+  - name: Landing Page
+    operations:
+      - id: view_hero
+        type: read
+        description: "Editor landing page"
+        steps_hint: "Observe the main interface"
+        narration: "This is the embedded workflow editor — I can paste an image or video and extract the ComfyUI workflow inside it."
+        success_criteria: "Editor interface visible"
+
+      - id: view_drop_zone
+        type: read
+        description: "File drop zone or upload area"
+        steps_hint: "Look for a drop area or file input"
+        narration: "The drop zone lets me upload an image or video that has a workflow embedded in its metadata."
+        success_criteria: "Drop zone or file input visible"
+
+  - name: Editor UI
+    operations:
+      - id: view_json_editor
+        type: read
+        description: "JSON editor panel"
+        steps_hint: "Observe the JSON/code editor area"
+        narration: "Once a workflow is loaded, I can see and edit its JSON directly in the editor."
+        success_criteria: "Editor panel visible"
+
+      - id: view_actions
+        type: read
+        description: "Action buttons (save, download, etc.)"
+        steps_hint: "Look for action buttons"
+        narration: "The toolbar has buttons to save my changes, download the edited workflow, or reset."
+        success_criteria: "Action buttons visible"

@@ -459,6 +459,8 @@ test("cloud comfyui tour", async ({ page, browserName }, testInfo) => {
   if (!email || !password) {
     throw new Error("CLOUD_USERNAME / CLOUD_PASSWORD missing in .env.local");
   }
+  // Wait explicitly for the email input (login form may load lazily)
+  await page.locator('input[name="email"]').waitFor({ state: "visible", timeout: 30000 });
   await page.locator('input[name="email"]').fill(email);
   await page.locator('input[name="password"]').fill(password);
   await page.getByRole("button", { name: /^sign in$/i }).click();

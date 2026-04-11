@@ -341,6 +341,134 @@ async function runPhase1(checklist: Checklist): Promise<ResearchResults> {
 // ---------------------------------------------------------------------------
 
 /**
+ * Render a rich HTML scorecard to be shown as a fullscreen page before the outro.
+ * Returns a self-contained HTML string that the spec can pass to page.setContent().
+ */
+function generateScorecardHtml(results: ResearchResults, checklist: Checklist): string {
+  const rows = results.features.map((f) => {
+    const ops = f.operations.map((op) => {
+      const mark = op.success ? "✓" : "✗";
+      const cls = op.success ? "pass" : "fail";
+      return `<li class="${cls}"><span class="mark">${mark}</span>${escapeHtml(op.id)}</li>`;
+    }).join("");
+    const featMark = f.passed === f.total ? "✓" : "⚠";
+    const featCls = f.passed === f.total ? "pass" : "partial";
+    return `
+    <section class="feature ${featCls}">
+      <h3><span class="mark">${featMark}</span>${escapeHtml(f.name)} <span class="score">${f.score}</span></h3>
+      <ul>${ops}</ul>
+    </section>`;
+  }).join("");
+
+  const total = `${results.totalPassed}/${results.totalOperations}`;
+  const pct = results.scorePercent;
+
+  return `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>${escapeHtml(checklist.product)} QA</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: radial-gradient(ellipse at top, #1a1f3a 0%, #0a0e1f 100%);
+    color: #fff;
+    min-height: 100vh;
+    padding: 40px 60px;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  header h1 {
+    font-size: 42px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #fff 0%, #8892b0 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  header .total {
+    font-size: 28px;
+    font-weight: 600;
+    color: ${pct >= 80 ? "#4ade80" : pct >= 50 ? "#facc15" : "#f87171"};
+  }
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+  }
+  .feature {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 20px 24px;
+    backdrop-filter: blur(10px);
+  }
+  .feature.pass { border-left: 4px solid #4ade80; }
+  .feature.partial { border-left: 4px solid #facc15; }
+  .feature h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .feature h3 .score {
+    margin-left: auto;
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 18px;
+    color: #8892b0;
+  }
+  .feature ul { list-style: none; }
+  .feature li {
+    padding: 6px 0;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #ccd6f6;
+  }
+  .feature li.fail { color: #8892b0; text-decoration: line-through; }
+  .mark {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+  .feature.pass h3 .mark { background: #4ade80; color: #0a0e1f; }
+  .feature.partial h3 .mark { background: #facc15; color: #0a0e1f; }
+  .feature li.pass .mark { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
+  .feature li.fail .mark { background: rgba(248, 113, 113, 0.2); color: #f87171; }
+  footer {
+    text-align: center;
+    margin-top: 40px;
+    font-size: 14px;
+    color: #8892b0;
+  }
+</style>
+</head><body>
+  <header>
+    <h1>${escapeHtml(checklist.product)} QA Results</h1>
+    <div class="total">${total} &nbsp;•&nbsp; ${pct}%</div>
+  </header>
+  <div class="features">
+    ${rows}
+  </div>
+  <footer>Comfy-QA Evidence • Generated ${new Date().toISOString().split("T")[0]}</footer>
+</body></html>`;
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+/**
  * Generate assertion code for a FAILED operation.
  * Instead of .catch(() => {}), we assert the actual broken behavior.
  * When the bug is fixed, this assertion will fail → signal to update the spec.
@@ -470,12 +598,15 @@ ${failBody}
     }
   }
 
-  // Scorecard
+  // Scorecard (compact for outro subtitle)
   const scoreLines: string[] = [];
   for (const f of results.features) {
     const icon = f.passed === f.total ? "✅" : "⚠";
     scoreLines.push(`${f.name} ${f.score} ${icon}`);
   }
+
+  // Scorecard HTML (for full-page render before outro)
+  const scorecardHtml = generateScorecardHtml(results, checklist);
 
   const slug = checklist.product.toLowerCase().replace(/\s+/g, "-");
 
@@ -487,6 +618,8 @@ ${failBody}
 import { test, safeMove, expect } from "./fixtures/fixture";
 import { createVideoScript } from "../lib/demowright/dist/index.mjs";
 
+const SCORECARD_HTML = ${JSON.stringify(scorecardHtml)};
+
 test("${slug} QA evidence", async ({ page }) => {
   test.setTimeout(10 * 60_000);
 
@@ -497,10 +630,21 @@ test("${slug} QA evidence", async ({ page }) => {
     })
 ${segments.join("\n")}
 
+    // Render the full scorecard as the last segment (visible for ~8s)
+    .segment("Here are the final QA results for this product.", {
+      setup: async () => {
+        await page.setContent(SCORECARD_HTML, { waitUntil: "domcontentloaded" });
+        await page.waitForTimeout(500);
+      },
+      action: async (pace) => {
+        await pace();
+      },
+    })
+
     .outro({
       text: "QA Results: ${results.totalPassed}/${results.totalOperations} (${results.scorePercent}%)",
       subtitle: ${JSON.stringify(scoreLines.join(" | "))},
-      durationMs: 5000,
+      durationMs: 4000,
     });
 
   // Pre-generate TTS BEFORE navigating — avoids idle time in recording

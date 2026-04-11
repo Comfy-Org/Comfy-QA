@@ -23,15 +23,22 @@ Checklist YAML (feature x CRUD operations with point values)
 - [ ] If recording fails, go back to Phase 2 to fix, then retry Phase 3
 
 ### 5. QA Scorecard rendering
-- [ ] Render QA results as fullscreen demowright outro card
-- [ ] Show per-feature scores (e.g., Node Detail 4/5)
-- [ ] Show total score (e.g., 11/13 = 85%)
-- [ ] Consider richer scorecard (HTML canvas or SVG overlay)
+- [x] Render QA results as fullscreen HTML card (setContent + segment)
+- [x] Show per-feature scores (e.g., Node Detail 4/5)
+- [x] Show total score (e.g., 11/13 = 85%)
+- [x] Rich scorecard with color-coded pass/partial, gradient background, grid layout
 
 ### 6. Cleanup & polish
 - [ ] Remove old demo-research.ts and demo-editor.ts once new pipeline is validated
-- [ ] Run on all Comfy-Org products (cloud, docs, embedded-editor, etc.)
+- [x] Add checklist YAMLs: comfy-docs, comfy-website, download-data, embedded-workflow-editor
+- [ ] Run QA Research Agent on all products (in progress)
 - [ ] Add more CRUD operations to checklist (currently all read-only)
+
+### 7. Infrastructure fixes
+- [x] cloud-comfy headless WebGL via Chromium --headless=new
+- [x] cloud-comfy email input explicit waitFor
+- [x] mux-reporter webm path fallback (attachment → outputDir → tmp/demos scan)
+- [x] mux-reporter subtitle filter fallback
 
 ## DONE
 

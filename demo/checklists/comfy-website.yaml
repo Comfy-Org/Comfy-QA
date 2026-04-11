@@ -1,0 +1,48 @@
+# QA Checklist: Comfy Website
+product: Comfy Website
+url: https://www.comfy.org/
+
+persona: >
+  A visitor learning about ComfyUI. First person, present tense, conversational.
+
+features:
+  - name: Landing Page
+    operations:
+      - id: view_hero
+        type: read
+        description: "Hero section with tagline and download CTA"
+        steps_hint: "Observe the main hero heading"
+        narration: "Welcome to comfy.org — the official homepage of the ComfyUI project."
+        success_criteria: "Hero heading and main content visible"
+
+      - id: view_download_cta
+        type: read
+        description: "Download button on landing page"
+        steps_hint: "Look for a 'Download' button or link"
+        narration: "Right at the top, there's a download button — one click to get ComfyUI."
+        success_criteria: "Download button or link visible"
+
+      - id: view_features
+        type: read
+        description: "Feature highlights section"
+        steps_hint: "Scroll down to see feature cards"
+        narration: "Below the hero, the features section explains what makes ComfyUI unique — visual workflows, custom nodes, and open source."
+        success_criteria: "Feature section or cards visible"
+
+  - name: Navigation
+    operations:
+      - id: view_nav_links
+        type: read
+        description: "Top navigation links"
+        steps_hint: "Observe the top navigation bar"
+        narration: "The navigation bar has links to docs, registry, and the blog."
+        success_criteria: "Navigation links visible"
+
+  - name: Blog
+    operations:
+      - id: view_blog
+        type: read
+        description: "Blog listing page"
+        steps_hint: "Navigate to /blog or similar"
+        narration: "The blog has updates on new releases, tutorials, and community highlights."
+        success_criteria: "Blog posts or blog section visible"
