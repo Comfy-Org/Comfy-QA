@@ -16,7 +16,7 @@
  *    2. Connect segments with transitional phrases — never bullet-points.
  *    3. Explain WHY, not just WHAT.
  *    4. Each segment ~6–10 seconds at 140 wpm ⇒ 14–24 words is the sweet spot.
- *    5. Total: 52 segments, video ~5+ minutes.
+ *    5. Total: 56 segments, video ~6+ minutes.
  */
 const VIDEO_SCRIPT = [
   // ── Title ──
@@ -373,7 +373,24 @@ const VIDEO_SCRIPT = [
     visuals: ["wheel +200"],
   },
 
-  // ── Chapter 10: Wrapping up (segments 48–52) ──
+  // ── Chapter 10: Navigate to a node detail page (segments 48–49) ──
+  {
+    kind: "segment",
+    narration:
+      "Let me click into VideoHelperSuite to see its detail page. " +
+      "Here's the node name, the install command — I can copy it with one click — " +
+      "the version history showing active maintenance, and a direct link to the GitHub repository.",
+    visuals: ["setup: click node card", "safeMove h1", "safeMove code/pre", "safeMove Copy button", "safeMove Version heading", "safeMove View Repository link"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "Clicking the logo takes me right back to the home page. " +
+      "The full loop — search, evaluate, and return — takes less than a minute.",
+    visuals: ["setup: click logo", "safeMove hero heading", "safeMove search bar"],
+  },
+
+  // ── Chapter 11: Wrapping up (segments 50–54) ──
   {
     kind: "segment",
     narration:
@@ -714,33 +731,79 @@ test("comfy registry tour", async ({ page }) => {
       await pace();
     })
 
-    // ── Chapter 10: Wrapping up ──
-    .segment(VIDEO_SCRIPT[48].narration, async (pace) => {
+    // ── Chapter 10: Navigate to a node detail page ──
+    .segment(VIDEO_SCRIPT[48].narration, {
+      setup: async () => {
+        // Click a node card to navigate to its detail page
+        const nodeLink = page.locator('a[href*="/nodes/"]').first();
+        const box = await nodeLink.boundingBox().catch(() => null);
+        if (box) {
+          await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+        } else {
+          await nodeLink.click().catch(() => {});
+        }
+        await page.waitForTimeout(3000);
+      },
+      action: async (pace) => {
+        await safeMove(page, "h1");
+        await pace();
+        await safeMove(page, "code, pre, [class*='install'], [class*='command']");
+        await pace();
+        await safeMove(page, 'button:has-text("Copy"), button:has-text("copy"), [class*="copy"]');
+        await pace();
+        await safeMove(page, 'h2:has-text("Version"), h3:has-text("Version"), [class*="version"]');
+        await pace();
+        await safeMove(page, 'a[href*="github"], a:has-text("Repository"), a:has-text("GitHub")');
+        await pace();
+      },
+    })
+    .segment(VIDEO_SCRIPT[49].narration, {
+      setup: async () => {
+        // Click the logo/home link to navigate back to the homepage
+        const logo = page.locator('nav a[href="/"], a[href="/"] img, header a[href="/"]').first();
+        const box = await logo.boundingBox().catch(() => null);
+        if (box) {
+          await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+        } else {
+          await logo.click().catch(() => {});
+        }
+        await page.waitForTimeout(3000);
+      },
+      action: async (pace) => {
+        await safeMove(page, "h1");
+        await pace();
+        await safeMove(page, 'input[placeholder*="Search"]');
+        await pace();
+      },
+    })
+
+    // ── Chapter 11: Wrapping up ──
+    .segment(VIDEO_SCRIPT[50].narration, async (pace) => {
       await page.mouse.wheel(0, -3000);
       await pace();
     })
-    .segment(VIDEO_SCRIPT[49].narration, async (pace) => {
+    .segment(VIDEO_SCRIPT[51].narration, async (pace) => {
       await safeMove(page, "h1");
       await pace();
     })
-    .segment(VIDEO_SCRIPT[50].narration, async (pace) => {
+    .segment(VIDEO_SCRIPT[52].narration, async (pace) => {
       await safeMove(page, "nav");
       await pace();
     })
-    .segment(VIDEO_SCRIPT[51].narration, async (pace) => {
+    .segment(VIDEO_SCRIPT[53].narration, async (pace) => {
       await safeMove(page, "main");
       await pace();
     })
-    .segment(VIDEO_SCRIPT[52].narration, async (pace) => {
+    .segment(VIDEO_SCRIPT[54].narration, async (pace) => {
       await safeMove(page, "h1");
       await pace();
     })
 
     // ── Outro ──
     .outro({
-      text: VIDEO_SCRIPT[53].text,
-      subtitle: VIDEO_SCRIPT[53].subtitle,
-      durationMs: VIDEO_SCRIPT[53].durationMs,
+      text: VIDEO_SCRIPT[55].text,
+      subtitle: VIDEO_SCRIPT[55].subtitle,
+      durationMs: VIDEO_SCRIPT[55].durationMs,
     });
 
   await script.prepare(page);

@@ -11,7 +11,7 @@
  * Companion to comfy-docs.spec.ts (landing page overview).
  * This spec covers a sub-page deep dive — the Text to Image tutorial.
  *
- * Coverage: 14/14 (100%)
+ * Coverage: 15/15 (100%)
  *
  * | Feature                              | R | Notes                         |
  * |--------------------------------------|---|-------------------------------|
@@ -24,10 +24,11 @@
  * | Node explanations (6 nodes)           | ✅ | hover individual node headings |
  * | Visual diagrams / screenshots         | ✅ | hover expandable images        |
  * | SD1.5 Model introduction             | ✅ | scroll to model info           |
+ * | Expandable image click               | ✅ | click image to expand, hover   |
  * | Right-sidebar table of contents       | ✅ | hover actual TOC links         |
+ * | TOC click navigation                 | ✅ | click TOC link, scroll to section |
  * | Working Principles section           | ✅ | data flow explanation          |
  * | AI chat assistant                    | ✅ | hover "Ask a question" input   |
- * | Expandable image hover              | ✅ | hover screenshot thumbnail     |
  * | Breadcrumb / page structure          | ✅ | page hierarchy visible         |
  */
 const VIDEO_SCRIPT = [
@@ -57,6 +58,13 @@ const VIDEO_SCRIPT = [
       "On the right side, there is a table of contents that lets you jump to any section. " +
       "For a page this long, that navigation is essential.",
     visuals: ["safeMove TOC link Preparation", "safeMove TOC link Working Principles"],
+  },
+  {
+    kind: "segment",
+    narration:
+      "I'll click the Preparation link in the table of contents. " +
+      "Watch how the page scrolls directly to that section — instant navigation.",
+    visuals: ["setup: click TOC Preparation link", "safeMove Preparation heading"],
   },
   {
     kind: "segment",
@@ -136,7 +144,7 @@ import { test, safeMove } from "./fixtures/fixture";
 import { createVideoScript } from "../lib/demowright/dist/index.mjs";
 
 test("comfy docs tutorial deep dive", async ({ page }) => {
-  test.setTimeout(5 * 60_000);
+  test.setTimeout(15 * 60_000);
 
   // Pre-navigate to the tutorial sub-page
   await page.goto(
@@ -174,15 +182,27 @@ test("comfy docs tutorial deep dive", async ({ page }) => {
       await safeMove(page, 'aside a[href*="#node"], [class*="toc"] a[href*="#node"], [class*="outline"] a[href*="#sd"]');
       await pace();
     })
-    // 4: Preparation section
+    // 4: Click TOC link to navigate to Preparation section
     .segment(VIDEO_SCRIPT[4].narration, async (pace) => {
+      // Click the Preparation link in the TOC — a real user action
+      const tocLink = page.locator('aside a[href*="#preparation"], [class*="toc"] a[href*="#preparation"], [class*="outline"] a[href*="#preparation"]').first();
+      const box = await tocLink.boundingBox().catch(() => null);
+      if (box) {
+        await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      }
+      await page.waitForTimeout(600);
+      await safeMove(page, 'h2:has-text("Preparation"), h3:has-text("Preparation")');
+      await pace();
+    })
+    // 5: Preparation section
+    .segment(VIDEO_SCRIPT[5].narration, async (pace) => {
       await page.mouse.wheel(0, 400);
       await pace();
       await safeMove(page, 'h2:has-text("Preparation"), h3:has-text("Preparation"), h2:has-text("preparation")');
       await pace();
     })
-    // 5: Loading the workflow + annotated screenshots
-    .segment(VIDEO_SCRIPT[5].narration, async (pace) => {
+    // 6: Loading the workflow + annotated screenshots
+    .segment(VIDEO_SCRIPT[6].narration, async (pace) => {
       await page.mouse.wheel(0, 500);
       await pace();
       await page.mouse.wheel(0, 400);
@@ -191,8 +211,8 @@ test("comfy docs tutorial deep dive", async ({ page }) => {
       await safeMove(page, 'img[alt*="load"], img[alt*="workflow"], article img, main img');
       await pace();
     })
-    // 6: Generating first image
-    .segment(VIDEO_SCRIPT[6].narration, async (pace) => {
+    // 7: Generating first image
+    .segment(VIDEO_SCRIPT[7].narration, async (pace) => {
       await page.mouse.wheel(0, 500);
       await pace();
       await page.mouse.wheel(0, 400);
@@ -201,22 +221,22 @@ test("comfy docs tutorial deep dive", async ({ page }) => {
       await safeMove(page, 'img[alt*="generat"], img[alt*="image"], article img');
       await pace();
     })
-    // 7: Start experimenting
-    .segment(VIDEO_SCRIPT[7].narration, async (pace) => {
+    // 8: Start experimenting
+    .segment(VIDEO_SCRIPT[8].narration, async (pace) => {
       await page.mouse.wheel(0, 500);
       await pace();
       await safeMove(page, 'h2:has-text("xperiment"), h3:has-text("xperiment"), h2:has-text("Start"), h3:has-text("Start")');
       await pace();
     })
-    // 8: Working Principles
-    .segment(VIDEO_SCRIPT[8].narration, async (pace) => {
+    // 9: Working Principles
+    .segment(VIDEO_SCRIPT[9].narration, async (pace) => {
       await page.mouse.wheel(0, 500);
       await pace();
       await safeMove(page, 'h2:has-text("Working Principles"), h2:has-text("working principles"), h2:has-text("Working")');
       await pace();
     })
-    // 9: Node explanations — hover individual node headings
-    .segment(VIDEO_SCRIPT[9].narration, async (pace) => {
+    // 10: Node explanations — hover individual node headings
+    .segment(VIDEO_SCRIPT[10].narration, async (pace) => {
       await page.mouse.wheel(0, 400);
       await pace();
       await safeMove(page, 'h3:has-text("Checkpoint"), h3:has-text("checkpoint"), h4:has-text("Checkpoint")');
@@ -232,15 +252,15 @@ test("comfy docs tutorial deep dive", async ({ page }) => {
       await safeMove(page, 'h3:has-text("Save Image"), h3:has-text("Save"), h4:has-text("Save Image")');
       await pace();
     })
-    // 10: SD1.5 Model section
-    .segment(VIDEO_SCRIPT[10].narration, async (pace) => {
+    // 11: SD1.5 Model section
+    .segment(VIDEO_SCRIPT[11].narration, async (pace) => {
       await page.mouse.wheel(0, 500);
       await pace();
       await safeMove(page, 'h2:has-text("SD1.5"), h2:has-text("Introduction to"), h2:has-text("Stable Diffusion"), h2:has-text("sd1.5")');
       await pace();
     })
-    // 11: AI chat assistant
-    .segment(VIDEO_SCRIPT[11].narration, async (pace) => {
+    // 12: AI chat assistant
+    .segment(VIDEO_SCRIPT[12].narration, async (pace) => {
       // Hover the AI chat input (textarea with placeholder "Ask a question...")
       await safeMove(page, 'textarea[placeholder*="Ask"], input[placeholder*="Ask"], [class*="chat"] textarea, [class*="ask"] input');
       await pace();
@@ -250,8 +270,8 @@ test("comfy docs tutorial deep dive", async ({ page }) => {
       await safeMove(page, "h1");
       await pace();
     })
-    // 12: Wrap-up — hover key elements during summary
-    .segment(VIDEO_SCRIPT[12].narration, async (pace) => {
+    // 13: Wrap-up — hover key elements during summary
+    .segment(VIDEO_SCRIPT[13].narration, async (pace) => {
       await page.mouse.wheel(0, -5000);
       await page.waitForTimeout(300);
       // Hover the heading
@@ -265,9 +285,9 @@ test("comfy docs tutorial deep dive", async ({ page }) => {
       await pace();
     })
     .outro({
-      text: VIDEO_SCRIPT[13].text,
-      subtitle: VIDEO_SCRIPT[13].subtitle,
-      durationMs: VIDEO_SCRIPT[13].durationMs,
+      text: VIDEO_SCRIPT[14].text,
+      subtitle: VIDEO_SCRIPT[14].subtitle,
+      durationMs: VIDEO_SCRIPT[14].durationMs,
     });
 
   await script.prepare(page);

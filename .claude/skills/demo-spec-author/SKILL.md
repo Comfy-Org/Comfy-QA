@@ -261,8 +261,8 @@ These are encoded in past commit history and bug reports:
 
 | Rule | Why |
 |------|-----|
-| **No `page.goto` inside `.segment()` callbacks** | Heavy nav overruns audio length → silent gaps in final video ([demowright #10](https://github.com/snomiao/demowright/issues/10)) |
-| **No `page.click()` that triggers navigation inside segments** | Same overrun problem |
+| **No `page.goto` inside `.segment()` ACTION callbacks** | Heavy nav overruns audio length → silent gaps in final video ([demowright #10](https://github.com/snomiao/demowright/issues/10)). Use the `setup` callback instead: `.segment("narration", { setup: async () => { await page.goto(...) }, action: async (pace) => { /* visual only */ } })` |
+| **No `page.click()` that triggers navigation inside ACTION callbacks** | Same overrun problem. Navigation clicks go in `setup`, visual-only clicks go in `action`. |
 | **Use `safeMove(page, sel)` not `moveToEl`** | `moveToEl` throws on missing selectors ([demowright #2](https://github.com/snomiao/demowright/issues/2)) |
 | **Title/outro `durationMs: 2000`** | Long enough to read, short enough not to bore |
 | **Pre-navigate BEFORE `script.render()`** | Wall clock counts toward segment timing once render starts |
