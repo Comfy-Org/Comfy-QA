@@ -1,11 +1,11 @@
 ---
-name: demo-spec-author
-description: "Author a narrated demo spec for a Comfy-Org product following the comfy-qa house workflow. Use when adding a new spec under demo/, recording a feature walkthrough, or producing a video evidence file. Enforces story-first authoring: probe → story → videoScript → playwright."
+name: comfy-qa
+description: "Generate high-quality narrated QA demo videos for Comfy-Org products. Given a target (PR, issue, feature doc, or product URL), generates a story, Playwright spec, and MP4 video with TTS narration. Enforces user-journey-first authoring: probe → story → videoScript → playwright."
 ---
 
-# demo-spec-author
+# comfy-qa
 
-The house workflow for writing `demo/<product>.spec.ts` files in this repo. The narration is the source of truth — you write a complete voiceover script BEFORE writing any Playwright code.
+Generate narrated QA demo videos for Comfy-Org products. The full pipeline: probe a live site → write a user-journey story → generate a VIDEO_SCRIPT → translate to Playwright → render MP4 with TTS narration and cursor HUD.
 
 ## When to use
 
@@ -242,8 +242,8 @@ If the script doesn't pass this review, rewrite it. **Do not proceed to Phase 5 
 Now translate `VIDEO_SCRIPT` into actual `createVideoScript()` chains. The implementation lives **below** the `VIDEO_SCRIPT` constant in the same file.
 
 ```ts
-import { test, safeMove } from "./fixtures/fixture";
-import { createVideoScript } from "../lib/demowright/dist/index.mjs";
+import { test, safeMove } from "../../demo/fixtures/fixture";
+import { createVideoScript } from "../../lib/demowright/dist/index.mjs";
 
 const VIDEO_SCRIPT = [/* ...from phase 3... */] as const;
 
@@ -456,22 +456,31 @@ The `setup` callback runs BEFORE narration starts — use it for page transition
 
 ## Output paths
 
+All generated output goes to `.comfy-qa/` (gitignored):
+
 ```
-demo/stories/<product>.story.md      ← Phase 2 output (committed)
-demo/<product>.spec.ts               ← Phases 3–5 output (committed)
-.comfy-qa/.demos/<baseName>.mp4      ← Final video (gitignored)
-.comfy-qa/.demos/tmp/<base>.wav      ← Intermediate audio (gitignored)
-.comfy-qa/.tmp/demos/<test>/         ← Playwright artifacts (gitignored)
+.comfy-qa/stories/<product>.story.md   ← Phase 2 output
+.comfy-qa/spec/<product>.spec.ts       ← Phases 3–5 output
+.comfy-qa/checklists/<product>.yaml    ← Feature checklist (optional)
+.comfy-qa/.demos/<baseName>.mp4        ← Final video
+.comfy-qa/.demos/tmp/<base>.wav        ← Intermediate audio
+.comfy-qa/.tmp/demos/<test>/           ← Playwright artifacts
+```
+
+Shared infrastructure (committed to repo):
+```
+demo/fixtures/fixture.ts               ← Playwright fixture (HUD + TTS)
+demo/fixtures/mux-reporter.ts          ← Video + audio → MP4 muxer
 ```
 
 ## Reference templates
 
 | Spec | Segs | NAVIGATE | INTERACT | OBSERVE | Ratio | Notes |
 |------|:----:|:--------:|:--------:|:-------:|:-----:|-------|
-| `demo/download-data.spec.ts` | 9 | 0 | 5 | 4 | 56% ✅ | clicks 4 time-range buttons + chart sweep |
-| `demo/registry-web.spec.ts` | 56 | 2 | 7 | 47 | 16% ❌ | needs rewrite — mostly hover tour |
-| `demo/comfy-website.spec.ts` | 12 | 0 | 0 | 12 | 0% ❌ | JS blocked SSR, needs interactive segments |
+| `.comfy-qa/spec/download-data.spec.ts` | 8 | 0 | 5 | 3 | 63% ✅ | clicks 4 time-range buttons + chart sweep |
+| `.comfy-qa/spec/registry-web.spec.ts` | 12 | 3 | 5 | 4 | 67% ✅ | search → detail page → back |
+| `.comfy-qa/spec/comfy-vibe.spec.ts` | 9 | 2 | 5 | 2 | 78% ✅ | sidebar nav + search + filter tabs |
 
-**Best example:** `demo/download-data.spec.ts` — every button clicked, chart hovered, compact 9 segments.
-**Setup pattern example:** `demo/registry-web.spec.ts` segments 48-49 — navigate to detail page and back via `setup` callback.
-**SSR workaround:** `demo/comfy-website.spec.ts` — blocks all `<script>` for Nuxt sites that hang on `page.evaluate`.
+**Best example:** `.comfy-qa/spec/comfy-vibe.spec.ts` — 78% interactive, sidebar click, search, filter, sort, CTA click.
+**Setup pattern example:** `.comfy-qa/spec/registry-web.spec.ts` — navigate to detail page and back via `setup` callback.
+**SSR workaround:** `.comfy-qa/spec/comfy-website.spec.ts` — blocks all `<script>` for Nuxt sites that hang on `page.evaluate`.
