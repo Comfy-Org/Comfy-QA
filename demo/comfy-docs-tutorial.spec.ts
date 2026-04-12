@@ -146,6 +146,21 @@ import { createVideoScript } from "../lib/demowright/dist/index.mjs";
 test("comfy docs tutorial deep dive", async ({ page }) => {
   test.setTimeout(15 * 60_000);
 
+  // Block ALL scripts — Mintlify's JS causes page.evaluate to hang,
+  // same pattern as comfy-website.spec.ts (Nuxt SSR site).
+  // Static HTML is enough for a scroll-through demo.
+  await page.route("**/*", (route) => {
+    const type = route.request().resourceType();
+    const url = route.request().url();
+    if (
+      type === "script" ||
+      /google-analytics|googletagmanager|sentry|posthog|hotjar|intercom|crisp|plausible|segment|mixpanel/i.test(url)
+    ) {
+      return route.abort();
+    }
+    return route.continue();
+  });
+
   // Pre-navigate to the tutorial sub-page
   await page.goto(
     "https://docs.comfy.org/tutorials/basic/text-to-image",

@@ -48,6 +48,25 @@ function pcmToWav(pcm: Buffer, rate = 24000, channels = 1, bits = 16): Buffer {
 
 const cache = new Map<string, Buffer>();
 
+// Concurrency limiter — Gemini free tier allows ~2-3 concurrent TTS requests.
+// Without this, prepare() fires 13+ parallel requests → mass 429s → 10min backoff spiral.
+let activeRequests = 0;
+const MAX_CONCURRENT = 2;
+const requestQueue: (() => void)[] = [];
+
+async function withConcurrencyLimit<T>(fn: () => Promise<T>): Promise<T> {
+  while (activeRequests >= MAX_CONCURRENT) {
+    await new Promise<void>((resolve) => requestQueue.push(resolve));
+  }
+  activeRequests++;
+  try {
+    return await fn();
+  } finally {
+    activeRequests--;
+    requestQueue.shift()?.();
+  }
+}
+
 async function geminiTTSOnce(text: string): Promise<Buffer> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_TTS_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
   const body = {
@@ -77,30 +96,35 @@ async function geminiTTS(text: string): Promise<Buffer> {
   if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not set");
   if (cache.has(text)) return cache.get(text)!;
 
-  // Exponential backoff: retry for up to ~10 minutes on 503/rate-limit errors
-  const MAX_ATTEMPTS = 12;
-  const BASE_DELAY_MS = 1000;
-  const MAX_DELAY_MS = 60_000;
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    try {
-      const wav = await geminiTTSOnce(text);
-      cache.set(text, wav);
-      return wav;
-    } catch (err) {
-      const msg = String(err).slice(0, 120);
-      const isRetryable = /503|429|rate|timeout|aborted/i.test(msg);
-      console.log(`  [tts] attempt ${attempt + 1}/${MAX_ATTEMPTS} failed: ${msg}`);
-      if (!isRetryable || attempt === MAX_ATTEMPTS - 1) break;
-      const delay = Math.min(BASE_DELAY_MS * 2 ** attempt, MAX_DELAY_MS);
-      console.log(`  [tts] retrying in ${(delay / 1000).toFixed(0)}s...`);
-      await new Promise((r) => setTimeout(r, delay));
-    }
-  }
+  return withConcurrencyLimit(async () => {
+    // Double-check cache (another request may have resolved while we waited)
+    if (cache.has(text)) return cache.get(text)!;
 
-  // Fallback: 0.5s of silence so playback doesn't hang
-  const silence = pcmToWav(Buffer.alloc(24000)); // 0.5s @ 24kHz mono 16-bit
-  cache.set(text, silence);
-  return silence;
+    // Exponential backoff: retry for up to ~2 minutes on 503/rate-limit errors
+    const MAX_ATTEMPTS = 8;
+    const BASE_DELAY_MS = 1000;
+    const MAX_DELAY_MS = 30_000;
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      try {
+        const wav = await geminiTTSOnce(text);
+        cache.set(text, wav);
+        return wav;
+      } catch (err) {
+        const msg = String(err).slice(0, 120);
+        const isRetryable = /503|429|rate|timeout|aborted/i.test(msg);
+        console.log(`  [tts] attempt ${attempt + 1}/${MAX_ATTEMPTS} failed: ${msg}`);
+        if (!isRetryable || attempt === MAX_ATTEMPTS - 1) break;
+        const delay = Math.min(BASE_DELAY_MS * 2 ** attempt, MAX_DELAY_MS);
+        console.log(`  [tts] retrying in ${(delay / 1000).toFixed(0)}s...`);
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+
+    // Fallback: 0.5s of silence so playback doesn't hang
+    const silence = pcmToWav(Buffer.alloc(24000)); // 0.5s @ 24kHz mono 16-bit
+    cache.set(text, silence);
+    return silence;
+  });
 }
 
 /** Safe wrapper for moveToEl that no-ops when the selector doesn't exist or page is busy */
