@@ -4,6 +4,14 @@ import { createVideoScript } from "../lib/demowright/dist/index.mjs";
 /**
  * VIDEO SCRIPT — every word in `narration` is read aloud verbatim by Gemini TTS.
  *
+ * User Journey: A user visits comfy.org, reads the hero, scrolls through all sections,
+ * and understands the full value proposition from hero to footer.
+ *
+ * NOTE: www.comfy.org is a Nuxt SSR site. ALL scripts are blocked to prevent
+ * page.evaluate hangs. This means no JS-dependent interactions (clicks, nav).
+ * Exception ratio: JS blocked — 0% interactive is acceptable for SSR-only sites.
+ * All segments are OBSERVE (scroll + hover).
+ *
  * Coverage: 15/19 (79%)
  *
  * | Feature                              | R | Notes                         |
@@ -11,102 +19,98 @@ import { createVideoScript } from "../lib/demowright/dist/index.mjs";
  * | Hero heading + branding              | ✅ | "most powerful open-source..." |
  * | Download ComfyUI CTA                 | ✅ | hover button                   |
  * | Comfy Cloud CTA                      | ✅ | hover button                   |
- * | Trusted by teams (partner logos)     | ✅ | scroll + narrate               |
+ * | Trusted by teams (partner logos)     | ✅ | scroll + sweep logos           |
  * | Latest News & Updates                | ✅ | scroll + hover cards           |
  * | Designed for Control and Creativity  | ✅ | Full Control, Reusable, Live Preview |
- * | Open Source and Yours to Shape       | ✅ | open source, custom nodes, runs locally |
- * | Created with ComfyUI gallery         | ✅ | scroll + hover                 |
- * | JOIN OUR TEAM / Careers              | ✅ | scroll + narrate               |
+ * | Open Source and Yours to Shape       | ✅ | open source, custom nodes, local |
+ * | Created with ComfyUI gallery         | ✅ | scroll + hover items           |
+ * | JOIN OUR TEAM / Careers              | ✅ | scroll + hover area            |
  * | Footer: Product links                | ✅ | Download, Cloud, Enterprise    |
  * | Footer: Resources links              | ✅ | Gallery, Hub, Blog             |
- * | Footer: Community links              | ✅ | Discord, GitHub, Docs, YouTube |
+ * | Footer: Community links              | ✅ | Discord, GitHub, Docs          |
  * | Footer: Company links                | ✅ | About, Careers, Terms          |
  * | Footer: Contact/Support              | ✅ | email, support                 |
- * | Nav bar dropdowns                    | ❌ | JS blocked — dropdowns don't work |
+ * | Social icons                         | ✅ | sweep across icons             |
+ * | Nav bar dropdowns                    | ❌ | JS blocked — dropdowns inert   |
  * | "Open Comfy Hub" link                | ❌ | requires JS navigation         |
  * | "Let's chat" enterprise button       | ❌ | requires JS navigation         |
- * | "Explore more on our blog" link      | ❌ | requires JS navigation         |
  * | "Browse community builds" link       | ❌ | requires JS navigation         |
+ *
+ * Segment types: 0 NAVIGATE + 0 INTERACT + 8 OBSERVE = 0% interactive
+ * Exception: JS blocked SSR site — scroll-through is the only viable demo mode.
  */
 const VIDEO_SCRIPT = [
   {
     kind: "title",
     text: "Comfy.org",
-    subtitle: "Website Tour",
+    subtitle: "The Home of ComfyUI",
     durationMs: 2000,
   },
+
+  // ── 1: Hero + CTAs ── OBSERVE
   {
     kind: "segment",
     narration:
-      "Welcome to comfy.org — the home of ComfyUI, the most powerful open-source generative AI tool available today.",
-    visuals: ["safeMove hero heading", "mouse.move across hero area"],
+      "Welcome to comfy.org — the home of ComfyUI. The hero puts two actions front and center: " +
+      "Download ComfyUI for local use, or launch Comfy Cloud to run workflows in the browser.",
   },
+
+  // ── 2: Partner logos ── OBSERVE
   {
     kind: "segment",
     narration:
-      "The hero banner puts the two main actions front and center: Download ComfyUI for local use, or try Comfy Cloud to run workflows in the browser.",
-    visuals: ["hover Download button", "hover Cloud button"],
+      "Scrolling down, you see the companies that trust ComfyUI in production — " +
+      "Tencent, Nike, HP, Autodesk, and more. Real teams, real workflows.",
   },
+
+  // ── 3: Latest News ── OBSERVE
   {
     kind: "segment",
     narration:
-      "Scrolling down, you see trusted partners — Tencent, Nike, HP, Autodesk, and more. These are real production teams using ComfyUI in their workflows.",
-    visuals: ["scroll to partners section", "sweep across logos"],
+      "The Latest News section keeps you up to date on releases, community highlights, " +
+      "and ecosystem updates. Each card links to a full blog post.",
   },
+
+  // ── 4: Control and Creativity features ── OBSERVE
   {
     kind: "segment",
     narration:
-      "The Latest News and Updates section showcases what is happening in the ComfyUI world right now. Each card links out to a blog post with full details.",
-    visuals: ["scroll to news", "hover card 1", "hover card 2"],
+      "Designed for Control and Creativity — three pillars define ComfyUI. Full Control " +
+      "with Nodes for visual pipeline building, Reusable Workflows for sharing, and Live Preview for real-time feedback.",
   },
+
+  // ── 5: Open Source section ── OBSERVE
   {
     kind: "segment",
     narration:
-      "Now here is Designed for Control and Creativity — three pillars that define why people choose ComfyUI. Full Control with Nodes means you build exactly the pipeline you want, visually.",
-    visuals: ["scroll to features section", "hover Full Control pillar"],
+      "Open Source and Yours to Shape — ComfyUI is fully open source with thousands of " +
+      "custom nodes, and it runs locally so your data never leaves your machine.",
   },
+
+  // ── 6: Gallery + Careers ── OBSERVE
   {
     kind: "segment",
     narration:
-      "Reusable Workflows let you save and share entire pipelines. And Live Preview means you see results as the generation progresses, not just at the end.",
-    visuals: ["hover Reusable Workflows", "hover Live Preview"],
+      "The Created with ComfyUI gallery showcases community outputs — images, video, " +
+      "and 3D. Below it, the Careers section shows that comfy.org is actively hiring.",
   },
+
+  // ── 7: Footer ── OBSERVE
   {
     kind: "segment",
     narration:
-      "Next up: Open Source and Yours to Shape. ComfyUI is fully open source, supports thousands of custom nodes, and runs locally so your data stays on your machine.",
-    visuals: ["scroll to Open Source section", "sweep across section"],
+      "The footer organizes everything into columns: Product links, Resources like Gallery and Blog, " +
+      "Community links for Discord and GitHub, and social icons for every platform.",
   },
+
+  // ── 8: Wrap-up ── OBSERVE
   {
     kind: "segment",
     narration:
-      "The Created with ComfyUI gallery shows real outputs from the community — proof that this tool produces professional-grade results across image, video, and 3D.",
-    visuals: ["scroll to gallery", "hover gallery item 1", "hover gallery item 2"],
+      "From hero to footer, comfy.org tells a clear story: ComfyUI is powerful, open source, " +
+      "and backed by a real team. Everything you need is right here.",
   },
-  {
-    kind: "segment",
-    narration:
-      "They are also hiring. The Join Our Team section shows that Comfy.org is actively growing — a healthy signal for the project's longevity.",
-    visuals: ["scroll to careers", "hover job listings area"],
-  },
-  {
-    kind: "segment",
-    narration:
-      "The footer is organized into four columns: Product links like Download and Cloud, Resources like Gallery and Blog, Company pages, and Contact information including support.",
-    visuals: ["scroll to footer", "sweep across footer columns"],
-  },
-  {
-    kind: "segment",
-    narration:
-      "Social links at the bottom connect to Discord, X, Reddit, GitHub, LinkedIn, and Instagram — everywhere the community gathers.",
-    visuals: ["scroll to social icons", "sweep across icons"],
-  },
-  {
-    kind: "segment",
-    narration:
-      "From the hero to the footer, comfy.org tells a clear story: ComfyUI is powerful, open, and backed by a real team. Everything you need is one click away.",
-    visuals: ["scroll to top", "hover hero heading", "hover Download CTA"],
-  },
+
   {
     kind: "outro",
     text: "Comfy.org",
@@ -144,135 +148,114 @@ test("comfy.org website tour", async ({ page }) => {
       subtitle: VIDEO_SCRIPT[0].subtitle,
       durationMs: VIDEO_SCRIPT[0].durationMs,
     })
-    // Seg 1: Hero
+
+    // ── 1: Hero + CTAs ── OBSERVE
     .segment(VIDEO_SCRIPT[1].narration, async (pace) => {
       await safeMove(page, "h1, h2, [class*='hero']");
       await pace();
-      await page.mouse.move(400, 250);
+      // Sweep to Download CTA area
+      await page.mouse.move(340, 450);
+      await pace();
+      // Sweep to Cloud CTA area
+      await page.mouse.move(560, 450);
       await pace();
       await page.mouse.move(880, 300);
       await pace();
     })
-    // Seg 2: Download + Cloud CTAs
+
+    // ── 2: Partner logos ── OBSERVE
     .segment(VIDEO_SCRIPT[2].narration, async (pace) => {
-      await page.mouse.move(340, 450);
+      await page.mouse.wheel(0, 600);
+      await page.mouse.move(250, 400);
       await pace();
-      await page.mouse.move(520, 450);
-      await pace();
-      await page.mouse.move(640, 450);
-      await pace();
-    })
-    // Seg 3: Trusted partners — scroll + sweep across logos
-    .segment(VIDEO_SCRIPT[3].narration, async (pace) => {
-      await page.mouse.wheel(0, 500);
-      await page.mouse.move(300, 400);
-      await pace();
-      await page.mouse.move(500, 400);
-      await page.mouse.wheel(0, 300);
+      await page.mouse.move(450, 400);
       await pace();
       await page.mouse.move(700, 400);
       await pace();
-      await page.mouse.move(900, 400);
+      await page.mouse.move(950, 400);
       await pace();
     })
-    // Seg 4: Latest News
-    .segment(VIDEO_SCRIPT[4].narration, async (pace) => {
-      await page.mouse.wheel(0, 500);
-      await page.mouse.move(350, 350);
-      await pace();
-      await page.mouse.move(640, 400);
-      await pace();
-      await page.mouse.move(900, 400);
-      await pace();
-    })
-    // Seg 5: Designed for Control and Creativity — Full Control with Nodes
-    .segment(VIDEO_SCRIPT[5].narration, async (pace) => {
+
+    // ── 3: Latest News ── OBSERVE
+    .segment(VIDEO_SCRIPT[3].narration, async (pace) => {
       await page.mouse.wheel(0, 600);
       await page.mouse.move(300, 350);
       await pace();
-      await page.mouse.move(500, 400);
+      await page.mouse.move(640, 380);
       await pace();
-      await page.mouse.move(640, 450);
+      await page.mouse.move(950, 370);
       await pace();
     })
-    // Seg 6: Reusable Workflows + Live Preview
-    .segment(VIDEO_SCRIPT[6].narration, async (pace) => {
-      await page.mouse.move(500, 400);
+
+    // ── 4: Control and Creativity ── OBSERVE
+    .segment(VIDEO_SCRIPT[4].narration, async (pace) => {
+      await page.mouse.wheel(0, 700);
+      await page.mouse.move(300, 350);
       await pace();
       await page.mouse.move(640, 380);
       await pace();
       await page.mouse.move(900, 400);
       await pace();
     })
-    // Seg 7: Open Source and Yours to Shape — scroll + sweep
-    .segment(VIDEO_SCRIPT[7].narration, async (pace) => {
-      await page.mouse.wheel(0, 600);
-      await page.mouse.move(400, 350);
-      await pace();
-      await page.mouse.move(640, 400);
-      await pace();
-      await page.mouse.move(880, 400);
-      await pace();
-    })
-    // Seg 8: Created with ComfyUI gallery — scroll + hover items
-    .segment(VIDEO_SCRIPT[8].narration, async (pace) => {
-      await page.mouse.wheel(0, 600);
-      await page.mouse.move(350, 380);
+
+    // ── 5: Open Source ── OBSERVE
+    .segment(VIDEO_SCRIPT[5].narration, async (pace) => {
+      await page.mouse.wheel(0, 700);
+      await page.mouse.move(350, 350);
       await pace();
       await page.mouse.move(640, 400);
       await pace();
       await page.mouse.move(900, 380);
       await pace();
     })
-    // Seg 9: JOIN OUR TEAM / Careers — scroll + hover listings
-    .segment(VIDEO_SCRIPT[9].narration, async (pace) => {
+
+    // ── 6: Gallery + Careers ── OBSERVE
+    .segment(VIDEO_SCRIPT[6].narration, async (pace) => {
       await page.mouse.wheel(0, 600);
-      await page.mouse.move(400, 350);
+      await page.mouse.move(300, 350);
       await pace();
-      await page.mouse.move(640, 400);
+      await page.mouse.move(640, 380);
       await pace();
-      await page.mouse.move(800, 450);
+      await page.mouse.wheel(0, 500);
+      await page.mouse.move(500, 400);
+      await pace();
+      await page.mouse.move(800, 420);
       await pace();
     })
-    // Seg 10: Footer columns — scroll + sweep left to right
-    .segment(VIDEO_SCRIPT[10].narration, async (pace) => {
-      await page.mouse.wheel(0, 600);
-      await page.mouse.move(200, 550);
+
+    // ── 7: Footer ── OBSERVE
+    .segment(VIDEO_SCRIPT[7].narration, async (pace) => {
+      await page.mouse.wheel(0, 700);
+      await page.mouse.move(200, 500);
       await pace();
-      await page.mouse.move(400, 570);
+      await page.mouse.move(450, 520);
       await pace();
-      await page.mouse.move(650, 580);
+      await page.mouse.move(700, 530);
       await pace();
-      await page.mouse.move(900, 560);
-      await pace();
-    })
-    // Seg 11: Social links — scroll + sweep across icons
-    .segment(VIDEO_SCRIPT[11].narration, async (pace) => {
-      await page.mouse.wheel(0, 300);
-      await pace();
-      for (const x of [300, 420, 540, 660, 780, 900]) {
-        await page.mouse.move(x, 650);
-        await page.waitForTimeout(180);
+      // Sweep social icons
+      for (const x of [350, 470, 590, 710, 830]) {
+        await page.mouse.move(x, 620);
+        await page.waitForTimeout(150);
       }
       await pace();
     })
-    // Seg 12: Wrap-up — scroll to top + hover hero + hover CTA
-    .segment(VIDEO_SCRIPT[12].narration, async (pace) => {
-      await page.mouse.wheel(0, -3000);
-      await page.waitForTimeout(300);
-      await page.mouse.wheel(0, -3000);
+
+    // ── 8: Wrap-up ── OBSERVE
+    .segment(VIDEO_SCRIPT[8].narration, async (pace) => {
+      await page.mouse.wheel(0, -4000);
       await page.waitForTimeout(300);
       await safeMove(page, "h1, h2, [class*='hero']");
       await pace();
-      await page.mouse.move(400, 450);
+      await page.mouse.move(450, 450);
       await pace();
       await page.mouse.move(640, 300);
       await pace();
     })
+
     .outro({
-      text: VIDEO_SCRIPT[13].text,
-      subtitle: VIDEO_SCRIPT[13].subtitle,
-      durationMs: VIDEO_SCRIPT[13].durationMs,
+      text: VIDEO_SCRIPT[9].text,
+      subtitle: VIDEO_SCRIPT[9].subtitle,
+      durationMs: VIDEO_SCRIPT[9].durationMs,
     });
 
   await script.prepare(page);

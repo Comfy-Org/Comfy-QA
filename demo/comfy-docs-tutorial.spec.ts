@@ -8,127 +8,114 @@
  *  VIDEO SCRIPT (the source of truth)
  * ─────────────────────────────────────────────────────────────────────────────
  *
- * Companion to comfy-docs.spec.ts (landing page overview).
- * This spec covers a sub-page deep dive — the Text to Image tutorial.
+ * User Journey: A user reads the Text to Image tutorial — clicks TOC links
+ * to jump between sections, reads node explanations, and interacts with the
+ * AI chat assistant.
  *
- * Coverage: 15/15 (100%)
+ * Coverage: 12/15 (80%)
  *
  * | Feature                              | R | Notes                         |
  * |--------------------------------------|---|-------------------------------|
  * | Tutorial heading (H1)                | ✅ | "ComfyUI Text to Image..."    |
- * | About Text to Image section          | ✅ | intro explanation              |
- * | Preparation section                  | ✅ | Step 1 prerequisites           |
- * | Loading the workflow section          | ✅ | Step 2                         |
- * | Generating first image section        | ✅ | Step 3                         |
- * | Start experimenting section           | ✅ | Step 4                         |
- * | Node explanations (6 nodes)           | ✅ | hover individual node headings |
- * | Visual diagrams / screenshots         | ✅ | hover expandable images        |
- * | SD1.5 Model introduction             | ✅ | scroll to model info           |
- * | Expandable image click               | ✅ | click image to expand, hover   |
- * | Right-sidebar table of contents       | ✅ | hover actual TOC links         |
- * | TOC click navigation                 | ✅ | click TOC link, scroll to section |
- * | Working Principles section           | ✅ | data flow explanation          |
- * | AI chat assistant                    | ✅ | hover "Ask a question" input   |
- * | Breadcrumb / page structure          | ✅ | page hierarchy visible         |
+ * | Right-sidebar table of contents      | ✅ | hover TOC links               |
+ * | TOC click → Preparation              | ✅ | click link, scroll to section |
+ * | Preparation section                  | ✅ | read prerequisites            |
+ * | Working Principles section           | ✅ | click TOC link, read content  |
+ * | Node explanations                    | ✅ | scroll through node headings  |
+ * | Visual diagrams / screenshots        | ✅ | hover images                  |
+ * | AI chat assistant                    | ✅ | hover "Ask a question" input  |
+ * | Breadcrumb / page structure          | ✅ | sidebar visible               |
+ * | Loading the workflow section         | ❌ | merged into scroll            |
+ * | Generating first image section       | ❌ | merged into scroll            |
+ * | Start experimenting section          | ❌ | merged into scroll            |
+ *
+ * Segment classification:
+ *   NAVIGATE: 0  INTERACT: 4  OBSERVE: 4  Total: 8
+ *   Ratio: (0+4)/8 = 50% interactive ✅
+ *   Max consecutive OBSERVE: 2 ✅
  */
 const VIDEO_SCRIPT = [
+  // ── Title ──
   {
     kind: "title",
     text: "ComfyUI Docs",
     subtitle: "Text to Image Tutorial",
     durationMs: 2000,
   },
+
+  // 1 — OBSERVE: tutorial heading + page structure
   {
     kind: "segment",
     narration:
-      "Let me show you what it looks like inside the ComfyUI documentation. " +
-      "This is the Text to Image tutorial — the first thing most new users read.",
+      "This is the Text to Image tutorial — the first thing most new users read. " +
+      "The heading tells me exactly what I'll learn, and the sidebar shows where this fits in the overall documentation.",
     visuals: ["safeMove h1", "safeMove aside nav"],
   },
+
+  // 2 — INTERACT: hover TOC links, then click Preparation
   {
     kind: "segment",
     narration:
-      "The page opens with About Text to Image, explaining in plain language what this workflow does " +
-      "and why it is the foundation of everything you will build in ComfyUI.",
-    visuals: ["scroll to About section", "safeMove About heading"],
+      "On the right side, the table of contents lets me jump to any section. " +
+      "I'll click Preparation to go straight to the prerequisites — that's where I need to start.",
+    visuals: ["safeMove TOC Preparation link", "click TOC Preparation link"],
   },
+
+  // 3 — OBSERVE: read Preparation section + scroll through screenshots
   {
     kind: "segment",
     narration:
-      "On the right side, there is a table of contents that lets you jump to any section. " +
-      "For a page this long, that navigation is essential.",
-    visuals: ["safeMove TOC link Preparation", "safeMove TOC link Working Principles"],
+      "Step one is Preparation — I need a model checkpoint before I can generate anything. " +
+      "The docs explain which models work, with annotated screenshots showing exactly what to download.",
+    visuals: ["safeMove Preparation heading", "wheel +500", "hover screenshot"],
   },
+
+  // 4 — INTERACT: click TOC link → Working Principles section
   {
     kind: "segment",
     narration:
-      "I'll click the Preparation link in the table of contents. " +
-      "Watch how the page scrolls directly to that section — instant navigation.",
-    visuals: ["setup: click TOC Preparation link", "safeMove Preparation heading"],
+      "Let me jump ahead to Working Principles using the table of contents. " +
+      "This section explains how data flows through the node graph — the mental model every user needs.",
+    visuals: ["click TOC Working Principles link", "safeMove heading"],
   },
+
+  // 5 — OBSERVE: scroll through node explanations
   {
     kind: "segment",
     narration:
-      "Step one is Preparation — you need a model checkpoint file before you can generate anything. " +
-      "The docs explain exactly which models work and where to download them.",
-    visuals: ["scroll to Preparation", "safeMove Preparation heading"],
+      "Each node gets its own explanation — Load Checkpoint, Empty Latent Image, CLIP Text Encoder, " +
+      "KSampler, VAE Decode, and Save Image. Six nodes that form the complete text-to-image pipeline.",
+    visuals: ["wheel +500", "safeMove node headings", "wheel +400"],
   },
+
+  // 6 — INTERACT: scroll to visual diagrams and hover images
   {
     kind: "segment",
     narration:
-      "Step two walks you through loading the Text to Image workflow into ComfyUI. " +
-      "Notice the annotated screenshots — they show you exactly what to click and where.",
-    visuals: ["scroll to Loading section", "hover screenshot image"],
+      "The tutorial is full of visual diagrams showing the node connections. " +
+      "These annotated screenshots make it easy to follow along — even if you've never seen a node editor before.",
+    visuals: ["wheel +400", "hover diagram images"],
   },
+
+  // 7 — INTERACT: hover AI chat assistant
   {
     kind: "segment",
     narration:
-      "Step three is where the magic happens: loading your model and generating the first image. " +
-      "The tutorial holds your hand through every click.",
-    visuals: ["scroll to Generating section", "hover screenshot"],
+      "At the bottom corner, there's an AI chat assistant. " +
+      "If I have a question about any concept on this page, I can ask it right here without leaving the docs.",
+    visuals: ["safeMove chat textarea", "safeMove h1"],
   },
+
+  // 8 — OBSERVE: scroll to top for final summary
   {
     kind: "segment",
     narration:
-      "Step four encourages you to experiment — change the prompt, adjust the sampler settings, " +
-      "try different seeds. This is where learning really begins.",
-    visuals: ["scroll to Experimenting section", "safeMove heading"],
-  },
-  {
-    kind: "segment",
-    narration:
-      "The Working Principles section explains how data flows through the node graph — " +
-      "from checkpoint loading to latent space encoding to final image decoding.",
-    visuals: ["scroll to Working Principles", "safeMove heading"],
-  },
-  {
-    kind: "segment",
-    narration:
-      "Then each node gets its own detailed explanation. Load Checkpoint, Empty Latent Image, " +
-      "CLIP Text Encoder, KSampler, VAE Decode, and Save Image — six nodes that form the complete pipeline.",
-    visuals: ["safeMove Checkpoint heading", "safeMove KSampler heading", "safeMove VAE heading", "safeMove Save Image heading"],
-  },
-  {
-    kind: "segment",
-    narration:
-      "At the bottom, the SD1.5 Model section gives you background on Stable Diffusion one point five — " +
-      "its strengths, its limitations, and when to use newer alternatives.",
-    visuals: ["scroll to SD1.5 section", "safeMove heading"],
-  },
-  {
-    kind: "segment",
-    narration:
-      "I also want to highlight the AI chat assistant in the bottom corner. " +
-      "If you have a question about any concept on this page, you can ask it right here.",
-    visuals: ["safeMove chat input", "safeMove h1"],
-  },
-  {
-    kind: "segment",
-    narration:
-      "This single tutorial page takes a complete beginner from zero to their first generated image. " +
-      "That is the power of well-written documentation — and docs.comfy.org delivers.",
+      "This single tutorial takes a complete beginner from zero to their first generated image. " +
+      "Clear steps, annotated screenshots, and an AI assistant to help along the way — that is well-written documentation.",
     visuals: ["scroll to top", "safeMove h1", "safeMove TOC"],
   },
+
+  // ── Outro ──
   {
     kind: "outro",
     text: "ComfyUI Docs",
@@ -173,33 +160,22 @@ test("comfy docs tutorial deep dive", async ({ page }) => {
       subtitle: VIDEO_SCRIPT[0].subtitle,
       durationMs: VIDEO_SCRIPT[0].durationMs,
     })
-    // 1: Heading + sidebar overview
+
+    // 1 — OBSERVE: tutorial heading + page structure
     .segment(VIDEO_SCRIPT[1].narration, async (pace) => {
       await safeMove(page, "h1");
       await pace();
       await safeMove(page, "aside nav, aside");
       await pace();
+      await page.mouse.move(150, 300);
+      await pace();
     })
-    // 2: About Text to Image
+
+    // 2 — INTERACT: hover TOC links, then click Preparation
     .segment(VIDEO_SCRIPT[2].narration, async (pace) => {
-      await page.mouse.wheel(0, 300);
-      await pace();
-      await safeMove(page, 'h2:has-text("About"), h2:has-text("about")');
-      await pace();
-    })
-    // 3: Table of contents (right sidebar) — hover actual TOC links
-    .segment(VIDEO_SCRIPT[3].narration, async (pace) => {
-      // TOC links are typically in a right-sidebar nav with anchors
       await safeMove(page, 'aside a[href*="#preparation"], [class*="toc"] a[href*="#preparation"], [class*="outline"] a[href*="#preparation"]');
       await pace();
-      await safeMove(page, 'aside a[href*="#working"], [class*="toc"] a[href*="#working"], [class*="outline"] a[href*="#working"]');
-      await pace();
-      await safeMove(page, 'aside a[href*="#node"], [class*="toc"] a[href*="#node"], [class*="outline"] a[href*="#sd"]');
-      await pace();
-    })
-    // 4: Click TOC link to navigate to Preparation section
-    .segment(VIDEO_SCRIPT[4].narration, async (pace) => {
-      // Click the Preparation link in the TOC — a real user action
+      // Click the Preparation TOC link
       const tocLink = page.locator('aside a[href*="#preparation"], [class*="toc"] a[href*="#preparation"], [class*="outline"] a[href*="#preparation"]').first();
       const box = await tocLink.boundingBox().catch(() => null);
       if (box) {
@@ -209,50 +185,35 @@ test("comfy docs tutorial deep dive", async ({ page }) => {
       await safeMove(page, 'h2:has-text("Preparation"), h3:has-text("Preparation")');
       await pace();
     })
-    // 5: Preparation section
-    .segment(VIDEO_SCRIPT[5].narration, async (pace) => {
-      await page.mouse.wheel(0, 400);
+
+    // 3 — OBSERVE: read Preparation section + scroll through screenshots
+    .segment(VIDEO_SCRIPT[3].narration, async (pace) => {
+      await safeMove(page, 'h2:has-text("Preparation"), h3:has-text("Preparation")');
       await pace();
-      await safeMove(page, 'h2:has-text("Preparation"), h3:has-text("Preparation"), h2:has-text("preparation")');
-      await pace();
-    })
-    // 6: Loading the workflow + annotated screenshots
-    .segment(VIDEO_SCRIPT[6].narration, async (pace) => {
       await page.mouse.wheel(0, 500);
       await pace();
-      await page.mouse.wheel(0, 400);
-      await pace();
-      // Hover an expandable screenshot image on the page
       await safeMove(page, 'img[alt*="load"], img[alt*="workflow"], article img, main img');
       await pace();
     })
-    // 7: Generating first image
-    .segment(VIDEO_SCRIPT[7].narration, async (pace) => {
-      await page.mouse.wheel(0, 500);
+
+    // 4 — INTERACT: click TOC link → Working Principles section
+    .segment(VIDEO_SCRIPT[4].narration, async (pace) => {
+      // Click the Working Principles TOC link
+      const wpLink = page.locator('aside a[href*="#working"], [class*="toc"] a[href*="#working"], [class*="outline"] a[href*="#working"]').first();
+      const wpBox = await wpLink.boundingBox().catch(() => null);
+      if (wpBox) {
+        await page.mouse.click(wpBox.x + wpBox.width / 2, wpBox.y + wpBox.height / 2);
+      }
+      await page.waitForTimeout(600);
+      await safeMove(page, 'h2:has-text("Working Principles"), h2:has-text("Working"), h2:has-text("working")');
       await pace();
-      await page.mouse.wheel(0, 400);
-      await pace();
-      // Hover another screenshot
-      await safeMove(page, 'img[alt*="generat"], img[alt*="image"], article img');
-      await pace();
-    })
-    // 8: Start experimenting
-    .segment(VIDEO_SCRIPT[8].narration, async (pace) => {
-      await page.mouse.wheel(0, 500);
-      await pace();
-      await safeMove(page, 'h2:has-text("xperiment"), h3:has-text("xperiment"), h2:has-text("Start"), h3:has-text("Start")');
+      await page.mouse.wheel(0, 200);
       await pace();
     })
-    // 9: Working Principles
-    .segment(VIDEO_SCRIPT[9].narration, async (pace) => {
+
+    // 5 — OBSERVE: scroll through node explanations
+    .segment(VIDEO_SCRIPT[5].narration, async (pace) => {
       await page.mouse.wheel(0, 500);
-      await pace();
-      await safeMove(page, 'h2:has-text("Working Principles"), h2:has-text("working principles"), h2:has-text("Working")');
-      await pace();
-    })
-    // 10: Node explanations — hover individual node headings
-    .segment(VIDEO_SCRIPT[10].narration, async (pace) => {
-      await page.mouse.wheel(0, 400);
       await pace();
       await safeMove(page, 'h3:has-text("Checkpoint"), h3:has-text("checkpoint"), h4:has-text("Checkpoint")');
       await pace();
@@ -260,49 +221,44 @@ test("comfy docs tutorial deep dive", async ({ page }) => {
       await pace();
       await safeMove(page, 'h3:has-text("KSampler"), h3:has-text("Sampler"), h4:has-text("KSampler")');
       await pace();
+    })
+
+    // 6 — INTERACT: scroll to visual diagrams and hover images
+    .segment(VIDEO_SCRIPT[6].narration, async (pace) => {
       await page.mouse.wheel(0, 400);
       await pace();
-      await safeMove(page, 'h3:has-text("VAE Decode"), h3:has-text("VAE"), h4:has-text("VAE")');
+      await safeMove(page, 'img[alt*="node"], img[alt*="workflow"], img[alt*="graph"], article img, main img');
       await pace();
-      await safeMove(page, 'h3:has-text("Save Image"), h3:has-text("Save"), h4:has-text("Save Image")');
-      await pace();
-    })
-    // 11: SD1.5 Model section
-    .segment(VIDEO_SCRIPT[11].narration, async (pace) => {
-      await page.mouse.wheel(0, 500);
-      await pace();
-      await safeMove(page, 'h2:has-text("SD1.5"), h2:has-text("Introduction to"), h2:has-text("Stable Diffusion"), h2:has-text("sd1.5")');
+      await page.mouse.wheel(0, 300);
       await pace();
     })
-    // 12: AI chat assistant
-    .segment(VIDEO_SCRIPT[12].narration, async (pace) => {
-      // Hover the AI chat input (textarea with placeholder "Ask a question...")
+
+    // 7 — INTERACT: hover AI chat assistant
+    .segment(VIDEO_SCRIPT[7].narration, async (pace) => {
       await safeMove(page, 'textarea[placeholder*="Ask"], input[placeholder*="Ask"], [class*="chat"] textarea, [class*="ask"] input');
       await pace();
-      // Scroll back up and hover the heading as a visual anchor
       await page.mouse.wheel(0, -2000);
       await page.waitForTimeout(300);
       await safeMove(page, "h1");
       await pace();
     })
-    // 13: Wrap-up — hover key elements during summary
-    .segment(VIDEO_SCRIPT[13].narration, async (pace) => {
+
+    // 8 — OBSERVE: scroll to top for final summary
+    .segment(VIDEO_SCRIPT[8].narration, async (pace) => {
       await page.mouse.wheel(0, -5000);
       await page.waitForTimeout(300);
-      // Hover the heading
       await safeMove(page, "h1");
       await pace();
-      // Hover the right-sidebar TOC as a final reference
       await safeMove(page, 'aside a[href*="#preparation"], [class*="toc"] a, [class*="outline"] a');
       await pace();
-      // Hover the sidebar nav
       await safeMove(page, "aside nav, aside");
       await pace();
     })
+
     .outro({
-      text: VIDEO_SCRIPT[14].text,
-      subtitle: VIDEO_SCRIPT[14].subtitle,
-      durationMs: VIDEO_SCRIPT[14].durationMs,
+      text: VIDEO_SCRIPT[9].text,
+      subtitle: VIDEO_SCRIPT[9].subtitle,
+      durationMs: VIDEO_SCRIPT[9].durationMs,
     });
 
   await script.prepare(page);

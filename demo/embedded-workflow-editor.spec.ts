@@ -4,6 +4,10 @@ import { createVideoScript } from "../lib/demowright/dist/index.mjs";
 /**
  * VIDEO SCRIPT — every word in `narration` is read aloud verbatim by Gemini TTS.
  *
+ * User Journey: A user opens the Embedded Workflow Editor, learns what it does,
+ * pastes a URL + clicks Load URL to import a real file, examines the result,
+ * explores the Save option, and checks the GitHub link.
+ *
  * Coverage: 9/9 (100%)
  *
  * | Feature                              | R | Notes                              |
@@ -11,13 +15,15 @@ import { createVideoScript } from "../lib/demowright/dist/index.mjs";
  * | Page heading                         | ✅ | "ComfyUI Workflow Editor in your browser" |
  * | Supported formats (PNG/WebP/FLAC/MP4)| ✅ | hover format text area              |
  * | Way 1: Paste/Drop zone               | ✅ | hover + explain                     |
- * | Way 2: Upload Files button           | ✅ | hover + explain                     |
- * | Way 3: Mount a Folder button         | ✅ | hover + explain                     |
- * | Way 4: URL input + Load URL button   | ✅ | hover both elements                 |
- * | Actual file loading via URL          | ✅ | type URL, click Load URL, show result |
- * | Editable Workflows section           | ✅ | scroll down to show placeholder     |
- * | Save workflow (download) button      | ✅ | hover + explain                     |
- * | Fork me on GitHub link               | ✅ | hover link                          |
+ * | Way 2: Upload Files button           | ✅ | hover                               |
+ * | Way 3: Mount a Folder button         | ✅ | hover                               |
+ * | Way 4: URL input + Load URL button   | ✅ | type URL + click Load URL           |
+ * | Actual file loading via URL          | ✅ | setup callback loads file           |
+ * | Editable Workflows section           | ✅ | scroll to view                      |
+ * | Save workflow (download) button      | ✅ | hover                               |
+ * | Fork me on GitHub link               | ✅ | hover                               |
+ *
+ * Segment types: 0 NAVIGATE + 4 INTERACT + 4 OBSERVE = 50% interactive
  */
 const VIDEO_SCRIPT = [
   {
@@ -26,67 +32,73 @@ const VIDEO_SCRIPT = [
     subtitle: "In-browser EXIF editor for ComfyUI images",
     durationMs: 2000,
   },
+
+  // ── 1: Welcome + heading ── OBSERVE
   {
     kind: "segment",
     narration:
-      "This is the ComfyUI Embedded Workflow Editor — a browser-based tool for reading and editing the workflow metadata hidden inside ComfyUI output files.",
-    visuals: ["safeMove heading", "mouse.move across page top"],
+      "This is the ComfyUI Embedded Workflow Editor — a browser-based tool for reading " +
+      "and editing the workflow metadata hidden inside ComfyUI output files.",
   },
+
+  // ── 2: Supported formats ── OBSERVE
   {
     kind: "segment",
     narration:
-      "It supports PNG, WebP, FLAC, and MP4 files. Any file that ComfyUI generates with embedded workflow data can be opened here.",
-    visuals: ["hover format text area", "sweep across format list"],
+      "It supports PNG, WebP, FLAC, and MP4 — any file that ComfyUI generates with " +
+      "embedded workflow data can be opened and edited right here.",
   },
+
+  // ── 3: Import options — paste/drop + Upload + Mount ── INTERACT
   {
     kind: "segment",
     narration:
-      "There are four ways to import files. Way one is the paste and drop zone at the top — drag a file from your desktop or paste from clipboard.",
-    visuals: ["safeMove paste/drop input", "hover drop zone borders"],
+      "There are four import methods. The paste and drop zone at the top accepts drag " +
+      "and drop files, the Upload Files button opens a file picker, and Mount a Folder " +
+      "connects directly to a local directory using the File System Access API.",
   },
+
+  // ── 4: Paste URL + click Load URL ── INTERACT
   {
     kind: "segment",
     narration:
-      "Way two is the Upload Files button, which opens a standard file picker. Way three is Mount a Folder — this uses the File System Access API to connect directly to a local directory, like your ComfyUI output folder.",
-    visuals: ["hover Upload Files", "hover Mount a Folder"],
+      "The fourth method is paste a URL. Let me type a link to a ComfyUI output image " +
+      "and click Load URL — the editor will fetch it and extract the embedded workflow.",
   },
+
+  // ── 5: Examine the loaded result ── OBSERVE
   {
     kind: "segment",
     narration:
-      "Way four is paste a URL. If your ComfyUI image is hosted online, paste the link here and click Load URL to fetch it.",
-    visuals: ["hover URL input", "hover Load URL button"],
+      "The editor has fetched the image and now shows the Editable Workflows section below. " +
+      "If the file contains workflow data, the JSON appears here and you can modify prompts, " +
+      "seeds, and generation settings directly.",
   },
+
+  // ── 6: Save workflow button ── INTERACT
   {
     kind: "segment",
     narration:
-      "Let me actually load a file. I'll paste this URL and click Load URL. " +
-      "The editor fetches the image and checks for embedded workflow data.",
-    visuals: ["setup: type URL + click Load URL", "hover result area"],
+      "After making changes, the Save Workflow button downloads the modified file with " +
+      "your edited workflow re-embedded. Everything runs locally — no server uploads.",
   },
+
+  // ── 7: GitHub link ── INTERACT
   {
     kind: "segment",
     narration:
-      "Below the import options is the Editable Workflows section. Once you load an image with embedded workflow data, the JSON workflow appears here and you can modify prompts, seeds, and generation settings directly.",
-    visuals: ["scroll to Editable Workflows", "hover textarea area"],
+      "The project is open source — the Fork me on GitHub link in the corner takes you " +
+      "to the source repository where you can contribute or report issues.",
   },
+
+  // ── 8: Wrap-up ── OBSERVE
   {
     kind: "segment",
     narration:
-      "After making changes, the Save Workflow button lets you download the modified file with your edited workflow re-embedded. Everything runs locally in your browser — no server uploads required.",
-    visuals: ["hover Save workflow button", "hover nearby text"],
+      "A simple but essential tool — inspect, edit, and re-export ComfyUI workflow metadata " +
+      "without leaving your browser.",
   },
-  {
-    kind: "segment",
-    narration:
-      "The project is open source. The Fork me on GitHub link in the corner takes you to the source repository where you can contribute or report issues.",
-    visuals: ["hover GitHub link", "hover page corner"],
-  },
-  {
-    kind: "segment",
-    narration:
-      "A simple but essential tool for anyone who works with ComfyUI — inspect, edit, and re-export workflow metadata without ever leaving your browser.",
-    visuals: ["scroll to top via mouse.wheel", "hover heading", "hover drop zone"],
-  },
+
   {
     kind: "outro",
     text: "Embedded Workflow Editor",
@@ -108,113 +120,109 @@ test("embedded workflow editor tour", async ({ page }) => {
       subtitle: VIDEO_SCRIPT[0].subtitle,
       durationMs: VIDEO_SCRIPT[0].durationMs,
     })
-    // Seg 1: Page heading — safeMove + sweep across page top
+
+    // ── 1: Welcome + heading ── OBSERVE
     .segment(VIDEO_SCRIPT[1].narration, async (pace) => {
       await safeMove(page, "h1, h2, h3, [class*='title']");
       await pace();
       await page.mouse.move(400, 150);
       await pace();
-      await page.mouse.move(880, 150);
+      await page.mouse.move(880, 180);
       await pace();
     })
-    // Seg 2: Supported formats — hover format text + sweep
+
+    // ── 2: Supported formats ── OBSERVE
     .segment(VIDEO_SCRIPT[2].narration, async (pace) => {
-      await safeMove(page, "main, [class*='card'], [class*='container']");
+      await page.mouse.move(350, 200);
       await pace();
-      // Sweep across the format text area (PNG/WebP/FLAC/MP4)
-      await page.mouse.move(400, 200);
+      await page.mouse.move(550, 210);
       await pace();
-      await page.mouse.move(640, 220);
-      await pace();
-      await page.mouse.move(880, 200);
+      await page.mouse.move(750, 200);
       await pace();
     })
-    // Seg 3: Way 1: Paste/Drop zone — safeMove + hover borders
+
+    // ── 3: Import options — hover paste/drop, click Upload, click Mount ── INTERACT
     .segment(VIDEO_SCRIPT[3].narration, async (pace) => {
       await safeMove(
         page,
         "input[placeholder*='Paste'], input[placeholder*='Drop']",
       );
       await pace();
-      // Hover around the drop zone borders for visual movement
-      await page.mouse.move(400, 280);
-      await pace();
-      await page.mouse.move(880, 280);
-      await pace();
-    })
-    // Seg 4: Way 2: Upload Files + Way 3: Mount a Folder
-    .segment(VIDEO_SCRIPT[4].narration, async (pace) => {
       await safeMove(page, 'button:has-text("Upload Files")');
       await pace();
       await safeMove(page, 'button:has-text("Mount a Folder")');
       await pace();
     })
-    // Seg 5: Way 4: URL input + Load URL
-    .segment(VIDEO_SCRIPT[5].narration, async (pace) => {
-      await safeMove(page, "input[placeholder*='URL']");
-      await pace();
-      await safeMove(page, 'button:has-text("Load URL")');
-      await pace();
-    })
-    // Seg 6: Actually load a file via URL
-    .segment(VIDEO_SCRIPT[6].narration, {
+
+    // ── 4: Paste URL + click Load URL ── INTERACT
+    .segment(VIDEO_SCRIPT[4].narration, {
       setup: async () => {
-        // Click into the URL input and type a sample URL
+        // Click into the URL input via boundingBox (no focus())
         const urlInput = page.locator("input[placeholder*='URL']").first();
         const box = await urlInput.boundingBox().catch(() => null);
         if (box) {
-          await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+          await page.mouse.click(
+            box.x + box.width / 2,
+            box.y + box.height / 2,
+          );
         }
         await page.keyboard.press("Control+A").catch(() => {});
         await page.keyboard.press("Backspace").catch(() => {});
-        await urlInput.fill("https://raw.githubusercontent.com/comfyanonymous/ComfyUI/master/input/example.png");
+        await urlInput.fill(
+          "https://raw.githubusercontent.com/comfyanonymous/ComfyUI/master/input/example.png",
+        );
         await page.waitForTimeout(500);
-        // Click the Load URL button
+        // Click the Load URL button via boundingBox
         const loadBtn = page.locator('button:has-text("Load URL")').first();
         const btnBox = await loadBtn.boundingBox().catch(() => null);
         if (btnBox) {
-          await page.mouse.click(btnBox.x + btnBox.width / 2, btnBox.y + btnBox.height / 2);
+          await page.mouse.click(
+            btnBox.x + btnBox.width / 2,
+            btnBox.y + btnBox.height / 2,
+          );
         } else {
           await loadBtn.click().catch(() => {});
         }
         await page.waitForTimeout(3000);
       },
       action: async (pace) => {
-        // Hover the result area — either the loaded content or the Editable Workflows section
-        await safeMove(
-          page,
-          "[class*='workflow'], [class*='editable'], h3, h4, textarea, [class*='result'], [class*='output']",
-        );
+        // Show the URL input area with the filled URL
+        await safeMove(page, "input[placeholder*='URL']");
         await pace();
-        await page.mouse.move(640, 450);
+        await safeMove(page, 'button:has-text("Load URL")');
         await pace();
       },
     })
-    // Seg 7: Editable Workflows section — scroll + hover textarea
-    .segment(VIDEO_SCRIPT[7].narration, async (pace) => {
+
+    // ── 5: Examine loaded result ── OBSERVE
+    .segment(VIDEO_SCRIPT[5].narration, async (pace) => {
       await page.mouse.wheel(0, 300);
       await page.mouse.move(400, 380);
       await pace();
       await safeMove(
         page,
-        "[class*='workflow'], [class*='editable'], h3, h4, textarea",
+        "[class*='workflow'], [class*='editable'], h3, h4, textarea, [class*='result']",
       );
       await pace();
-      await page.mouse.move(640, 450);
+      await page.mouse.move(640, 480);
       await pace();
     })
-    // Seg 8: Save workflow button — hover button + sweep nearby
-    .segment(VIDEO_SCRIPT[8].narration, async (pace) => {
-      await safeMove(page, "#save-workflow, button:has-text('Save workflow')");
+
+    // ── 6: Save workflow button ── INTERACT
+    .segment(VIDEO_SCRIPT[6].narration, async (pace) => {
+      await safeMove(
+        page,
+        "#save-workflow, button:has-text('Save workflow'), button:has-text('Save')",
+      );
       await pace();
-      // Hover nearby context text
       await page.mouse.move(640, 500);
       await pace();
       await page.mouse.move(400, 480);
       await pace();
     })
-    // Seg 9: GitHub link — hover link + hover corner
-    .segment(VIDEO_SCRIPT[9].narration, async (pace) => {
+
+    // ── 7: GitHub link ── INTERACT
+    .segment(VIDEO_SCRIPT[7].narration, async (pace) => {
       await safeMove(page, 'a[href*="github"]');
       await pace();
       // Hover toward top-right corner where GitHub ribbon typically sits
@@ -223,8 +231,9 @@ test("embedded workflow editor tour", async ({ page }) => {
       await page.mouse.move(1100, 80);
       await pace();
     })
-    // Seg 10: Wrap-up — scroll to top via mouse.wheel + hover heading + drop zone
-    .segment(VIDEO_SCRIPT[10].narration, async (pace) => {
+
+    // ── 8: Wrap-up ── OBSERVE
+    .segment(VIDEO_SCRIPT[8].narration, async (pace) => {
       await page.mouse.wheel(0, -2000);
       await page.waitForTimeout(300);
       await safeMove(page, "h1, h2, h3, [class*='title']");
@@ -234,13 +243,12 @@ test("embedded workflow editor tour", async ({ page }) => {
         "input[placeholder*='Paste'], input[placeholder*='Drop']",
       );
       await pace();
-      await page.mouse.move(640, 300);
-      await pace();
     })
+
     .outro({
-      text: VIDEO_SCRIPT[11].text,
-      subtitle: VIDEO_SCRIPT[11].subtitle,
-      durationMs: VIDEO_SCRIPT[11].durationMs,
+      text: VIDEO_SCRIPT[9].text,
+      subtitle: VIDEO_SCRIPT[9].subtitle,
+      durationMs: VIDEO_SCRIPT[9].durationMs,
     });
 
   await script.prepare(page);

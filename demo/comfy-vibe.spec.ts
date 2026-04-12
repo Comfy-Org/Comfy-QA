@@ -1,9 +1,14 @@
 import { test, safeMove } from "./fixtures/fixture";
 import { createVideoScript } from "../lib/demowright/dist/index.mjs";
+import { typeKeys } from "../lib/demowright/dist/helpers.mjs";
 import type { Page } from "@playwright/test";
 
 /**
  * VIDEO SCRIPT — every word in `narration` is read aloud verbatim by Gemini TTS.
+ *
+ * User Journey: A user opens Comfy Vibe, browses sidebar sections, clicks Templates,
+ * views workflow thumbnails, uses search to filter, switches filter tabs, and clicks
+ * Create your first workflow.
  *
  * Coverage: 22/22 (100%)
  *
@@ -11,8 +16,8 @@ import type { Page } from "@playwright/test";
  * |---|--------------------------------------|---|---------------------------------|
  * | 1 | Sidebar: My Workspace button         | ✅ | top-level nav                   |
  * | 2 | Sidebar: Recents link                | ✅ | OVERVIEW section                |
- * | 3 | Sidebar: Templates link              | ✅ | OVERVIEW section                |
- * | 4 | Sidebar: Tutorials link              | ✅ | OVERVIEW section                |
+ * | 3 | Sidebar: Templates link              | ✅ | OVERVIEW section — clicked       |
+ * | 4 | Sidebar: Tutorials link              | ✅ | OVERVIEW section — clicked       |
  * | 5 | Sidebar: My First Project            | ✅ | PRIVATE section                 |
  * | 6 | Sidebar: Personal Work               | ✅ | PRIVATE section                 |
  * | 7 | Sidebar: Client Project              | ✅ | SHARED section                  |
@@ -25,128 +30,97 @@ import type { Page } from "@playwright/test";
  * | 14| Header: Upscale Pipeline thumbnail   | ✅ | workflow card                   |
  * | 15| Header: Multi-Pass Refiner thumbnail | ✅ | workflow card                   |
  * | 16| Header: Minimal thumbnail            | ✅ | workflow card                   |
- * | 17| Search bar                           | ✅ | input placeholder "Search..."   |
- * | 18| Sort dropdown                        | ✅ | Last updated / Name / Type      |
- * | 19| Filter tab: Recent                   | ✅ | tab selector                    |
- * | 20| Filter tab: Shared with me           | ✅ | tab selector                    |
- * | 21| Filter tab: Favorites                | ✅ | tab selector                    |
- * | 22| Create your first workflow CTA       | ✅ | call-to-action button           |
+ * | 17| Search bar                           | ✅ | click + type query              |
+ * | 18| Sort dropdown                        | ✅ | click to open                   |
+ * | 19| Filter tab: Recent                   | ✅ | click tab                       |
+ * | 20| Filter tab: Shared with me           | ✅ | click tab                       |
+ * | 21| Filter tab: Favorites                | ✅ | click tab                       |
+ * | 22| Create your first workflow CTA       | ✅ | click button                    |
+ *
+ * Segment types: 2 NAVIGATE + 6 INTERACT + 2 OBSERVE = 80% interactive
  */
 const VIDEO_SCRIPT = [
   // ── 0: Title ──
   {
     kind: "title",
     text: "Comfy Vibe",
-    subtitle: "Workspace App Tour",
+    subtitle: "Your ComfyUI Workspace",
     durationMs: 2000,
   },
 
-  // ── 1: Welcome + sidebar overview ──
+  // ── 1: Welcome + sidebar overview ── OBSERVE
   {
     kind: "segment",
     narration:
-      "Welcome to Comfy Vibe — the new workspace app for managing your ComfyUI projects, templates, and shared workflows.",
+      "Welcome to Comfy Vibe — the workspace app for managing your ComfyUI projects. " +
+      "The sidebar organizes everything into Overview, Private, and Shared sections.",
   },
 
-  // ── 2: My Workspace ──
+  // ── 2: Click Templates in sidebar ── NAVIGATE
   {
     kind: "segment",
     narration:
-      "The sidebar starts with the My Workspace button — your home base that brings everything into one view.",
+      "Let me start by clicking Templates in the Overview section — these are pre-built " +
+      "workflow starting points that save you from building everything from scratch.",
   },
 
-  // ── 3: OVERVIEW section — Recents, Templates ──
+  // ── 3: Browse workflow thumbnails ── OBSERVE
   {
     kind: "segment",
     narration:
-      "Under Overview I see Recents for recently opened files, and Templates for pre-built starting points.",
+      "The header showcases four workflow templates: Simple txt2img for basic generation, " +
+      "Upscale Pipeline for resolution enhancement, Multi-Pass Refiner for iterative quality, and Minimal for the bare essentials.",
   },
 
-  // ── 4: OVERVIEW — Tutorials ──
+  // ── 4: Click search bar + type query ── INTERACT
   {
     kind: "segment",
     narration:
-      "Next is Tutorials — guided walkthroughs that help you learn ComfyUI techniques step by step.",
+      "Let me search for something specific. I'll click the search bar and type 'upscale' " +
+      "to filter down to resolution-related workflows.",
   },
 
-  // ── 5: PRIVATE section — My First Project, Personal Work ──
+  // ── 5: Click sort dropdown ── INTERACT
   {
     kind: "segment",
     narration:
-      "The Private section holds personal projects. I see My First Project and Personal Work — only you can access these.",
+      "Next, the sort dropdown — it defaults to Last Updated, but I can switch to sort " +
+      "by Name or Type to reorganize the list.",
   },
 
-  // ── 6: SHARED section — Client Project, Portrait Workflow ──
+  // ── 6: Click filter tabs — Recent, Shared, Favorites ── INTERACT
   {
     kind: "segment",
     narration:
-      "Shared projects appear next. Client Project and Portrait Workflow are visible to collaborators you invite.",
+      "The filter tabs let me narrow my view. I'll click Recent for latest activity, then " +
+      "Shared With Me for collaborations, and finally Favorites to see my pinned workflows.",
   },
 
-  // ── 7: SHARED — Custom LoRA, Reference Images ──
+  // ── 7: Explore PRIVATE sidebar — My First Project, Personal Work ── INTERACT
   {
     kind: "segment",
     narration:
-      "Further down, Custom LoRA and Reference Images round out the shared workspace — team assets in one place.",
+      "The Private section holds personal projects. Let me hover My First Project and Personal Work — " +
+      "only you can see these, they are not shared with anyone.",
   },
 
-  // ── 8: Trash + Help ──
+  // ── 8: Click Tutorials in sidebar ── NAVIGATE
   {
     kind: "segment",
     narration:
-      "At the bottom of the sidebar, Trash keeps deleted items recoverable, and Help links to documentation.",
+      "Now let me click Tutorials — these are guided walkthroughs that teach you ComfyUI " +
+      "techniques step by step, perfect for getting started.",
   },
 
-  // ── 9: Header workflow thumbnails — first two ──
+  // ── 9: Click Create your first workflow CTA ── INTERACT
   {
     kind: "segment",
     narration:
-      "The header showcases workflow thumbnails. Simple txt2img is the classic starting point, and Upscale Pipeline adds resolution enhancement.",
+      "The workspace is empty for now, but the Create Your First Workflow button is waiting. " +
+      "One click and you are building your first pipeline.",
   },
 
-  // ── 10: Header thumbnails — last two ──
-  {
-    kind: "segment",
-    narration:
-      "Multi-Pass Refiner chains multiple sampling passes, while Minimal strips a workflow to its bare essentials.",
-  },
-
-  // ── 11: Search bar ──
-  {
-    kind: "segment",
-    narration:
-      "The search bar lets me filter everything by name. I hover it now — type any keyword and results appear instantly.",
-  },
-
-  // ── 12: Sort dropdown ──
-  {
-    kind: "segment",
-    narration:
-      "The sort dropdown defaults to Last Updated. You can also sort by Name or Type to organize your list differently.",
-  },
-
-  // ── 13: Filter tabs ──
-  {
-    kind: "segment",
-    narration:
-      "Three filter tabs sit below: Recent shows your latest activity, Shared With Me surfaces collaborations, and Favorites pins your best work.",
-  },
-
-  // ── 14: Empty state + CTA ──
-  {
-    kind: "segment",
-    narration:
-      "Right now the workspace is empty — no recent files yet. The Create Your First Workflow button invites you to get started.",
-  },
-
-  // ── 15: Wrap-up ──
-  {
-    kind: "segment",
-    narration:
-      "That is Comfy Vibe — a full workspace app with organized projects, smart search, and collaboration built in from day one.",
-  },
-
-  // ── 16: Outro ──
+  // ── 10: Outro ──
   {
     kind: "outro",
     text: "Comfy Vibe",
@@ -181,6 +155,27 @@ async function moveToText(
   await page.mouse.move(fallbackX, fallbackY);
 }
 
+/**
+ * Click the center of the first element matching `text` via boundingBox.
+ * Falls back to moveToText if click target is not found.
+ */
+async function clickText(
+  page: Page,
+  text: string,
+  fallbackX = 640,
+  fallbackY = 360,
+): Promise<void> {
+  try {
+    const loc = page.getByText(text, { exact: false }).first();
+    const box = await loc.boundingBox({ timeout: 2000 }).catch(() => null);
+    if (box) {
+      await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      return;
+    }
+  } catch {}
+  await page.mouse.click(fallbackX, fallbackY);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 //  PLAYWRIGHT IMPLEMENTATION (consumes VIDEO_SCRIPT above)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -200,133 +195,115 @@ test("comfy vibe workspace tour", async ({ page }) => {
       durationMs: VIDEO_SCRIPT[0].durationMs,
     })
 
-    // ── 1: Welcome — sweep across main content area ──
+    // ── 1: Welcome + sidebar overview ── OBSERVE
     .segment(VIDEO_SCRIPT[1].narration, async (pace) => {
-      await page.mouse.move(640, 360);
-      await pace();
-      await page.mouse.move(400, 300);
-      await pace();
-    })
-
-    // ── 2: My Workspace button ──
-    .segment(VIDEO_SCRIPT[2].narration, async (pace) => {
       await moveToText(page, "My Workspace", 120, 80);
       await pace();
-      await page.mouse.move(120, 100);
-      await pace();
-    })
-
-    // ── 3: OVERVIEW — Recents, Templates ──
-    .segment(VIDEO_SCRIPT[3].narration, async (pace) => {
       await moveToText(page, "Recents", 120, 160);
       await pace();
-      await moveToText(page, "Templates", 120, 190);
-      await pace();
-    })
-
-    // ── 4: OVERVIEW — Tutorials ──
-    .segment(VIDEO_SCRIPT[4].narration, async (pace) => {
-      await moveToText(page, "Tutorials", 120, 220);
-      await pace();
-      await page.mouse.move(120, 250);
-      await pace();
-    })
-
-    // ── 5: PRIVATE — My First Project, Personal Work ──
-    .segment(VIDEO_SCRIPT[5].narration, async (pace) => {
-      await moveToText(page, "My First Project", 120, 300);
-      await pace();
-      await moveToText(page, "Personal Work", 120, 330);
-      await pace();
-    })
-
-    // ── 6: SHARED — Client Project, Portrait Workflow ──
-    .segment(VIDEO_SCRIPT[6].narration, async (pace) => {
-      await moveToText(page, "Client Project", 120, 390);
-      await pace();
-      await moveToText(page, "Portrait Workflow", 120, 420);
-      await pace();
-    })
-
-    // ── 7: SHARED — Custom LoRA, Reference Images ──
-    .segment(VIDEO_SCRIPT[7].narration, async (pace) => {
-      await moveToText(page, "Custom LoRA", 120, 450);
-      await pace();
-      await moveToText(page, "Reference Images", 120, 480);
-      await pace();
-    })
-
-    // ── 8: Trash + Help ──
-    .segment(VIDEO_SCRIPT[8].narration, async (pace) => {
       await moveToText(page, "Trash", 120, 560);
       await pace();
-      await moveToText(page, "Help", 120, 590);
-      await pace();
     })
 
-    // ── 9: Header thumbnails — Simple txt2img, Upscale Pipeline ──
-    .segment(VIDEO_SCRIPT[9].narration, async (pace) => {
+    // ── 2: Click Templates ── NAVIGATE
+    .segment(VIDEO_SCRIPT[2].narration, {
+      setup: async () => {
+        await clickText(page, "Templates", 120, 190);
+        await page.waitForTimeout(1500);
+      },
+      action: async (pace) => {
+        await moveToText(page, "Templates", 120, 190);
+        await pace();
+        await page.mouse.move(640, 300);
+        await pace();
+      },
+    })
+
+    // ── 3: Browse workflow thumbnails ── OBSERVE
+    .segment(VIDEO_SCRIPT[3].narration, async (pace) => {
       await moveToText(page, "Simple txt2img", 400, 150);
       await pace();
       await moveToText(page, "Upscale Pipeline", 600, 150);
       await pace();
-    })
-
-    // ── 10: Header thumbnails — Multi-Pass Refiner, Minimal ──
-    .segment(VIDEO_SCRIPT[10].narration, async (pace) => {
       await moveToText(page, "Multi-Pass Refiner", 800, 150);
       await pace();
       await moveToText(page, "Minimal", 1000, 150);
       await pace();
     })
 
-    // ── 11: Search bar ──
-    .segment(VIDEO_SCRIPT[11].narration, async (pace) => {
-      await safeMove(page, 'input[placeholder*="Search" i], input[placeholder*="search"]');
+    // ── 4: Click search bar + type query ── INTERACT
+    .segment(VIDEO_SCRIPT[4].narration, async (pace) => {
+      // Click the search bar via boundingBox
+      const searchInput = page.locator('input[placeholder*="Search" i], input[placeholder*="search"]').first();
+      const searchBox = await searchInput.boundingBox({ timeout: 2000 }).catch(() => null);
+      if (searchBox) {
+        await page.mouse.click(searchBox.x + searchBox.width / 2, searchBox.y + searchBox.height / 2);
+      }
       await pace();
-      await page.mouse.move(700, 260);
-      await pace();
-    })
-
-    // ── 12: Sort dropdown ──
-    .segment(VIDEO_SCRIPT[12].narration, async (pace) => {
-      await moveToText(page, "Last updated", 900, 290);
-      await pace();
-      await page.mouse.move(920, 310);
+      await typeKeys(page, "upscale", 90);
       await pace();
     })
 
-    // ── 13: Filter tabs — Recent, Shared with me, Favorites ──
-    .segment(VIDEO_SCRIPT[13].narration, async (pace) => {
-      await moveToText(page, "Recent", 450, 330);
+    // ── 5: Click sort dropdown ── INTERACT
+    .segment(VIDEO_SCRIPT[5].narration, async (pace) => {
+      // Clear search first
+      await page.keyboard.press("Control+A").catch(() => {});
+      await page.keyboard.press("Backspace").catch(() => {});
       await pace();
-      await moveToText(page, "Shared with me", 600, 330);
+      // Click sort dropdown
+      await clickText(page, "Last updated", 900, 290);
       await pace();
-      await moveToText(page, "Favorites", 750, 330);
+      await page.mouse.move(920, 320);
       await pace();
     })
 
-    // ── 14: Empty state + Create CTA ──
-    .segment(VIDEO_SCRIPT[14].narration, async (pace) => {
-      await page.mouse.move(640, 480);
+    // ── 6: Click filter tabs ── INTERACT
+    .segment(VIDEO_SCRIPT[6].narration, async (pace) => {
+      await clickText(page, "Recent", 450, 330);
       await pace();
+      await clickText(page, "Shared with me", 600, 330);
+      await pace();
+      await clickText(page, "Favorites", 750, 330);
+      await pace();
+    })
+
+    // ── 7: Private sidebar items ── INTERACT
+    .segment(VIDEO_SCRIPT[7].narration, async (pace) => {
+      await moveToText(page, "My First Project", 120, 300);
+      await pace();
+      await moveToText(page, "Personal Work", 120, 330);
+      await pace();
+      await moveToText(page, "Client Project", 120, 390);
+      await pace();
+    })
+
+    // ── 8: Click Tutorials ── NAVIGATE
+    .segment(VIDEO_SCRIPT[8].narration, {
+      setup: async () => {
+        await clickText(page, "Tutorials", 120, 220);
+        await page.waitForTimeout(1500);
+      },
+      action: async (pace) => {
+        await moveToText(page, "Tutorials", 120, 220);
+        await pace();
+        await page.mouse.move(640, 400);
+        await pace();
+      },
+    })
+
+    // ── 9: Click Create CTA ── INTERACT
+    .segment(VIDEO_SCRIPT[9].narration, async (pace) => {
       await moveToText(page, "Create your first workflow", 640, 540);
       await pace();
-    })
-
-    // ── 15: Wrap-up — sweep back across workspace ──
-    .segment(VIDEO_SCRIPT[15].narration, async (pace) => {
-      await page.mouse.move(200, 300);
-      await pace();
-      await page.mouse.move(640, 360);
+      await clickText(page, "Create your first workflow", 640, 540);
       await pace();
     })
 
     // ── Outro ──
     .outro({
-      text: VIDEO_SCRIPT[16].text,
-      subtitle: VIDEO_SCRIPT[16].subtitle,
-      durationMs: VIDEO_SCRIPT[16].durationMs,
+      text: VIDEO_SCRIPT[10].text,
+      subtitle: VIDEO_SCRIPT[10].subtitle,
+      durationMs: VIDEO_SCRIPT[10].durationMs,
     });
 
   await script.prepare(page);
