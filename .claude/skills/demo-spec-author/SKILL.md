@@ -89,6 +89,38 @@ What the user wants to accomplish in one sentence.
 
 The story is for humans (and future you), not the agent. It captures intent before detail.
 
+### User journey constraint (mandatory)
+
+Every story must describe a **complete user workflow** — not a museum tour. A user journey has:
+
+1. **An entry point** — how the user arrives (Google search, Discord link, bookmark)
+2. **A concrete goal** — "install a ControlNet node" not "explore the page"
+3. **Real actions to reach that goal** — search, click result, read detail, copy install command
+4. **A measurable outcome** — the user has accomplished something (copied a command, submitted a form, downloaded a file)
+
+#### The "Could I follow along?" test
+
+Read your happy path steps aloud. If a viewer could follow the same steps on their own computer and achieve the same outcome, the story passes. If the viewer would just be watching someone hover over things, rewrite it.
+
+#### BAD: museum tour (DON'T)
+```
+1. Land on homepage → hover heading
+2. Hover over search bar
+3. Hover over nav links
+4. Scroll down → hover pagination
+5. Hover over login button
+```
+
+#### GOOD: real workflow (DO)
+```
+1. Land on homepage → read the hero
+2. Click search bar → type "controlnet" → scan results
+3. Click the top result → land on detail page
+4. Read install command → click Copy button
+5. Scroll to version history → confirm active maintenance
+6. Click logo → return to homepage
+```
+
 ## Phase 3 — Video Script (THE source of truth)
 
 At the **top of `demo/<product>.spec.ts`**, define a `VIDEO_SCRIPT` constant. Every word in `narration` will be read aloud by Gemini TTS during recording. Write it as a continuous, natural voiceover — not a list of feature labels.
@@ -153,6 +185,44 @@ const VIDEO_SCRIPT = [
 
 `visuals` is a non-executable comment array that documents what should be on screen during this narration. The actual Playwright work happens in phase 5. Keep visuals notes brief — they're just a reminder for the implementer.
 
+### Segment classification (mandatory)
+
+Every segment must be one of three types. Annotate each VIDEO_SCRIPT entry with a `// TYPE` comment.
+
+| Type | What happens | `setup` callback | `action` callback | Example |
+|------|-------------|------------------|-------------------|---------|
+| **NAVIGATE** | Page changes URL | `page.goto()` or nav click | Visual hover on new page | Click node card → detail page loads |
+| **INTERACT** | User input changes state | Optional | `typeKeys`, `mouse.click`, `keyboard.press` | Type search query, click Copy, select time range |
+| **OBSERVE** | Read-only viewing | None | `safeMove`, `mouse.wheel`, `mouse.move` | Scroll README, hover metadata |
+
+#### Minimum interaction ratio (non-negotiable)
+
+| Rule | Threshold |
+|------|-----------|
+| NAVIGATE + INTERACT segments | **≥ 50%** of total |
+| OBSERVE-only segments | **≤ 30%** of total |
+| Consecutive OBSERVE segments | **≤ 2** in a row |
+
+If your 10-segment script has 7 OBSERVE segments, it's a hover tour. Go back to Phase 2 and redesign the user journey.
+
+**Why?** Gemini 3.1 Pro scored our existing demos 3.7–6.3/10 because 93.6% of segments were OBSERVE-only.
+
+#### Example annotated script
+```ts
+const VIDEO_SCRIPT = [
+  { kind: "title", ... },
+  { kind: "segment", narration: "Welcome to the registry...",              /* OBSERVE */ },
+  { kind: "segment", narration: "Let me type controlnet in the search...", /* INTERACT */ },
+  { kind: "segment", narration: "Results stream in instantly...",          /* OBSERVE */ },
+  { kind: "segment", narration: "I'll click KJNodes to see details...",    /* NAVIGATE */ },
+  { kind: "segment", narration: "Here's the install command — Copy...",    /* INTERACT */ },
+  { kind: "segment", narration: "Version history shows 37 releases...",    /* OBSERVE */ },
+  { kind: "segment", narration: "Clicking the logo takes me home...",      /* NAVIGATE */ },
+  { kind: "outro", ... },
+] as const;
+// Ratio: 2 NAVIGATE + 2 INTERACT + 3 OBSERVE = 57% interactive ✅
+```
+
 ## Phase 4 — Review the script
 
 Before writing any Playwright code:
@@ -162,6 +232,8 @@ Before writing any Playwright code:
 3. **Prune anything redundant.** If two consecutive segments say the same thing, merge them.
 4. **Verify total length.** A good demo is 30–90 seconds. 21 segments × 6 seconds each = 126 seconds (too long). Aim for 6–10 segments unless the product is dense.
 5. **Never claim something the demo can't show.** If you say "now I'll click the buy button", the visuals had better actually click it.
+6. **Count segment types.** Tag each segment as NAVIGATE, INTERACT, or OBSERVE. If NAVIGATE + INTERACT < 50%, go back to Phase 2 and add real user actions.
+7. **Check for museum-tour streaks.** If you have 3+ consecutive OBSERVE segments, merge or replace them with an INTERACT segment.
 
 If the script doesn't pass this review, rewrite it. **Do not proceed to Phase 5 with a weak script.** A weak script ⇒ a boring video ⇒ wasted Gemini TTS API quota and human review time.
 
@@ -255,6 +327,55 @@ Never evaluate demo quality as simple "pass/fail". Instead, enumerate every poss
 
 This principle applies to all phases: story writing (phase 2 must acknowledge total surface area), video scripting (phase 3 must justify what's omitted), and project status reporting.
 
+## Anti-patterns (things that produce bad demos)
+
+These were identified by Gemini 3.1 Pro review of generated videos (avg 3.7–6.3/10). Avoid them.
+
+### 1. Museum tour — hover everything, touch nothing
+```ts
+// BAD: 50 segments of safeMove, nothing clicked
+.segment("Here's the search bar.", async (pace) => {
+  await safeMove(page, 'input[placeholder*="Search"]'); await pace();
+})
+.segment("Here's the login button.", async (pace) => {
+  await safeMove(page, 'button:has-text("Login")'); await pace();
+})
+```
+**Fix:** Actually USE the search bar. Type a query. Click a result. One INTERACT segment replaces 5 OBSERVE segments.
+
+### 2. Narrating intent instead of doing it
+```ts
+// BAD: Two segments where one would do
+.segment("I'm going to click the search box now.", async (pace) => { ... })
+.segment("Now I'm typing controlnet.", async (pace) => { ... })
+```
+**Fix:** One segment: "Let me search for controlnet — the most common query." with typeKeys in the action.
+
+### 3. "Out of scope" for navigable features
+```markdown
+## Out of scope
+- Node detail pages (can't navigate inside segments)  ← WRONG
+```
+**Fix:** With `setup` callbacks, you CAN navigate. Remove artificial scope limits.
+
+### 4. Commentary without action
+```ts
+// BAD: narrator talks but cursor just sits at center
+.segment("The registry is valuable because...", async (pace) => {
+  await page.mouse.move(640, 360); await pace();
+})
+```
+**Fix:** Merge commentary into an INTERACT segment. Explain WHY while the user is actively doing something.
+
+### 5. Segments that only wait
+```ts
+// BAD: just waiting for results to appear
+.segment("Results appear.", async (pace) => {
+  await page.waitForTimeout(1500); await pace();
+})
+```
+**Fix:** Merge into the typing segment — results appear as the user types.
+
 ## Hard rules (non-negotiable)
 
 These are encoded in past commit history and bug reports:
@@ -272,6 +393,67 @@ These are encoded in past commit history and bug reports:
 | **For SSR sites that hang anyway** (e.g., www.comfy.org) | Block all `<script>` resources via `page.route`, see `comfy-website.spec.ts` |
 | **ZERO idle frames — always move the mouse** | Every segment must have continuous visual action. Never let the cursor sit still while narrating. If you're explaining something, hover related elements. If there's nothing to show, shorten or cut the segment. |
 
+## Setup callback patterns (reference)
+
+The `setup` callback runs BEFORE narration starts — use it for page transitions and heavy operations. The `action` callback runs DURING narration — visual-only actions here.
+
+### Pattern 1: Navigate to a new page
+```ts
+.segment(VIDEO_SCRIPT[N].narration, {
+  setup: async () => {
+    const link = page.locator('a[href*="/nodes/"]').first();
+    const box = await link.boundingBox().catch(() => null);
+    if (box) await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await page.waitForTimeout(3000);
+  },
+  action: async (pace) => {
+    await safeMove(page, "h1"); await pace();
+    await safeMove(page, "code, pre"); await pace();
+  },
+})
+```
+
+### Pattern 2: Fill a form and submit
+```ts
+.segment(VIDEO_SCRIPT[N].narration, {
+  setup: async () => {
+    const input = page.locator("input[placeholder*='URL']").first();
+    const box = await input.boundingBox().catch(() => null);
+    if (box) await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await input.fill("https://example.com/image.png");
+    const btn = page.locator('button:has-text("Load")').first();
+    const btnBox = await btn.boundingBox().catch(() => null);
+    if (btnBox) await page.mouse.click(btnBox.x + btnBox.width / 2, btnBox.y + btnBox.height / 2);
+    await page.waitForTimeout(3000);
+  },
+  action: async (pace) => {
+    await safeMove(page, "[class*='result']"); await pace();
+  },
+})
+```
+
+### Pattern 3: Same-page button (no setup needed)
+```ts
+// Buttons that don't navigate are safe in action callbacks
+.segment(VIDEO_SCRIPT[N].narration, async (pace) => {
+  await clickTimeRange(page, "1 Month");
+  await page.mouse.move(300, 400); await pace();
+  await page.mouse.move(700, 400); await pace();
+})
+```
+
+### When to use setup vs action
+
+| Operation | Where | Why |
+|-----------|-------|-----|
+| `page.goto()` | `setup` | Network latency is unpredictable |
+| Click that triggers navigation | `setup` | Page load time varies |
+| `waitForTimeout(>500ms)` | `setup` | Long waits = silent gaps in narration |
+| `typeKeys()` (visual typing) | `action` | User sees typing live |
+| `safeMove()` / `mouse.move()` | `action` | Visual cursor movement |
+| `mouse.click()` on same-page button | `action` | Fast, no navigation |
+| `mouse.wheel()` | `action` | Viewer sees scrolling |
+
 ## Output paths
 
 ```
@@ -284,6 +466,12 @@ demo/<product>.spec.ts               ← Phases 3–5 output (committed)
 
 ## Reference templates
 
-- `demo/registry-web.spec.ts` — canonical short tour (8 segments)
-- `demo/cloud-comfy.spec.ts` — auth flow + 21 segments (largest example)
-- `demo/comfy-website.spec.ts` — SSR site requiring script blocking
+| Spec | Segs | NAVIGATE | INTERACT | OBSERVE | Ratio | Notes |
+|------|:----:|:--------:|:--------:|:-------:|:-----:|-------|
+| `demo/download-data.spec.ts` | 9 | 0 | 5 | 4 | 56% ✅ | clicks 4 time-range buttons + chart sweep |
+| `demo/registry-web.spec.ts` | 56 | 2 | 7 | 47 | 16% ❌ | needs rewrite — mostly hover tour |
+| `demo/comfy-website.spec.ts` | 12 | 0 | 0 | 12 | 0% ❌ | JS blocked SSR, needs interactive segments |
+
+**Best example:** `demo/download-data.spec.ts` — every button clicked, chart hovered, compact 9 segments.
+**Setup pattern example:** `demo/registry-web.spec.ts` segments 48-49 — navigate to detail page and back via `setup` callback.
+**SSR workaround:** `demo/comfy-website.spec.ts` — blocks all `<script>` for Nuxt sites that hang on `page.evaluate`.
