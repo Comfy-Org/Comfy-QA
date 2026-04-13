@@ -80,46 +80,48 @@ interface ResearchResults {
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY_QA ?? process.env.ANTHROPIC_API_KEY ?? "";
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY ?? "";
 
+import Anthropic from "@anthropic-ai/sdk";
+
+const anthropicClient = ANTHROPIC_KEY ? new Anthropic({ apiKey: ANTHROPIC_KEY, timeout: 60_000 }) : null;
+
 async function callLLM(system: string, messages: any[]): Promise<string> {
-  if (ANTHROPIC_KEY) {
+  if (anthropicClient) {
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "x-api-key": ANTHROPIC_KEY,
-          "anthropic-version": "2023-06-01",
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 8192,
-          system,
-          messages,
-        }),
+      const res = await anthropicClient.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 8192,
+        system,
+        messages,
       });
-      const json = (await res.json()) as any;
-      return json.content?.[0]?.text ?? "";
-    } catch {}
+      return res.content?.[0]?.type === "text" ? res.content[0].text : "";
+    } catch (err: any) {
+      console.log(`  ⚠ Anthropic SDK: ${err.message?.slice(0, 80)}`);
+    }
   }
 
   if (OPENROUTER_KEY) {
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_KEY}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "anthropic/claude-sonnet-4-20250514",
-        messages: [{ role: "system", content: system }, ...messages],
-        max_tokens: 2048,
-      }),
-    });
-    const json = (await res.json()) as any;
-    return json.choices?.[0]?.message?.content ?? "";
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 60_000);
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        signal: controller.signal,
+        headers: { Authorization: `Bearer ${OPENROUTER_KEY}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          model: "anthropic/claude-sonnet-4-20250514",
+          messages: [{ role: "system", content: system }, ...messages],
+          max_tokens: 8192,
+        }),
+      });
+      clearTimeout(timer);
+      const json = (await res.json()) as any;
+      return json.choices?.[0]?.message?.content ?? "";
+    } catch (err: any) {
+      console.log(`  ⚠ OpenRouter: ${err.message?.slice(0, 60)}`);
+    }
   }
 
-  throw new Error("No API key (ANTHROPIC_API_KEY_QA or OPENROUTER_API_KEY)");
+  return "";
 }
 
 // ---------------------------------------------------------------------------
@@ -229,20 +231,33 @@ async function testOperation(
     try {
       const state = await captureState(page);
 
-      const systemPrompt = `You are a QA tester. Test a specific operation on a website.
+      const systemPrompt = `You are a QA tester recording a video demo of a website.
 
 Product: ${checklist.product}
 
 RULES:
 - Headless browser, NO URL bar. Use {"type": "goto", "text": "url"} to navigate.
 - Use simple CSS selectors. Maximum 5 actions.
-- Set "success": true ONLY if success criteria is met in the current state.
-- If content is already visible, set "success": true with empty actions.
-- On retry, try a different approach.
+- Set "success": true if the success criteria is met in the current state.
+- ALWAYS include at least 1 visual action (safeMove, hover, scroll) so the video shows
+  something happening. Even if content is already visible, move the cursor to it so the
+  viewer's eye is drawn to the relevant element.
+- For "read" operations: use safeMove or hover to highlight the relevant element.
+- For "create"/"update"/"delete" operations: perform the actual action (click, type).
+- On retry, try a different selector approach.
+
+Action types:
+- {"type": "goto", "text": "url"}     — navigate (use absolute URL)
+- {"type": "safeMove", "selector": "..."}  — move cursor to element (visual)
+- {"type": "hover", "selector": "..."}     — hover over element (visual)
+- {"type": "scroll", "value": 300}    — scroll down N pixels (visual)
+- {"type": "click", "selector": "..."}     — click element
+- {"type": "type", "selector": "...", "text": "..."}  — type text
+- {"type": "wait", "value": 1000}     — wait N ms
 
 Respond with ONLY JSON:
 {
-  "actions": [{"type": "click", "selector": "..."}],
+  "actions": [{"type": "safeMove", "selector": "h1"}],
   "success": true/false,
   "observation": "what I see"
 }`;
@@ -464,6 +479,34 @@ function generateScorecardHtml(results: ResearchResults, checklist: Checklist): 
 </body></html>`;
 }
 
+/**
+ * Build a multi-sentence scorecard narration that takes ~12-15s to read
+ * so the scorecard stays on screen long enough to be readable.
+ */
+function buildScorecardNarration(results: ResearchResults, checklist: Checklist): string {
+  const parts: string[] = [];
+  parts.push(`Here are the final QA results for ${checklist.product}.`);
+  parts.push(`Out of ${results.totalOperations} operations tested, ${results.totalPassed} passed, giving an overall score of ${results.scorePercent} percent.`);
+
+  const passed = results.features.filter(f => f.passed === f.total);
+  const partial = results.features.filter(f => f.passed < f.total);
+
+  if (passed.length > 0) {
+    const names = passed.map(f => f.name).join(", ");
+    parts.push(`The following features work as expected: ${names}.`);
+  }
+  if (partial.length > 0) {
+    const details = partial.map(f => {
+      const failedOps = f.operations.filter(o => !o.success).map(o => o.id).join(", ");
+      return `${f.name} scored ${f.score} — failing operations include ${failedOps}`;
+    }).join("; ");
+    parts.push(`Partial coverage in: ${details}.`);
+  }
+
+  parts.push(`This video serves as evidence of the current product state. Failing operations are demonstrated as bugs to be fixed.`);
+  return parts.join(" ");
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
@@ -631,7 +674,7 @@ test("${slug} QA evidence", async ({ page }) => {
 ${segments.join("\n")}
 
     // Render the full scorecard as the last segment (visible for ~8s)
-    .segment("Here are the final QA results for this product.", {
+    .segment(${JSON.stringify(buildScorecardNarration(results, checklist))}, {
       setup: async () => {
         await page.setContent(SCORECARD_HTML, { waitUntil: "domcontentloaded" });
         await page.waitForTimeout(500);
@@ -670,7 +713,10 @@ async function runSpec(specPath: string, label: string): Promise<{ ok: boolean; 
   console.log(`\n${label}\n  Running: bunx playwright test ${specPath}\n`);
   try {
     const result = await $`bunx playwright test ${specPath} --reporter=list 2>&1`.text();
-    const ok = !result.includes("failed");
+    // Match Playwright's summary line: "N passed" or "N failed"
+    const passMatch = result.match(/(\d+) passed/);
+    const failMatch = result.match(/(\d+) failed/);
+    const ok = passMatch !== null && (failMatch === null || parseInt(failMatch[1]) === 0);
     console.log(result.slice(-1000));
     return { ok, output: result };
   } catch (err: any) {
