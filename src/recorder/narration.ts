@@ -9,7 +9,7 @@ import { $ } from "bun";
 import * as fs from "fs";
 import * as path from "path";
 
-const GEMINI_TTS_MODEL = "gemini-2.5-flash-preview-tts";
+const GEMINI_TTS_MODEL = "gemini-3-flash-preview-tts";
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
 
 export interface NarrationSegment {

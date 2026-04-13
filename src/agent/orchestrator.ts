@@ -143,9 +143,24 @@ export async function runQA(opts: QAOptions): Promise<void> {
     const ffmpegStartMs = Date.now();
 
     try {
+      // Show persistent title card immediately — covers loading/setup in video
+      try {
+        const { showTitleCard } = await import("../../lib/demowright/dist/video-script.mjs");
+        await showTitleCard(session.page, `QA: ${target.title.slice(0, 60)}`, {
+          subtitle: `${targetType.toUpperCase()} #${parsed.number}`,
+        });
+      } catch {
+        // showTitleCard not available in this demowright build — skip
+      }
+
       // Screenshot the GitHub page for evidence
       if (narration) await session.narrate("intro", `Opening ${target.url}`);
       else await session.step(`Opening ${target.url}`);
+      // Hide persistent title card before navigating
+      try {
+        const { hideTitleCard } = await import("../../lib/demowright/dist/video-script.mjs");
+        await hideTitleCard(session.page);
+      } catch { /* skip */ }
       await navigateWithHUD(session, target.url, `QA: ${targetType.toUpperCase()} #${parsed.number}`);
       await session.plan(`Analyzing: ${target.title}`);
       if (narration) await session.narrate("github", "Inspecting GitHub page");
