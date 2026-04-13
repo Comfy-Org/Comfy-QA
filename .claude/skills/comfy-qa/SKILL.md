@@ -282,7 +282,7 @@ test("comfy code search tour", async ({ page }) => {
     });
 
   await script.prepare(page);
-  await script.render(page, { baseName: "comfy-codesearch", outputDir: ".comfy-qa/.demos" });
+  await script.render(page, { baseName: "comfy-codesearch", outputDir: ".comfy-qa/videos" });
 });
 ```
 
@@ -459,11 +459,11 @@ The `setup` callback runs BEFORE narration starts — use it for page transition
 All generated output goes to `.comfy-qa/` (gitignored):
 
 ```
-.comfy-qa/stories/<product>.story.md   ← Phase 2 output
-.comfy-qa/spec/<product>.spec.ts       ← Phases 3–5 output
-.comfy-qa/checklists/<product>.yaml    ← Feature checklist (optional)
-.comfy-qa/.demos/<baseName>.mp4        ← Final video
-.comfy-qa/.demos/tmp/<base>.wav        ← Intermediate audio
+.comfy-qa/02-stories/<product>.story.md   ← Phase 2 output
+.comfy-qa/03-spec/<product>.spec.ts       ← Phases 3–5 output
+.comfy-qa/01-checklists/<product>.yaml    ← Feature checklist (optional)
+.comfy-qa/04-videos/<baseName>.mp4        ← Final video
+.comfy-qa/04-videos/tmp/<base>.wav        ← Intermediate audio
 .comfy-qa/.tmp/demos/<test>/           ← Playwright artifacts
 ```
 
@@ -477,10 +477,10 @@ demo/fixtures/mux-reporter.ts          ← Video + audio → MP4 muxer
 
 | Spec | Segs | NAVIGATE | INTERACT | OBSERVE | Ratio | Notes |
 |------|:----:|:--------:|:--------:|:-------:|:-----:|-------|
-| `.comfy-qa/spec/download-data.spec.ts` | 8 | 0 | 5 | 3 | 63% ✅ | clicks 4 time-range buttons + chart sweep |
-| `.comfy-qa/spec/registry-web.spec.ts` | 12 | 3 | 5 | 4 | 67% ✅ | search → detail page → back |
-| `.comfy-qa/spec/comfy-vibe.spec.ts` | 9 | 2 | 5 | 2 | 78% ✅ | sidebar nav + search + filter tabs |
+| `.comfy-qa/03-spec/download-data.spec.ts` | 8 | 0 | 5 | 3 | 63% ✅ | clicks 4 time-range buttons + chart sweep |
+| `.comfy-qa/03-spec/registry-web.spec.ts` | 12 | 3 | 5 | 4 | 67% ✅ | search → detail page → back |
+| `.comfy-qa/03-spec/comfy-vibe.spec.ts` | 9 | 2 | 5 | 2 | 78% ✅ | sidebar nav + search + filter tabs |
 
-**Best example:** `.comfy-qa/spec/comfy-vibe.spec.ts` — 78% interactive, sidebar click, search, filter, sort, CTA click.
-**Setup pattern example:** `.comfy-qa/spec/registry-web.spec.ts` — navigate to detail page and back via `setup` callback.
-**SSR workaround:** `.comfy-qa/spec/comfy-website.spec.ts` — blocks all `<script>` for Nuxt sites that hang on `page.evaluate`.
+**Best example:** `.comfy-qa/03-spec/comfy-vibe.spec.ts` — 78% interactive, sidebar click, search, filter, sort, CTA click.
+**Setup pattern example:** `.comfy-qa/03-spec/registry-web.spec.ts` — navigate to detail page and back via `setup` callback.
+**SSR workaround:** `.comfy-qa/03-spec/comfy-website.spec.ts` — blocks all `<script>` for Nuxt sites that hang on `page.evaluate`.

@@ -117,7 +117,7 @@ bunx playwright test demo/comfy-docs.spec.ts  # run one demo
 bun demo/evaluate-demos.ts              # evaluate output videos with Gemini
 ```
 
-Output goes to `.comfy-qa/.demos/` (git-ignored). The mux-reporter at `demo/fixtures/mux-reporter.ts` automatically combines video + narration audio + subtitles into mp4 after each test.
+Output goes to `.comfy-qa/04-videos/` (git-ignored). The mux-reporter at `demo/fixtures/mux-reporter.ts` automatically combines video + narration audio + subtitles into mp4 after each test.
 
 ### Submodule: demowright
 

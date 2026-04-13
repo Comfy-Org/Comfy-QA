@@ -18,8 +18,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "../..");
 const COMFY_QA_DIR = path.join(PROJECT_ROOT, ".comfy-qa");
 // demowright joins outputDir with cwd → use a relative path
-const DEMOS_OUTPUT_DIR_REL = ".comfy-qa/.demos";
-const DEMOS_OUTPUT_DIR = path.join(COMFY_QA_DIR, ".demos");
+const DEMOS_OUTPUT_DIR_REL = ".comfy-qa/04-videos";
+const DEMOS_OUTPUT_DIR = path.join(COMFY_QA_DIR, "videos");
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_TTS_MODEL = "gemini-2.5-flash-preview-tts";
@@ -178,7 +178,7 @@ export const test = base.extend<{ audioPath: string; videoPathHolder: { path?: s
     } as any);
 
     await use(context);
-    // demowright's render() handles muxing audio + video → .comfy-qa/.demos/<baseName>.mp4
+    // demowright's render() handles muxing audio + video → .comfy-qa/04-videos/<baseName>.mp4
   },
 });
 

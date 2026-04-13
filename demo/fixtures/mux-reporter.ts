@@ -5,11 +5,11 @@
  *
  * Inputs (produced by demowright + the demo fixture):
  *   - <output>/<spec>-<test>-chromium/video.webm   ← Playwright recording
- *   - .comfy-qa/.demos/tmp/<spec>.wav               ← TTS narration
- *   - .comfy-qa/.demos/tmp/<spec>.srt               ← optional captions
+ *   - .comfy-qa/videos/tmp/<spec>.wav               ← TTS narration
+ *   - .comfy-qa/videos/tmp/<spec>.srt               ← optional captions
  *
  * Output:
- *   - .comfy-qa/.demos/<spec>.mp4
+ *   - .comfy-qa/videos/<spec>.mp4
  *
  * Robustness:
  *   - Skips silently if ffmpeg, the webm, or the wav is missing
@@ -33,8 +33,8 @@ import ffmpegStatic from "ffmpeg-static";
 const FFMPEG_BIN = (ffmpegStatic as unknown as string) || "ffmpeg";
 
 const PROJECT_ROOT = process.cwd();
-const PREPARED_DIR = path.join(PROJECT_ROOT, ".comfy-qa", ".demos", "tmp");
-const OUTPUT_DIR = path.join(PROJECT_ROOT, ".comfy-qa", ".demos");
+const PREPARED_DIR = path.join(PROJECT_ROOT, ".comfy-qa", "04-videos", "tmp");
+const OUTPUT_DIR = path.join(PROJECT_ROOT, ".comfy-qa", "04-videos");
 
 function specSlug(testFile: string): string {
   return path.basename(testFile).replace(/\.spec\.[tj]sx?$/, "");

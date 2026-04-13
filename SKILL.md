@@ -13,9 +13,9 @@ Automated QA demo video generator for Comfy-Org's public-facing products. Given 
 Input:  PR / issue / feature doc / product URL
   ↓
 Phase 1: Probe → discover site structure (headless browser)
-Phase 2: Story → generate .comfy-qa/stories/<product>.story.md
-Phase 3: Spec  → generate .comfy-qa/spec/<product>.spec.ts
-Phase 4: Video → render .comfy-qa/.demos/<product>.mp4
+Phase 2: Story → generate .comfy-qa/02-stories/<product>.story.md
+Phase 3: Spec  → generate .comfy-qa/03-spec/<product>.spec.ts
+Phase 4: Video → render .comfy-qa/04-videos/<product>.mp4
   ↓
 Output: Narrated MP4 with TTS, cursor HUD, subtitles
 ```
@@ -28,10 +28,10 @@ bun install
 bun run prepare   # sync demowright submodule
 
 # Generate a demo for a product
-# 1. Write or generate a story in .comfy-qa/stories/
-# 2. Write or generate a spec in .comfy-qa/spec/
+# 1. Write or generate a story in .comfy-qa/02-stories/
+# 2. Write or generate a spec in .comfy-qa/03-spec/
 # 3. Run the spec
-bunx playwright test .comfy-qa/spec/<product>.spec.ts
+bunx playwright test .comfy-qa/03-spec/<product>.spec.ts
 
 # Run all demos
 bunx playwright test
@@ -65,7 +65,7 @@ demo/
 ├── spec/                  ← generated Playwright spec files
 ├── stories/               ← generated story markdown files
 ├── checklists/            ← generated feature checklists (YAML)
-├── .demos/                ← rendered MP4 videos
+├── videos/                ← rendered MP4 videos
 └── .tmp/                  ← intermediate Playwright artifacts
 ```
 
