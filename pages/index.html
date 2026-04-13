@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comfy QA — Registry</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .badge-pass { background: #22c55e; }
+    .badge-fail { background: #ef4444; }
+    .badge-running { background: #f59e0b; animation: pulse 2s infinite; }
+    .badge-skip { background: #6b7280; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .card { transition: all 0.15s ease; }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen">
+  <!-- Header -->
+  <header class="border-b border-zinc-800 px-6 py-4">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-bold">Comfy QA</h1>
+        <p class="text-sm text-zinc-400">Automated QA video registry for Comfy-Org products</p>
+      </div>
+      <div class="flex gap-3 text-sm">
+        <a href="https://github.com/Comfy-Org/Comfy-QA" class="text-zinc-400 hover:text-white">GitHub</a>
+        <a href="https://www.npmjs.com/package/comfy-qa" class="text-zinc-400 hover:text-white">npm</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Filters -->
+  <div class="border-b border-zinc-800 px-6 py-3">
+    <div class="max-w-6xl mx-auto flex items-center gap-4">
+      <div class="flex gap-1 flex-wrap">
+        <button onclick="filter('all')" class="filter-btn active px-3 py-1 rounded text-sm" data-filter="all">All</button>
+        <button onclick="filter('qa')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="qa">QA Runs</button>
+        <button onclick="filter('demo')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="demo">Demos</button>
+        <button onclick="filter('pass')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="pass">Pass</button>
+        <button onclick="filter('fail')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="fail">Fail</button>
+        <span class="text-zinc-700 px-1">|</span>
+        <span id="repo-filters" class="flex gap-1"></span>
+      </div>
+      <input type="text" id="search" placeholder="Search by issue #, repo, or product..."
+        class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-1 text-sm focus:outline-none focus:border-zinc-500"
+        oninput="renderCards()">
+      <span id="count" class="text-sm text-zinc-500"></span>
+    </div>
+  </div>
+
+  <!-- Stats bar -->
+  <div class="border-b border-zinc-800 px-6 py-2">
+    <div class="max-w-6xl mx-auto flex gap-6 text-sm text-zinc-400">
+      <span id="stat-total">Loading...</span>
+      <span id="stat-pass" class="text-green-400"></span>
+      <span id="stat-fail" class="text-red-400"></span>
+      <span id="stat-running" class="text-yellow-400"></span>
+    </div>
+  </div>
+
+  <!-- Cards grid -->
+  <main class="px-6 py-6">
+    <div id="grid" class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="col-span-full text-center text-zinc-500 py-12">Loading QA runs...</div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-zinc-800 px-6 py-4 text-center text-sm text-zinc-500">
+    Powered by <a href="https://github.com/Comfy-Org/Comfy-QA" class="text-zinc-400 hover:text-white">Comfy-QA</a>
+    — Data from GitHub API (no database)
+  </footer>
+
+  <script>
+    const REPO = "Comfy-Org/Comfy-QA";
+    const PAGES_DOMAIN = "comfy-qa.pages.dev";
+
+    let allRuns = [];
+    let currentFilter = "all";
+
+    // Fetch all branches that match QA/demo patterns
+    async function fetchBranches() {
+      const resp = await fetch(`https://api.github.com/repos/${REPO}/branches?per_page=100`);
+      if (!resp.ok) return [];
+      return (await resp.json()).map(b => b.name);
+    }
+
+    // Fetch results.json from a branch (via CF Pages or raw GitHub)
+    async function fetchRunMeta(branch) {
+      // Try CF Pages first (faster, cached)
+      const pagesUrl = `https://${branch}.${PAGES_DOMAIN}/results.json`;
+      try {
+        const resp = await fetch(pagesUrl, { signal: AbortSignal.timeout(5000) });
+        if (resp.ok) return await resp.json();
+      } catch {}
+
+      // Fallback: GitHub raw content
+      try {
+        const resp = await fetch(`https://raw.githubusercontent.com/${REPO}/${branch}/results.json`, { signal: AbortSignal.timeout(5000) });
+        if (resp.ok) return await resp.json();
+      } catch {}
+
+      // Return minimal info parsed from branch name
+      return parseBranchName(branch);
+    }
+
+    function parseBranchName(branch) {
+      // Pattern: qa-{repo}-{number} or sno-qa-{number}
+      const qaMatch = branch.match(/^(?:sno-)?qa-(?:(.+?)-)?(\d+)$/);
+      if (qaMatch) return { type: "qa", repo: qaMatch[1] || "unknown", number: qaMatch[2], status: "unknown", branch };
+
+      // Pattern: demo-{repo}-{product} or sno-demo-{product}
+      const demoMatch = branch.match(/^(?:sno-)?demo-(?:(.+?)-)?(.+)$/);
+      if (demoMatch) return { type: "demo", repo: demoMatch[1] || "comfy-qa", product: demoMatch[2], status: "unknown", branch };
+
+      return { type: "other", branch, status: "unknown" };
+    }
+
+    // Also fetch running GitHub Actions workflows
+    async function fetchRunningWorkflows() {
+      try {
+        const resp = await fetch(`https://api.github.com/repos/${REPO}/actions/runs?status=in_progress&per_page=10`);
+        if (!resp.ok) return [];
+        const data = await resp.json();
+        return (data.workflow_runs || []).map(r => ({
+          type: "running",
+          status: "running",
+          title: r.display_title,
+          branch: r.head_branch,
+          url: r.html_url,
+          started: r.run_started_at,
+        }));
+      } catch { return []; }
+    }
+
+    function statusBadge(status) {
+      const cls = { pass: "badge-pass", fail: "badge-fail", running: "badge-running", skip: "badge-skip", unknown: "badge-skip" }[status] || "badge-skip";
+      const label = { pass: "PASS", fail: "FAIL", running: "RUNNING", skip: "SKIP", unknown: "?" }[status] || status;
+      return `<span class="${cls} px-2 py-0.5 rounded text-xs font-bold text-white">${label}</span>`;
+    }
+
+    function renderCard(run) {
+      const pageUrl = `https://${run.branch}.${PAGES_DOMAIN}/`;
+      const title = run.title || run.product || `#${run.number}` || run.branch;
+      const subtitle = run.repo || run.type || "";
+      const date = run.date || run.started || "";
+      const dateStr = date ? new Date(date).toLocaleDateString() : "";
+      const hasVideo = run.hasVideo !== false;
+
+      return `
+        <a href="${pageUrl}" target="_blank" class="card block bg-zinc-900 border border-zinc-800 rounded-lg p-4 hover:border-zinc-600">
+          <div class="flex items-start justify-between mb-2">
+            <div class="font-medium text-sm">${title}</div>
+            ${statusBadge(run.status)}
+          </div>
+          <div class="text-xs text-zinc-500 mb-3">${subtitle} ${dateStr}</div>
+          ${hasVideo ? `
+            <div class="bg-zinc-800 rounded aspect-video flex items-center justify-center text-zinc-600 text-xs mb-2">
+              <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+          ` : ''}
+          <div class="text-xs text-zinc-600 font-mono">${run.branch}</div>
+        </a>
+      `;
+    }
+
+    function renderCards() {
+      const search = document.getElementById("search").value.toLowerCase();
+      const filtered = allRuns.filter(r => {
+        if (currentFilter === "qa" && r.type !== "qa" && r.type !== "running") return false;
+        if (currentFilter === "demo" && r.type !== "demo") return false;
+        if (currentFilter === "pass" && r.status !== "pass") return false;
+        if (currentFilter === "fail" && r.status !== "fail") return false;
+        if (currentFilter.startsWith("repo:") && r.repo !== currentFilter.slice(5)) return false;
+        if (search) {
+          const text = JSON.stringify(r).toLowerCase();
+          return text.includes(search);
+        }
+        return true;
+      });
+
+      const grid = document.getElementById("grid");
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center text-zinc-500 py-12">
+          ${allRuns.length === 0 ? "No QA runs found yet. Runs will appear here when CI deploys results." : "No results match your filter."}
+        </div>`;
+      } else {
+        grid.innerHTML = filtered.map(renderCard).join("");
+      }
+      document.getElementById("count").textContent = `${filtered.length} of ${allRuns.length}`;
+    }
+
+    function filter(f) {
+      currentFilter = f;
+      document.querySelectorAll(".filter-btn").forEach(b => {
+        b.classList.toggle("bg-zinc-700", b.dataset.filter === f);
+        b.classList.toggle("text-white", b.dataset.filter === f);
+        b.classList.toggle("active", b.dataset.filter === f);
+      });
+      renderCards();
+    }
+
+    function filterRepo(repo) {
+      currentFilter = "repo:" + repo;
+      document.querySelectorAll(".filter-btn").forEach(b => {
+        b.classList.toggle("bg-zinc-700", b.dataset.filter === currentFilter);
+        b.classList.toggle("text-white", b.dataset.filter === currentFilter);
+      });
+      renderCards();
+    }
+
+    async function init() {
+      // Fetch branches + running workflows in parallel
+      const [branches, running] = await Promise.all([
+        fetchBranches(),
+        fetchRunningWorkflows(),
+      ]);
+
+      // Match branches from any repo: qa-*, demo-*, sno-qa-*, sno-demo-*
+      const qaBranches = branches.filter(b => /^(sno-)?(qa|demo)-/.test(b));
+
+      // Fetch metadata for each branch (parallel, with limit)
+      const metas = await Promise.all(qaBranches.map(b => fetchRunMeta(b)));
+
+      allRuns = [...running, ...metas].sort((a, b) => {
+        // Running first, then by date desc
+        if (a.status === "running" && b.status !== "running") return -1;
+        if (b.status === "running" && a.status !== "running") return 1;
+        return (b.date || "") > (a.date || "") ? 1 : -1;
+      });
+
+      // Build repo filter buttons dynamically
+      const repos = [...new Set(allRuns.map(r => r.repo).filter(Boolean))];
+      document.getElementById("repo-filters").innerHTML = repos.map(repo =>
+        `<button onclick="filterRepo('${repo}')" class="filter-btn px-2 py-0.5 rounded text-xs border border-zinc-700 text-zinc-400 hover:text-white" data-filter="repo:${repo}">${repo}</button>`
+      ).join("");
+
+      // Stats
+      const pass = allRuns.filter(r => r.status === "pass").length;
+      const fail = allRuns.filter(r => r.status === "fail").length;
+      const runningCount = allRuns.filter(r => r.status === "running").length;
+      document.getElementById("stat-total").textContent = `${allRuns.length} total runs`;
+      document.getElementById("stat-pass").textContent = pass ? `${pass} pass` : "";
+      document.getElementById("stat-fail").textContent = fail ? `${fail} fail` : "";
+      document.getElementById("stat-running").textContent = runningCount ? `${runningCount} running` : "";
+
+      renderCards();
+    }
+
+    init();
+  </script>
+</body>
+</html>

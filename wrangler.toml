@@ -1,0 +1,3 @@
+name = "comfy-qa"
+pages_build_output_dir = "./pages"
+compatibility_date = "2026-04-13"
