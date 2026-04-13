@@ -710,9 +710,11 @@ ${segments.join("\n")}
 // ---------------------------------------------------------------------------
 
 async function runSpec(specPath: string, label: string): Promise<{ ok: boolean; output: string }> {
-  console.log(`\n${label}\n  Running: bunx playwright test ${specPath}\n`);
+  // Use -c demo/ to override testDir so specs in demo/ are found
+  const testDir = path.dirname(specPath);
+  console.log(`\n${label}\n  Running: bunx playwright test -c ${testDir}/ ${specPath}\n`);
   try {
-    const result = await $`bunx playwright test ${specPath} --reporter=list 2>&1`.text();
+    const result = await $`bunx playwright test -c ${testDir}/ ${specPath} --reporter=list 2>&1`.text();
     // Match Playwright's summary line: "N passed" or "N failed"
     const passMatch = result.match(/(\d+) passed/);
     const failMatch = result.match(/(\d+) failed/);
