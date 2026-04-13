@@ -15,6 +15,7 @@ if (fs.existsSync(envPath)) {
 }
 
 export default defineConfig({
+  preserveOutput: "always",
   timeout: 5 * 60_000,
   use: {
     video: { mode: "on", size: { width: 1280, height: 720 } },
