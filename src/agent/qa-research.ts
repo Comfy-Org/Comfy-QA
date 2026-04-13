@@ -710,6 +710,10 @@ ${segments.join("\n")}
 // ---------------------------------------------------------------------------
 
 async function runSpec(specPath: string, label: string): Promise<{ ok: boolean; output: string }> {
+  // Clean duplicate playwright from demowright submodule (causes "Requiring @playwright/test second time" error)
+  for (const d of ["lib/demowright/node_modules/playwright", "lib/demowright/node_modules/@playwright"]) {
+    try { fs.rmSync(d, { recursive: true, force: true }); } catch {}
+  }
   // Use -c demo/ to override testDir so specs in demo/ are found
   const testDir = path.dirname(specPath);
   console.log(`\n${label}\n  Running: bunx playwright test -c ${testDir}/ ${specPath}\n`);
