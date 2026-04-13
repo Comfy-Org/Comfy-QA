@@ -1,0 +1,126 @@
+# QA Checklist: Comfy Registry
+# Each operation is 1 point. Total score = passed / total.
+# The research agent tests each operation, then generates a .spec.ts
+# that demonstrates both successes and failures with narration.
+
+product: Comfy Registry
+url: https://registry.comfy.org/
+
+persona: >
+  A ComfyUI user who wants to find, evaluate, and install custom nodes.
+  First person, present tense, conversational tone.
+
+features:
+  - name: Landing Page
+    operations:
+      - id: view_hero
+        type: read
+        description: "Hero section with branding and tagline"
+        steps_hint: "Observe the hero heading and Get Started button"
+        narration: "Welcome to the Comfy Registry — the central hub for finding and installing ComfyUI custom nodes."
+        success_criteria: "Page loads with 'Welcome to ComfyUI Registry' heading visible"
+
+      - id: view_trending
+        type: read
+        description: "Trending/featured node cards"
+        steps_hint: "Scroll down to see the node cards grid"
+        narration: "Scrolling down, I can see the trending nodes — these are what the community is installing right now."
+        success_criteria: "Node cards visible below the fold"
+
+  - name: Node Search
+    operations:
+      - id: search_by_name
+        type: create
+        description: "Type a search query and get results"
+        steps_hint: "Click search input, type 'SUPIR', wait for results"
+        narration: "I want image upscaling, so I'm searching for SUPIR. Results appear instantly as I type."
+        success_criteria: "Search results appear with node cards matching the query"
+
+      - id: clear_and_search_again
+        type: update
+        description: "Clear search and type a different query"
+        steps_hint: "Clear the search input, type 'video', wait for new results"
+        narration: "Let me clear that and try a different search — typing video to find video processing nodes."
+        success_criteria: "New search results appear for the different query"
+
+      - id: view_result_card
+        type: read
+        description: "Inspect a search result card"
+        steps_hint: "Hover over a result card to see details"
+        narration: "Each result card shows the name, version, publisher, download count, and tags — everything I need to decide at a glance."
+        success_criteria: "Result card visible with name, version, and download count"
+
+  - name: Node Detail
+    operations:
+      - id: view_node_page
+        type: read
+        description: "View a node's detail page"
+        steps_hint: "Navigate to /nodes/comfyui-reactor-node"
+        narration: "Here's the detail page for ReActor Node — I can see the name, publisher badge, version, and download count right at the top."
+        success_criteria: "Node detail page loads with node name and metadata visible"
+
+      - id: view_readme
+        type: read
+        description: "View the node's README documentation"
+        steps_hint: "Scroll down to the Description section"
+        narration: "The README documentation is rendered right here — no more hunting through GitHub wikis."
+        success_criteria: "Description/README section visible with text content"
+
+      - id: view_install_command
+        type: read
+        description: "View the install command"
+        steps_hint: "Find the 'comfy node install' command with copy button"
+        narration: "One command to install — just copy and paste into your terminal."
+        success_criteria: "Install command visible with copy button"
+
+      - id: view_version_history
+        type: read
+        description: "View version history"
+        steps_hint: "Scroll to Version history section"
+        narration: "The version history shows frequent updates — that means active maintenance and a healthy project."
+        success_criteria: "Version history section visible with version entries"
+
+      - id: view_metadata
+        type: read
+        description: "View compatibility metadata (OS, accelerators, license)"
+        steps_hint: "Check the sidebar or metadata area"
+        narration: "The metadata sidebar tells me everything about compatibility — OS support, GPU accelerators, dependencies, and license."
+        success_criteria: "Metadata visible showing OS support or license or dependencies"
+
+  - name: Publisher Profile
+    operations:
+      - id: navigate_to_publisher
+        type: read
+        description: "Navigate to a publisher's profile from node detail"
+        steps_hint: "Click the publisher name link on the node detail page"
+        narration: "Clicking on the publisher name takes me to their profile where I can see all their other nodes."
+        success_criteria: "Publisher profile page loads with publisher name and node list"
+
+      - id: view_publisher_nodes
+        type: read
+        description: "View all nodes by this publisher"
+        steps_hint: "Check the publisher's node list"
+        narration: "If I trust one package from a developer, I probably want to check out everything else they've built."
+        success_criteria: "List of nodes by this publisher visible"
+
+  - name: Documentation
+    operations:
+      - id: view_docs_overview
+        type: read
+        description: "View the registry documentation"
+        steps_hint: "Navigate to https://docs.comfy.org/registry/overview"
+        narration: "The documentation covers everything from API endpoints to publishing guides and packaging requirements."
+        success_criteria: "Registry docs page loads with documentation content"
+
+      - id: view_publish_guide
+        type: read
+        description: "View the publishing workflow guide"
+        steps_hint: "Click 'Publishing Nodes' in docs sidebar"
+        narration: "Publishing your own node gives you a dedicated page with version tracking and download statistics."
+        success_criteria: "Publishing Nodes documentation page visible"
+
+conclusion:
+  narration: >
+    With the Comfy Registry you get instant search, verified publishers,
+    one-command installs, version tracking, and a growing library of
+    community nodes. Start exploring at registry.comfy.org.

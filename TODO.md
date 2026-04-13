@@ -12,57 +12,45 @@ Checklist YAML (feature x CRUD operations with point values)
 
 ## TODO
 
-### 3. Research Agent Phase 2 — Debug loop
-- [x] If spec fails, LLM reads error + spec → fixes spec → re-runs
-- [x] Loop until spec passes or max retries (3)
-- [ ] Handle common failures: selector changed, page didn't load, timeout
-
-### 4. Research Agent Phase 3 — Record
-- [ ] Verify demowright correctly detects video mode and adds delays
-- [ ] Verify TTS narration plays during recording
-- [ ] If recording fails, go back to Phase 2 to fix, then retry Phase 3
-
-### 5. QA Scorecard rendering
-- [x] Render QA results as fullscreen HTML card (setContent + segment)
-- [x] Show per-feature scores (e.g., Node Detail 4/5)
-- [x] Show total score (e.g., 11/13 = 85%)
-- [x] Rich scorecard with color-coded pass/partial, gradient background, grid layout
-
-### 6. Cleanup & polish
-- [ ] Remove old demo-research.ts and demo-editor.ts once new pipeline is validated
-- [x] Add checklist YAMLs: comfy-docs, comfy-website, download-data, embedded-workflow-editor
-- [ ] Run QA Research Agent on all products (in progress)
-- [ ] Add more CRUD operations to checklist (currently all read-only)
-
-### 7. Infrastructure fixes
-- [x] cloud-comfy headless WebGL via Chromium --headless=new
-- [x] cloud-comfy email input explicit waitFor
-- [x] mux-reporter webm path fallback (attachment → outputDir → tmp/demos scan)
-- [x] mux-reporter subtitle filter fallback
+### Remaining
+- [ ] Improve Gemini evaluation score: average 3.7/10 → target 7/10
+- [ ] Fix mux-reporter subtitles filter on macOS (path quoting)
+- [ ] Reduce title card idle time (video starts recording before render begins)
 
 ## DONE
 
-### New architecture (Phase 1 + spec generation)
-- [x] Redesigned checklist YAML format with CRUD operations and success_criteria
-- [x] Built QA Research Agent (`src/agent/qa-research.ts`) with 3-phase pipeline
-- [x] Phase 1: headless exploration with LLM, tests each operation, scores pass/fail
-- [x] Phase 2: generates demowright-compatible `.spec.ts` from research results
-- [x] Phase 3: runs spec via `playwright test` (debug fast, record with video)
-- [x] QA scorecard printed to console + embedded in spec outro card
-- [x] Wrote docs (`docs/research-agent.md`)
-- [x] Updated `demo/checklists/registry-web.yaml` to new CRUD format
+- [x] QA Research Agent (`src/agent/qa-research.ts`) — 3-phase pipeline
+- [x] Phase 1: headless LLM exploration, tests each CRUD operation, scores pass/fail
+- [x] Phase 2: generates demowright .spec.ts, debug loop with LLM auto-fix (3 retries)
+- [x] Phase 3: runs spec with video recording (demowright delays + TTS)
+- [x] Anthropic SDK with 60s timeout (fixes Bun fetch hanging)
+- [x] Phase 2 pass detection: regex "N passed"/"N failed" (not string match)
+- [x] Visual actions in system prompt (safeMove, hover, scroll required)
+- [x] QA scorecard: fullscreen HTML card with color-coded results + long narration
+- [x] Checklist YAMLs: registry-web, comfy-docs, comfy-website, download-data, embedded-editor
+- [x] CRUD operations: added create (search input), update (filter switch) operations
+- [x] cloud-comfy headless WebGL via Chromium --headless=new
+- [x] Gemini 3.1 Pro video evaluator (demo/evaluate-demos.ts)
+- [x] demowright setup API: segment({ setup, action }) for pre-narration navigation
+- [x] Deleted old demo-research.ts and demo-editor.ts
+- [x] Timeout increased to 20min for slow specs
+- [x] preserveOutput: "always" for webm retention
+- [x] mux-reporter webm fallback + subtitles fallback
+- [x] docs/research-agent.md with QA principles
 
-### Research Agent v1-v5 (exploration, now superseded)
-- [x] Built Research Agent with LLM-in-the-loop recording
-- [x] Built Editor Agent with segment scoring + ffmpeg assembly
-- [x] Identified idle time problem (LLM thinking = 50-90% of video)
-- [x] Improved Editor with burst-based cutting (63% idle removal)
-- [x] Confirmed fundamental limitation: can't cut out all idle time
-- [x] Decided on new architecture: separate research from recording
+### QA Scores (Phase 1)
+| Product | Score |
+|---------|-------|
+| comfy-docs | 80% (4/5) |
+| comfy-website | 80% (4/5) |
+| comfy-registry | 77% (10/13) |
+| embedded-workflow-editor | 75% (3/4) |
+| download-data | 100% (5/5) |
 
-### Analysis & Findings
-- [x] registry.comfy.org/nodes requires client-side auth (redirects to sign-in)
-- [x] Individual node pages (/nodes/comfyui-reactor-node) work without auth
-- [x] Publisher pages work without auth
-- [x] docs.comfy.org accessible without auth
-- [x] Improved agent success rate from 31% to 81% with better system prompts
+### Gemini Video Evaluation
+| Video | Score |
+|-------|-------|
+| comfy-registry-qa | 5/10 |
+| comfy-docs-qa | 4/10 |
+| download-data-qa | 2/10 |
+| Average | 3.7/10 |

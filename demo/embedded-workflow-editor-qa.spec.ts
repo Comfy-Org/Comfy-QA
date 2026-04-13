@@ -17,7 +17,7 @@ async function safeMove(page, selector) {
 }
 
 test("embedded-workflow-editor QA evidence", async ({ page }) => {
-  test.setTimeout(10 * 60_000);
+  test.setTimeout(20 * 60_000);
 
   const script = createVideoScript()
     .title("Embedded Workflow Editor QA", {

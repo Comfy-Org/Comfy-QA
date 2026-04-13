@@ -1,0 +1,46 @@
+# QA Checklist: ComfyUI Download Statistics
+product: Download Data
+url: https://comfyui-download-statistics.vercel.app/
+
+persona: >
+  A ComfyUI user or developer checking download trends. First person, present tense.
+
+features:
+  - name: Landing Page
+    operations:
+      - id: view_chart
+        type: read
+        description: "Main download chart"
+        steps_hint: "Observe the download statistics chart"
+        narration: "This dashboard shows ComfyUI download trends over time — useful for tracking growth."
+        success_criteria: "Chart or graph visible with data"
+
+      - id: view_totals
+        type: read
+        description: "Total download numbers"
+        steps_hint: "Look for total download counters"
+        narration: "At a glance, I can see the total downloads across all platforms."
+        success_criteria: "Numeric totals visible"
+
+  - name: Time Ranges
+    operations:
+      - id: switch_daily
+        type: update
+        description: "Switch to daily time range"
+        steps_hint: "Click on 'Daily' or 1d time range button"
+        narration: "Switching to daily view to see short-term download trends."
+        success_criteria: "Daily view selected or daily data visible, chart updated"
+
+      - id: switch_weekly
+        type: update
+        description: "Switch to weekly time range"
+        steps_hint: "Click on 'Weekly' or 7d button"
+        narration: "Now switching to weekly — this smooths out daily noise and shows broader patterns."
+        success_criteria: "Weekly view selected, chart updated"
+
+      - id: switch_monthly
+        type: update
+        description: "Switch to monthly time range"
+        steps_hint: "Click on 'Monthly' or 30d button"
+        narration: "Monthly view shows long-term growth trends over months."
+        success_criteria: "Monthly view selected, chart updated"
