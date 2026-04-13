@@ -752,8 +752,8 @@ async function debugLoop(specPath: string, maxRetries = 3): Promise<boolean> {
 RULES:
 - Only fix the specific error. Don't rewrite the whole spec.
 - Keep the same structure (title, segments, outro).
-- If a selector timed out, try a more robust selector or add .catch(() => {}).
-- If an import is wrong, fix it.
+- NEVER change import paths. Keep them exactly as they are.
+- If a selector timed out, try a more robust selector.
 - Return the COMPLETE fixed spec file (not just the diff).
 
 ## Current spec:
@@ -786,6 +786,10 @@ Return ONLY the fixed TypeScript file content, no markdown fences.`;
       const balancedBraces = (fixedContent.match(/\{/g)?.length ?? 0) === (fixedContent.match(/\}/g)?.length ?? 0);
 
       if (hasImport && hasTest && hasEnd && balancedBraces) {
+        // Force correct import paths (LLM sometimes changes them)
+        fixedContent = fixedContent
+          .replace(/from\s+["'].*?fixtures\/fixture["']/g, 'from "./fixtures/fixture"')
+          .replace(/from\s+["'].*?demowright\/dist\/[^"']*["']/g, 'from "../lib/demowright/dist/index.mjs"');
         fs.writeFileSync(specPath, fixedContent);
         console.log(`  ✏️ Spec updated, retrying...`);
       } else {
