@@ -1,0 +1,13 @@
+{
+  "type": "demo",
+  "branch": "demo-comfy-qa-download-data",
+  "repo": "comfy-qa",
+  "product": "download-data",
+  "title": "ComfyUI Download Statistics Dashboard",
+  "status": "pass",
+  "date": "2026-04-14T00:00:00Z",
+  "hasVideo": true,
+  "segments": 8,
+  "interactive_ratio": "63%",
+  "url": "https://demo-comfy-qa-download-data.comfy-qa.pages.dev/"
+}
