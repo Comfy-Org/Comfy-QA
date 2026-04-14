@@ -97,26 +97,44 @@ def fetch_status(run):
     except:
         pass
 
-    # Try badge.svg — parse status from SVG title text
+    # Try badge.svg — parse detailed status from SVG title text
     try:
+        import re
         req = urllib.request.Request(f"{url}/badge.svg", headers=headers)
         svg = urllib.request.urlopen(req, timeout=8).read().decode()
-        if "reproduced" in svg.lower():
-            run["status"] = "pass"
-        elif "not-repro" in svg.lower() or "inconclusive" in svg.lower():
-            run["status"] = "fail"
-        elif "skip" in svg.lower() or "cancelled" in svg.lower():
-            run["status"] = "skip"
 
-        # Extract title from SVG <title> tag
-        import re
+        # Extract title: "#10766 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
         title_match = re.search(r"<title>([^<]+)</title>", svg)
         if title_match:
-            run["badge_title"] = title_match.group(1)
-            # Extract issue number from badge title
-            num_match = re.search(r"#(\d+)", title_match.group(1))
-            if num_match and run.get("title", "").startswith("#"):
+            badge_text = title_match.group(1)
+            run["badge_title"] = badge_text
+
+            # Parse counts
+            repro = int(m.group(1)) if (m := re.search(r"(\d+)\s*reproduced", badge_text)) else 0
+            not_repro = int(m.group(1)) if (m := re.search(r"(\d+)\s*not-repro", badge_text)) else 0
+            inconclusive = int(m.group(1)) if (m := re.search(r"(\d+)\s*inconclusive", badge_text)) else 0
+            total = int(m.group(1)) if (m := re.search(r"/\s*(\d+)", badge_text)) else (repro + not_repro + inconclusive)
+
+            run["reproduced"] = repro
+            run["not_repro"] = not_repro
+            run["inconclusive"] = inconclusive
+            run["total"] = total
+
+            # Determine status
+            if repro > 0:
+                run["status"] = "reproduced"
+            elif not_repro > 0:
+                run["status"] = "not-repro"
+            elif inconclusive > 0:
+                run["status"] = "inconclusive"
+
+            # Extract issue number
+            num_match = re.search(r"#(\d+)", badge_text)
+            if num_match:
                 run["title"] = f"#{num_match.group(1)}"
+
+        # Store badge URL for direct display
+        run["badge_url"] = f"{url}/badge.svg"
     except:
         pass
 

@@ -39,8 +39,9 @@
         <button onclick="filter('all')" class="filter-btn active px-3 py-1 rounded text-sm" data-filter="all">All</button>
         <button onclick="filter('qa')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="qa">QA Runs</button>
         <button onclick="filter('demo')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="demo">Demos</button>
-        <button onclick="filter('pass')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="pass">Pass</button>
-        <button onclick="filter('fail')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="fail">Fail</button>
+        <button onclick="filter('reproduced')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="reproduced">Reproduced</button>
+        <button onclick="filter('not-repro')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="not-repro">Not Repro</button>
+        <button onclick="filter('inconclusive')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="inconclusive">Inconclusive</button>
         <span class="text-zinc-700 px-1">|</span>
         <span id="repo-filters" class="flex gap-1"></span>
       </div>
@@ -131,9 +132,14 @@
       } catch { return []; }
     }
 
-    function statusBadge(status) {
-      const cls = { pass: "badge-pass", fail: "badge-fail", running: "badge-running", skip: "badge-skip", unknown: "badge-skip" }[status] || "badge-skip";
-      const label = { pass: "PASS", fail: "FAIL", running: "RUNNING", skip: "SKIP", unknown: "?" }[status] || status;
+    function statusBadge(run) {
+      // Use original badge.svg if available (shows detailed reproduced/not-repro/inconclusive)
+      if (run.badge_url) {
+        return `<img src="${run.badge_url}" alt="${run.status}" class="h-5" loading="lazy">`;
+      }
+      const status = run.status || "unknown";
+      const cls = { pass: "badge-pass", reproduced: "badge-pass", fail: "badge-fail", "not-repro": "badge-fail", inconclusive: "badge-skip", running: "badge-running", skip: "badge-skip", unknown: "badge-skip" }[status] || "badge-skip";
+      const label = { pass: "PASS", reproduced: "REPRODUCED", fail: "FAIL", "not-repro": "NOT REPRO", inconclusive: "INCONCLUSIVE", running: "RUNNING", skip: "SKIP", unknown: "?" }[status] || status.toUpperCase();
       return `<span class="${cls} px-2 py-0.5 rounded text-xs font-bold text-white">${label}</span>`;
     }
 
@@ -150,7 +156,7 @@
         <a href="${pageUrl}" target="_blank" class="card block bg-zinc-900 border border-zinc-800 rounded-lg p-4 hover:border-zinc-600">
           <div class="flex items-start justify-between mb-2">
             <div class="font-medium text-sm">${title}</div>
-            ${statusBadge(run.status)}
+            ${statusBadge(run)}
           </div>
           <div class="text-xs text-zinc-500 mb-3">${subtitle} ${dateStr}</div>
           ${hasVideo ? `
@@ -168,8 +174,9 @@
       const filtered = allRuns.filter(r => {
         if (currentFilter === "qa" && r.type !== "qa" && r.type !== "running") return false;
         if (currentFilter === "demo" && r.type !== "demo") return false;
-        if (currentFilter === "pass" && r.status !== "pass") return false;
-        if (currentFilter === "fail" && r.status !== "fail") return false;
+        if (currentFilter === "reproduced" && r.status !== "reproduced" && r.status !== "pass") return false;
+        if (currentFilter === "not-repro" && r.status !== "not-repro") return false;
+        if (currentFilter === "inconclusive" && r.status !== "inconclusive") return false;
         if (currentFilter.startsWith("repo:") && r.repo !== currentFilter.slice(5)) return false;
         if (search) {
           const text = JSON.stringify(r).toLowerCase();
@@ -231,13 +238,16 @@
       ).join("");
 
       // Stats
-      const pass = allRuns.filter(r => r.status === "pass").length;
-      const fail = allRuns.filter(r => r.status === "fail").length;
+      const repro = allRuns.filter(r => r.status === "reproduced" || r.status === "pass").length;
+      const notRepro = allRuns.filter(r => r.status === "not-repro").length;
+      const inconclusive = allRuns.filter(r => r.status === "inconclusive").length;
       const runningCount = allRuns.filter(r => r.status === "running").length;
       document.getElementById("stat-total").textContent = `${allRuns.length} total runs`;
-      document.getElementById("stat-pass").textContent = pass ? `${pass} pass` : "";
-      document.getElementById("stat-fail").textContent = fail ? `${fail} fail` : "";
-      document.getElementById("stat-running").textContent = runningCount ? `${runningCount} running` : "";
+      document.getElementById("stat-pass").textContent = repro ? `${repro} reproduced` : "";
+      document.getElementById("stat-fail").textContent = notRepro ? `${notRepro} not-repro` : "";
+      document.getElementById("stat-running").textContent =
+        (inconclusive ? `${inconclusive} inconclusive` : "") +
+        (runningCount ? ` ${runningCount} running` : "");
 
       renderCards();
     }
