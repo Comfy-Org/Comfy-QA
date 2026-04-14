@@ -128,6 +128,16 @@ HTML
 
 # Copy video and spec if provided
 [ -n "$VIDEO" ] && [ -f "$VIDEO" ] && cp "$VIDEO" video.mp4
+
+# Generate poster thumbnail from video at 3s (for dashboard main page)
+if [ -f "video.mp4" ] && command -v ffmpeg >/dev/null 2>&1; then
+  ffmpeg -y -ss 3 -i video.mp4 -frames:v 1 -vf "scale=640:-1" -q:v 3 thumbnail.jpg 2>/dev/null || true
+  # Fallback to first frame if 3s seek failed (video shorter than 3s)
+  if [ ! -s thumbnail.jpg ]; then
+    ffmpeg -y -i video.mp4 -frames:v 1 -vf "scale=640:-1" -q:v 3 thumbnail.jpg 2>/dev/null || true
+  fi
+fi
+
 [ -n "$SPEC" ] && [ -f "$SPEC" ] && cp "$SPEC" spec.ts
 
 # Commit and push (stores results in git for the dashboard API)

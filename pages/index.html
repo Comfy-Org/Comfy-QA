@@ -161,13 +161,19 @@
           <div class="text-xs text-zinc-500 mb-3">${subtitle} ${dateStr}</div>
           ${hasVideo ? `
             <div class="bg-zinc-800 rounded aspect-video flex items-center justify-center text-zinc-600 text-xs mb-2 overflow-hidden relative group/video">
+              <img
+                class="w-full h-full object-cover absolute inset-0 group-hover/video:opacity-0 transition-opacity"
+                src="${pageUrl}thumbnail.jpg"
+                alt=""
+                loading="lazy"
+                onerror="this.style.display='none'"
+              >
               <video
-                class="w-full h-full object-cover absolute inset-0"
+                class="w-full h-full object-cover absolute inset-0 opacity-0 group-hover/video:opacity-100 transition-opacity"
                 src="${pageUrl}video.mp4"
-                muted loop playsinline preload="metadata"
+                muted loop playsinline preload="none"
                 onmouseenter="this.play().catch(()=>{})"
                 onmouseleave="this.pause();this.currentTime=0"
-                onloadeddata="this.currentTime=3"
               ></video>
               <div class="absolute inset-0 flex items-center justify-center bg-black/40 group-hover/video:opacity-0 transition-opacity pointer-events-none">
                 <svg class="w-10 h-10 text-white/80" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
