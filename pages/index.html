@@ -164,10 +164,10 @@
               <video
                 class="w-full h-full object-cover absolute inset-0"
                 src="${pageUrl}video.mp4"
-                muted loop playsinline preload="none"
+                muted loop playsinline preload="metadata"
                 onmouseenter="this.play().catch(()=>{})"
                 onmouseleave="this.pause();this.currentTime=0"
-                poster="${pageUrl}video.mp4#t=2"
+                onloadeddata="this.currentTime=3"
               ></video>
               <div class="absolute inset-0 flex items-center justify-center bg-black/40 group-hover/video:opacity-0 transition-opacity pointer-events-none">
                 <svg class="w-10 h-10 text-white/80" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
