@@ -76,6 +76,62 @@ for dep in all_deps:
 
 runs.sort(key=lambda r: r.get("date", ""), reverse=True)
 
+# Fetch status from each branch's badge.svg or results.json (parallel)
+import concurrent.futures
+
+def fetch_status(run):
+    url = run.get("url", "").rstrip("/")
+    if not url:
+        return run
+
+    headers = {"User-Agent": "comfy-qa-indexer/1.0"}
+
+    # Try results.json first
+    try:
+        req = urllib.request.Request(f"{url}/results.json", headers=headers)
+        resp = json.loads(urllib.request.urlopen(req, timeout=8).read())
+        if "status" in resp:
+            run["status"] = resp["status"]
+            run["title"] = resp.get("title", run.get("title", ""))
+            return run
+    except:
+        pass
+
+    # Try badge.svg — parse status from SVG title text
+    try:
+        req = urllib.request.Request(f"{url}/badge.svg", headers=headers)
+        svg = urllib.request.urlopen(req, timeout=8).read().decode()
+        if "reproduced" in svg.lower():
+            run["status"] = "pass"
+        elif "not-repro" in svg.lower() or "inconclusive" in svg.lower():
+            run["status"] = "fail"
+        elif "skip" in svg.lower() or "cancelled" in svg.lower():
+            run["status"] = "skip"
+
+        # Extract title from SVG <title> tag
+        import re
+        title_match = re.search(r"<title>([^<]+)</title>", svg)
+        if title_match:
+            run["badge_title"] = title_match.group(1)
+            # Extract issue number from badge title
+            num_match = re.search(r"#(\d+)", title_match.group(1))
+            if num_match and run.get("title", "").startswith("#"):
+                run["title"] = f"#{num_match.group(1)}"
+    except:
+        pass
+
+    return run
+
+print(f"Fetching status for {len(runs)} runs...")
+with concurrent.futures.ThreadPoolExecutor(max_workers=10) as pool:
+    runs = list(pool.map(fetch_status, runs))
+
+status_counts = {}
+for r in runs:
+    s = r.get("status", "unknown")
+    status_counts[s] = status_counts.get(s, 0) + 1
+print(f"Status: {status_counts}")
+
 with open(f"{outdir}/runs.json", "w") as f:
     json.dump(runs, f, indent=2)
 

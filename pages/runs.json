@@ -1,5 +1,53 @@
 [
   {
+    "branch": "sno-qa-9012",
+    "url": "https://sno-qa-9012.comfy-qa.pages.dev",
+    "date": "2026-04-14T13:38:59.94972Z",
+    "hasVideo": true,
+    "type": "qa",
+    "number": "9012",
+    "repo": "sno-qa",
+    "title": "sno-qa #9012",
+    "status": "pass",
+    "badge_title": "#9012 QA0414: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
+  },
+  {
+    "branch": "sno-qa-10850",
+    "url": "https://sno-qa-10850.comfy-qa.pages.dev",
+    "date": "2026-04-14T13:38:56.049503Z",
+    "hasVideo": true,
+    "type": "qa",
+    "number": "10850",
+    "repo": "sno-qa",
+    "title": "sno-qa #10850",
+    "status": "pass",
+    "badge_title": "#10850 QA0414: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
+  },
+  {
+    "branch": "sno-qa-7497",
+    "url": "https://sno-qa-7497.comfy-qa.pages.dev",
+    "date": "2026-04-14T13:38:13.304904Z",
+    "hasVideo": true,
+    "type": "qa",
+    "number": "7497",
+    "repo": "sno-qa",
+    "title": "sno-qa #7497",
+    "status": "pass",
+    "badge_title": "#7497 QA0414: 0 reproduced, 1 not-repro, 0 inconclusive / 1"
+  },
+  {
+    "branch": "sno-qa-11181",
+    "url": "https://sno-qa-11181.comfy-qa.pages.dev",
+    "date": "2026-04-14T13:31:07.375521Z",
+    "hasVideo": true,
+    "type": "qa",
+    "number": "11181",
+    "repo": "sno-qa",
+    "title": "sno-qa #11181",
+    "status": "pass",
+    "badge_title": "#11181 QA0414: 0 reproduced, 1 not-repro, 0 inconclusive / 1"
+  },
+  {
     "branch": "demo-comfy-qa-embedded-workflow-editor",
     "url": "https://demo-comfy-qa-embedded-workf.comfy-qa.pages.dev",
     "date": "2026-04-14T11:18:48.669538Z",
@@ -16,7 +64,7 @@
     "hasVideo": true,
     "type": "demo",
     "product": "registry-node-detail",
-    "title": "Registry Node Detail",
+    "title": "Comfy Registry Node Detail",
     "status": "pass"
   },
   {
@@ -26,7 +74,7 @@
     "hasVideo": true,
     "type": "demo",
     "product": "comfy-docs",
-    "title": "Comfy Docs",
+    "title": "ComfyUI Documentation",
     "status": "pass"
   },
   {
@@ -36,7 +84,7 @@
     "hasVideo": true,
     "type": "demo",
     "product": "download-data",
-    "title": "Download Data",
+    "title": "ComfyUI Download Statistics Dashboard",
     "status": "pass"
   },
   {
@@ -48,7 +96,8 @@
     "number": "10000",
     "repo": "sno-qa",
     "title": "sno-qa #10000",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10000 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-9999",
@@ -59,7 +108,8 @@
     "number": "9999",
     "repo": "sno-qa",
     "title": "sno-qa #9999",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#9999 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-8820",
@@ -70,7 +120,8 @@
     "number": "8820",
     "repo": "sno-qa",
     "title": "sno-qa #8820",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#8820 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10988",
@@ -81,7 +132,8 @@
     "number": "10988",
     "repo": "sno-qa",
     "title": "sno-qa #10988",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10988 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10417",
@@ -92,7 +144,8 @@
     "number": "10417",
     "repo": "sno-qa",
     "title": "sno-qa #10417",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10417 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7192",
@@ -103,7 +156,8 @@
     "number": "7192",
     "repo": "sno-qa",
     "title": "sno-qa #7192",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7192 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10257",
@@ -114,7 +168,8 @@
     "number": "10257",
     "repo": "sno-qa",
     "title": "sno-qa #10257",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10257 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10607",
@@ -125,7 +180,8 @@
     "number": "10607",
     "repo": "sno-qa",
     "title": "sno-qa #10607",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10607 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7432",
@@ -136,7 +192,8 @@
     "number": "7432",
     "repo": "sno-qa",
     "title": "sno-qa #7432",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7432 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7844",
@@ -147,7 +204,8 @@
     "number": "7844",
     "repo": "sno-qa",
     "title": "sno-qa #7844",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7844 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10258",
@@ -158,7 +216,8 @@
     "number": "10258",
     "repo": "sno-qa",
     "title": "sno-qa #10258",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10258 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7441",
@@ -169,7 +228,8 @@
     "number": "7441",
     "repo": "sno-qa",
     "title": "sno-qa #7441",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7441 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-8532",
@@ -180,7 +240,8 @@
     "number": "8532",
     "repo": "sno-qa",
     "title": "sno-qa #8532",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#8532 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-9779",
@@ -191,7 +252,8 @@
     "number": "9779",
     "repo": "sno-qa",
     "title": "sno-qa #9779",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#9779 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-9696",
@@ -202,7 +264,8 @@
     "number": "9696",
     "repo": "sno-qa",
     "title": "sno-qa #9696",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#9696 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10368",
@@ -213,18 +276,8 @@
     "number": "10368",
     "repo": "sno-qa",
     "title": "sno-qa #10368",
-    "status": "unknown"
-  },
-  {
-    "branch": "sno-qa-9012",
-    "url": "https://sno-qa-9012.comfy-qa.pages.dev",
-    "date": "2026-04-13T20:05:38.86002Z",
-    "hasVideo": true,
-    "type": "qa",
-    "number": "9012",
-    "repo": "sno-qa",
-    "title": "sno-qa #9012",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10368 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-11185",
@@ -235,18 +288,8 @@
     "number": "11185",
     "repo": "sno-qa",
     "title": "sno-qa #11185",
-    "status": "unknown"
-  },
-  {
-    "branch": "sno-qa-7497",
-    "url": "https://sno-qa-7497.comfy-qa.pages.dev",
-    "date": "2026-04-13T20:05:37.17586Z",
-    "hasVideo": true,
-    "type": "qa",
-    "number": "7497",
-    "repo": "sno-qa",
-    "title": "sno-qa #7497",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#11185 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7182",
@@ -257,7 +300,8 @@
     "number": "7182",
     "repo": "sno-qa",
     "title": "sno-qa #7182",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7182 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10320",
@@ -268,7 +312,8 @@
     "number": "10320",
     "repo": "sno-qa",
     "title": "sno-qa #10320",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10320 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-8841",
@@ -279,7 +324,8 @@
     "number": "8841",
     "repo": "sno-qa",
     "title": "sno-qa #8841",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#8841 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7456",
@@ -290,7 +336,8 @@
     "number": "7456",
     "repo": "sno-qa",
     "title": "sno-qa #7456",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7456 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-9902",
@@ -301,7 +348,8 @@
     "number": "9902",
     "repo": "sno-qa",
     "title": "sno-qa #9902",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#9902 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-9101",
@@ -312,7 +360,8 @@
     "number": "9101",
     "repo": "sno-qa",
     "title": "sno-qa #9101",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#9101 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-11176",
@@ -323,7 +372,8 @@
     "number": "11176",
     "repo": "sno-qa",
     "title": "sno-qa #11176",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#11176 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10820",
@@ -334,7 +384,8 @@
     "number": "10820",
     "repo": "sno-qa",
     "title": "sno-qa #10820",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10820 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10146",
@@ -345,18 +396,8 @@
     "number": "10146",
     "repo": "sno-qa",
     "title": "sno-qa #10146",
-    "status": "unknown"
-  },
-  {
-    "branch": "sno-qa-10850",
-    "url": "https://sno-qa-10850.comfy-qa.pages.dev",
-    "date": "2026-04-13T20:05:23.427926Z",
-    "hasVideo": true,
-    "type": "qa",
-    "number": "10850",
-    "repo": "sno-qa",
-    "title": "sno-qa #10850",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10146 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-9010",
@@ -367,7 +408,8 @@
     "number": "9010",
     "repo": "sno-qa",
     "title": "sno-qa #9010",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#9010 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7458",
@@ -378,7 +420,8 @@
     "number": "7458",
     "repo": "sno-qa",
     "title": "sno-qa #7458",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7458 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7697",
@@ -389,7 +432,8 @@
     "number": "7697",
     "repo": "sno-qa",
     "title": "sno-qa #7697",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7697 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7806",
@@ -400,7 +444,8 @@
     "number": "7806",
     "repo": "sno-qa",
     "title": "sno-qa #7806",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7806 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10133",
@@ -411,7 +456,8 @@
     "number": "10133",
     "repo": "sno-qa",
     "title": "sno-qa #10133",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10133 QA0413: 0 reproduced, 1 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-8876",
@@ -422,7 +468,8 @@
     "number": "8876",
     "repo": "sno-qa",
     "title": "sno-qa #8876",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#8876 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-8816",
@@ -433,7 +480,8 @@
     "number": "8816",
     "repo": "sno-qa",
     "title": "sno-qa #8816",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#8816 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-11165",
@@ -444,7 +492,8 @@
     "number": "11165",
     "repo": "sno-qa",
     "title": "sno-qa #11165",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#11165 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7147",
@@ -455,7 +504,8 @@
     "number": "7147",
     "repo": "sno-qa",
     "title": "sno-qa #7147",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7147 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7439",
@@ -466,7 +516,8 @@
     "number": "7439",
     "repo": "sno-qa",
     "title": "sno-qa #7439",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7439 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-9862",
@@ -477,7 +528,8 @@
     "number": "9862",
     "repo": "sno-qa",
     "title": "sno-qa #9862",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#9862 QA0413: 0 reproduced, 1 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-9925",
@@ -488,7 +540,8 @@
     "number": "9925",
     "repo": "sno-qa",
     "title": "sno-qa #9925",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#9925 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10981",
@@ -499,7 +552,8 @@
     "number": "10981",
     "repo": "sno-qa",
     "title": "sno-qa #10981",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10981 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7930",
@@ -510,7 +564,8 @@
     "number": "7930",
     "repo": "sno-qa",
     "title": "sno-qa #7930",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7930 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10136",
@@ -521,7 +576,8 @@
     "number": "10136",
     "repo": "sno-qa",
     "title": "sno-qa #10136",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10136 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10794",
@@ -532,7 +588,8 @@
     "number": "10794",
     "repo": "sno-qa",
     "title": "sno-qa #10794",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10794 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7427",
@@ -543,7 +600,8 @@
     "number": "7427",
     "repo": "sno-qa",
     "title": "sno-qa #7427",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7427 QA0413: 0 reproduced, 1 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10124",
@@ -554,7 +612,8 @@
     "number": "10124",
     "repo": "sno-qa",
     "title": "sno-qa #10124",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10124 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-9780",
@@ -565,7 +624,8 @@
     "number": "9780",
     "repo": "sno-qa",
     "title": "sno-qa #9780",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#9780 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7316",
@@ -576,7 +636,8 @@
     "number": "7316",
     "repo": "sno-qa",
     "title": "sno-qa #7316",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7316 QA0413: 0 reproduced, 1 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7690",
@@ -587,7 +648,8 @@
     "number": "7690",
     "repo": "sno-qa",
     "title": "sno-qa #7690",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7690 QA0413: 0 reproduced, 1 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10259",
@@ -598,7 +660,8 @@
     "number": "10259",
     "repo": "sno-qa",
     "title": "sno-qa #10259",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10259 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7168",
@@ -609,7 +672,8 @@
     "number": "7168",
     "repo": "sno-qa",
     "title": "sno-qa #7168",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7168 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-9996",
@@ -620,7 +684,8 @@
     "number": "9996",
     "repo": "sno-qa",
     "title": "sno-qa #9996",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#9996 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-9859",
@@ -631,7 +696,8 @@
     "number": "9859",
     "repo": "sno-qa",
     "title": "sno-qa #9859",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#9859 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7426",
@@ -642,7 +708,8 @@
     "number": "7426",
     "repo": "sno-qa",
     "title": "sno-qa #7426",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7426 QA0413: 0 reproduced, 1 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10416",
@@ -653,7 +720,8 @@
     "number": "10416",
     "repo": "sno-qa",
     "title": "sno-qa #10416",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10416 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-11037",
@@ -664,7 +732,8 @@
     "number": "11037",
     "repo": "sno-qa",
     "title": "sno-qa #11037",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#11037 QA0413: 0 reproduced, 1 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7840",
@@ -675,7 +744,8 @@
     "number": "7840",
     "repo": "sno-qa",
     "title": "sno-qa #7840",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7840 QA0413: 0 reproduced, 1 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-9854",
@@ -686,7 +756,8 @@
     "number": "9854",
     "repo": "sno-qa",
     "title": "sno-qa #9854",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#9854 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-8819",
@@ -697,7 +768,8 @@
     "number": "8819",
     "repo": "sno-qa",
     "title": "sno-qa #8819",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#8819 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7642",
@@ -708,7 +780,8 @@
     "number": "7642",
     "repo": "sno-qa",
     "title": "sno-qa #7642",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7642 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-8906",
@@ -719,7 +792,8 @@
     "number": "8906",
     "repo": "sno-qa",
     "title": "sno-qa #8906",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#8906 QA0413: 0 reproduced, 1 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7320",
@@ -730,7 +804,8 @@
     "number": "7320",
     "repo": "sno-qa",
     "title": "sno-qa #7320",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7320 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-8144",
@@ -741,7 +816,8 @@
     "number": "8144",
     "repo": "sno-qa",
     "title": "sno-qa #8144",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#8144 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-8393",
@@ -752,7 +828,8 @@
     "number": "8393",
     "repo": "sno-qa",
     "title": "sno-qa #8393",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#8393 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10844",
@@ -763,18 +840,8 @@
     "number": "10844",
     "repo": "sno-qa",
     "title": "sno-qa #10844",
-    "status": "unknown"
-  },
-  {
-    "branch": "sno-qa-11181",
-    "url": "https://sno-qa-11181.comfy-qa.pages.dev",
-    "date": "2026-04-13T16:47:32.480714Z",
-    "hasVideo": true,
-    "type": "qa",
-    "number": "11181",
-    "repo": "sno-qa",
-    "title": "sno-qa #11181",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10844 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-9097",
@@ -785,7 +852,8 @@
     "number": "9097",
     "repo": "sno-qa",
     "title": "sno-qa #9097",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#9097 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10563",
@@ -796,7 +864,8 @@
     "number": "10563",
     "repo": "sno-qa",
     "title": "sno-qa #10563",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10563 QA0413: 0 reproduced, 1 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10861",
@@ -807,7 +876,8 @@
     "number": "10861",
     "repo": "sno-qa",
     "title": "sno-qa #10861",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10861 QA0413: 0 reproduced, 1 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10253",
@@ -818,7 +888,8 @@
     "number": "10253",
     "repo": "sno-qa",
     "title": "sno-qa #10253",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10253 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10612",
@@ -829,7 +900,8 @@
     "number": "10612",
     "repo": "sno-qa",
     "title": "sno-qa #10612",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10612 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10307",
@@ -840,7 +912,8 @@
     "number": "10307",
     "repo": "sno-qa",
     "title": "sno-qa #10307",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10307 QA0413: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10766",
@@ -851,7 +924,8 @@
     "number": "10766",
     "repo": "sno-qa",
     "title": "sno-qa #10766",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10766 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10424",
@@ -862,7 +936,8 @@
     "number": "10424",
     "repo": "sno-qa",
     "title": "sno-qa #10424",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10424 QA0413: 0 reproduced, 1 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10708",
@@ -873,7 +948,8 @@
     "number": "10708",
     "repo": "sno-qa",
     "title": "sno-qa #10708",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10708 QA0412: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10288",
@@ -884,7 +960,8 @@
     "number": "10288",
     "repo": "sno-qa",
     "title": "sno-qa #10288",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10288 QA0412: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10504",
@@ -895,7 +972,8 @@
     "number": "10504",
     "repo": "sno-qa",
     "title": "sno-qa #10504",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10504 QA0412: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-3990",
@@ -906,7 +984,8 @@
     "number": "3990",
     "repo": "sno-qa",
     "title": "sno-qa #3990",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#3990 QA0412: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10394",
@@ -917,7 +996,8 @@
     "number": "10394",
     "repo": "sno-qa",
     "title": "sno-qa #10394",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10394 QA0412: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7942",
@@ -928,7 +1008,8 @@
     "number": "7942",
     "repo": "sno-qa",
     "title": "sno-qa #7942",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7942 QA0412: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10688",
@@ -939,7 +1020,8 @@
     "number": "10688",
     "repo": "sno-qa",
     "title": "sno-qa #10688",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10688 QA0412: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-6993",
@@ -950,7 +1032,8 @@
     "number": "6993",
     "repo": "sno-qa",
     "title": "sno-qa #6993",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#6993 QA0412: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-7414",
@@ -961,7 +1044,8 @@
     "number": "7414",
     "repo": "sno-qa",
     "title": "sno-qa #7414",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#7414 QA0412: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10409",
@@ -972,7 +1056,8 @@
     "number": "10409",
     "repo": "sno-qa",
     "title": "sno-qa #10409",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10409 QA0412: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10745",
@@ -983,7 +1068,8 @@
     "number": "10745",
     "repo": "sno-qa",
     "title": "sno-qa #10745",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10745 QA0412: 0 reproduced, 0 not-repro, 1 inconclusive / 1 | Fix: APPROVED"
   },
   {
     "branch": "sno-qa-10682",
@@ -994,7 +1080,8 @@
     "number": "10682",
     "repo": "sno-qa",
     "title": "sno-qa #10682",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10682 QA0412: 1 reproduced, 0 not-repro, 0 inconclusive / 1 | Fix: APPROVED"
   },
   {
     "branch": "sno-qa-10397",
@@ -1005,7 +1092,8 @@
     "number": "10397",
     "repo": "sno-qa",
     "title": "sno-qa #10397",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10397 QA0412: 1 reproduced, 0 not-repro, 0 inconclusive / 1 | Fix: APPROVED"
   },
   {
     "branch": "sno-qa-10834",
@@ -1016,7 +1104,8 @@
     "number": "10834",
     "repo": "sno-qa",
     "title": "sno-qa #10834",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10834 QA0403: 1 reproduced, 0 not-repro, 0 inconclusive / 1 | Fix: APPROVED"
   },
   {
     "branch": "sno-qa-10833",
@@ -1027,7 +1116,8 @@
     "number": "10833",
     "repo": "sno-qa",
     "title": "sno-qa #10833",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10833 QA0403: 0 reproduced, 0 not-repro, 1 inconclusive / 1 | Fix: APPROVED"
   },
   {
     "branch": "sno-qa-10772",
@@ -1038,7 +1128,8 @@
     "number": "10772",
     "repo": "sno-qa",
     "title": "sno-qa #10772",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10772 QA0402: 0 reproduced, 1 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10609",
@@ -1049,7 +1140,8 @@
     "number": "10609",
     "repo": "sno-qa",
     "title": "sno-qa #10609",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10609 QA0402: 0 reproduced, 0 not-repro, 1 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10655",
@@ -1060,7 +1152,8 @@
     "number": "10655",
     "repo": "sno-qa",
     "title": "sno-qa #10655",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10655 QA0402: 1 reproduced, 0 not-repro, 0 inconclusive / 1 | Fix: APPROVED"
   },
   {
     "branch": "sno-qa-10714",
@@ -1071,7 +1164,8 @@
     "number": "10714",
     "repo": "sno-qa",
     "title": "sno-qa #10714",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10714 QA0402: 1 reproduced, 0 not-repro, 0 inconclusive / 1 | Fix: APPROVED"
   },
   {
     "branch": "sno-qa-10679",
@@ -1082,7 +1176,8 @@
     "number": "10679",
     "repo": "sno-qa",
     "title": "sno-qa #10679",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10679 QA0402: 0 reproduced, 0 not-repro, 1 inconclusive / 1 | Fix: APPROVED"
   },
   {
     "branch": "sno-qa-10641",
@@ -1093,7 +1188,8 @@
     "number": "10641",
     "repo": "sno-qa",
     "title": "sno-qa #10641",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10641 QA0402: 0 reproduced, 0 not-repro, 1 inconclusive / 1 | Fix: APPROVED"
   },
   {
     "branch": "sno-qa-10604",
@@ -1104,7 +1200,8 @@
     "number": "10604",
     "repo": "sno-qa",
     "title": "sno-qa #10604",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10604 QA0402: 1 reproduced, 0 not-repro, 0 inconclusive / 1 | Fix: APPROVED"
   },
   {
     "branch": "sno-qa-10681",
@@ -1115,7 +1212,8 @@
     "number": "10681",
     "repo": "sno-qa",
     "title": "sno-qa #10681",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10681 QA0402: 1 reproduced, 0 not-repro, 0 inconclusive / 1 | Fix: APPROVED"
   },
   {
     "branch": "sno-qa-10768",
@@ -1126,7 +1224,8 @@
     "number": "10768",
     "repo": "sno-qa",
     "title": "sno-qa #10768",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10768 QA0402: 0 reproduced, 0 not-repro, 1 inconclusive / 1 | Fix: APPROVED"
   },
   {
     "branch": "sno-qa-10650",
@@ -1137,7 +1236,8 @@
     "number": "10650",
     "repo": "sno-qa",
     "title": "sno-qa #10650",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10650 QA0402: 1 reproduced, 0 not-repro, 0 inconclusive / 1 | Fix: APPROVED"
   },
   {
     "branch": "sno-qa-10648",
@@ -1148,7 +1248,8 @@
     "number": "10648",
     "repo": "sno-qa",
     "title": "sno-qa #10648",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10648 QA0402: 0 reproduced, 0 not-repro, 1 inconclusive / 1 | Fix: APPROVED"
   },
   {
     "branch": "sno-qa-10700",
@@ -1159,7 +1260,8 @@
     "number": "10700",
     "repo": "sno-qa",
     "title": "sno-qa #10700",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10700 QA0402: 0 reproduced, 0 not-repro, 1 inconclusive / 1 | Fix: APPROVED"
   },
   {
     "branch": "sno-qa-10549",
@@ -1170,7 +1272,8 @@
     "number": "10549",
     "repo": "sno-qa",
     "title": "sno-qa #10549",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10549 QA0402: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
   },
   {
     "branch": "sno-qa-10336",
@@ -1181,7 +1284,8 @@
     "number": "10336",
     "repo": "sno-qa",
     "title": "sno-qa #10336",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10336 QA0402: 1 reproduced, 0 not-repro, 0 inconclusive / 1 | Fix: APPROVED"
   },
   {
     "branch": "sno-qa-10247",
@@ -1192,7 +1296,8 @@
     "number": "10247",
     "repo": "sno-qa",
     "title": "sno-qa #10247",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10247 QA0402: 0 reproduced, 0 not-repro, 1 inconclusive / 1 | Fix: APPROVED"
   },
   {
     "branch": "sno-qa-10564",
@@ -1203,7 +1308,8 @@
     "number": "10564",
     "repo": "sno-qa",
     "title": "sno-qa #10564",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10564 QA0402: 0 reproduced, 0 not-repro, 1 inconclusive / 1 | Fix: APPROVED"
   },
   {
     "branch": "sno-qa-10418",
@@ -1214,6 +1320,7 @@
     "number": "10418",
     "repo": "sno-qa",
     "title": "sno-qa #10418",
-    "status": "unknown"
+    "status": "pass",
+    "badge_title": "#10418 QA0402: 0 reproduced, 0 not-repro, 1 inconclusive / 1 | Fix: MINOR ISSUES"
   }
 ]
