@@ -81,30 +81,25 @@
     let allRuns = [];
     let currentFilter = "all";
 
-    // Fetch all branches that match QA/demo patterns
-    async function fetchBranches() {
-      const resp = await fetch(`https://api.github.com/repos/${REPO}/branches?per_page=100`);
-      if (!resp.ok) return [];
-      return (await resp.json()).map(b => b.name);
+    // Load runs from pre-built runs.json (built by scripts/build-index.sh in CI)
+    // Falls back to GitHub API if runs.json is empty or missing.
+    async function fetchRunsFromIndex() {
+      try {
+        const resp = await fetch("runs.json", { signal: AbortSignal.timeout(5000) });
+        if (resp.ok) {
+          const runs = await resp.json();
+          if (runs.length > 0) return runs;
+        }
+      } catch {}
+      return null;
     }
 
-    // Fetch results.json from a branch (via CF Pages or raw GitHub)
-    async function fetchRunMeta(branch) {
-      // Try CF Pages first (faster, cached)
-      const pagesUrl = `https://${branch}.${PAGES_DOMAIN}/results.json`;
-      try {
-        const resp = await fetch(pagesUrl, { signal: AbortSignal.timeout(5000) });
-        if (resp.ok) return await resp.json();
-      } catch {}
-
-      // Fallback: GitHub raw content
-      try {
-        const resp = await fetch(`https://raw.githubusercontent.com/${REPO}/${branch}/results.json`, { signal: AbortSignal.timeout(5000) });
-        if (resp.ok) return await resp.json();
-      } catch {}
-
-      // Return minimal info parsed from branch name
-      return parseBranchName(branch);
+    // Fallback: fetch branches from GitHub API (rate-limited, 60/hr unauthenticated)
+    async function fetchRunsFromGitHub() {
+      const resp = await fetch(`https://api.github.com/repos/${REPO}/branches?per_page=100`);
+      if (!resp.ok) return [];
+      const branches = (await resp.json()).map(b => b.name);
+      return branches.filter(b => /^(sno-)?(qa|demo)-/.test(b)).map(parseBranchName);
     }
 
     function parseBranchName(branch) {
@@ -143,7 +138,8 @@
     }
 
     function renderCard(run) {
-      const pageUrl = `https://${run.branch}.${PAGES_DOMAIN}/`;
+      // CF Pages may truncate long branch names in subdomains — prefer url from results.json
+      const pageUrl = run.url || `https://${run.branch}.${PAGES_DOMAIN}/`;
       const title = run.title || run.product || `#${run.number}` || run.branch;
       const subtitle = run.repo || run.type || "";
       const date = run.date || run.started || "";
@@ -213,17 +209,13 @@
     }
 
     async function init() {
-      // Fetch branches + running workflows in parallel
-      const [branches, running] = await Promise.all([
-        fetchBranches(),
+      // Try pre-built index first, fall back to GitHub API
+      const [indexRuns, running] = await Promise.all([
+        fetchRunsFromIndex(),
         fetchRunningWorkflows(),
       ]);
 
-      // Match branches from any repo: qa-*, demo-*, sno-qa-*, sno-demo-*
-      const qaBranches = branches.filter(b => /^(sno-)?(qa|demo)-/.test(b));
-
-      // Fetch metadata for each branch (parallel, with limit)
-      const metas = await Promise.all(qaBranches.map(b => fetchRunMeta(b)));
+      const metas = indexRuns || await fetchRunsFromGitHub();
 
       allRuns = [...running, ...metas].sort((a, b) => {
         // Running first, then by date desc

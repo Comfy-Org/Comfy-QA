@@ -3,8 +3,10 @@ name: Deploy to Cloudflare Pages
 on:
   push:
     branches: [main]
-    paths: [pages/**]
+    paths: [pages/**, scripts/build-index.sh]
   workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *'  # Rebuild index every 6 hours
 
 jobs:
   deploy:
@@ -14,6 +16,16 @@ jobs:
       deployments: write
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build runs.json index
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: bash scripts/build-index.sh pages
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3

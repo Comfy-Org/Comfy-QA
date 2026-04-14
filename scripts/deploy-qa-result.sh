@@ -130,10 +130,21 @@ HTML
 [ -n "$VIDEO" ] && [ -f "$VIDEO" ] && cp "$VIDEO" video.mp4
 [ -n "$SPEC" ] && [ -f "$SPEC" ] && cp "$SPEC" spec.ts
 
-# Commit and push
+# Commit and push (stores results in git for the dashboard API)
 git add -A
 git commit -m "QA: ${REPO}#${NUMBER} — ${STATUS}"
 git push origin "$BRANCH" --force
+
+# Deploy to CF Pages via wrangler (creates the subdomain immediately)
+CF_TOKEN="${CLOUDFLARE_API_TOKEN:-${CF_API_TOKEN:-}}"
+CF_ACCOUNT="${CLOUDFLARE_ACCOUNT_ID:-}"
+if [ -n "$CF_TOKEN" ] && [ -n "$CF_ACCOUNT" ]; then
+  CLOUDFLARE_API_TOKEN="$CF_TOKEN" CLOUDFLARE_ACCOUNT_ID="$CF_ACCOUNT" \
+    npx wrangler pages deploy . --project-name=comfy-qa --branch="$BRANCH" 2>&1 | tail -3
+else
+  echo "Skipping wrangler deploy (CLOUDFLARE_API_TOKEN not set)"
+  echo "CF Pages will pick up the branch if Git integration is enabled."
+fi
 
 echo ""
 echo "Deployed: https://${BRANCH}.${PAGES_DOMAIN}/"
