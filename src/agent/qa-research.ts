@@ -604,9 +604,11 @@ function generateSpec(results: ResearchResults, checklist: Checklist): string {
         }
 
         if (setupLines.length > 0) {
-          const actionBody = visualLines.length > 0
-            ? visualLines.map(l => `        ${l}`).join("\n") + "\n        await pace();"
-            : "        await pace();";
+          // Interleave visual actions with pace() calls so the cursor moves
+          // throughout the narration, not just once at the start.
+          const interleavedAction = visualLines.length > 0
+            ? visualLines.map(l => `        ${l}\n        await pace();`).join("\n")
+            : "        await pace();\n        await pace();";
 
           segments.push(`    // ${icon} ${op.id} (${op.type}) — PASS
     .segment(${JSON.stringify(narration)}, {
@@ -614,17 +616,18 @@ function generateSpec(results: ResearchResults, checklist: Checklist): string {
 ${setupLines.map(l => `        ${l}`).join("\n")}
       },
       action: async (pace) => {
-${actionBody}
+${interleavedAction}
       },
     })`);
         } else {
-          const bodyLines = visualLines.length > 0
-            ? visualLines.map(l => `      ${l}`).join("\n") + "\n      await pace();"
-            : "      await pace();";
+          // Interleave visual actions with pace() so cursor moves during narration
+          const interleaved = visualLines.length > 0
+            ? visualLines.map(l => `      ${l}\n      await pace();`).join("\n")
+            : "      await pace();\n      await pace();";
 
           segments.push(`    // ${icon} ${op.id} (${op.type}) — PASS
     .segment(${JSON.stringify(narration)}, async (pace) => {
-${bodyLines}
+${interleaved}
     })`);
         }
       } else {
@@ -664,22 +667,28 @@ import { createVideoScript } from "../lib/demowright/dist/index.mjs";
 const SCORECARD_HTML = ${JSON.stringify(scorecardHtml)};
 
 test("${slug} QA evidence", async ({ page }) => {
-  test.setTimeout(10 * 60_000);
+  test.setTimeout(20 * 60_000);
 
   const script = createVideoScript()
     .title(${JSON.stringify(checklist.product + " QA")}, {
       subtitle: "Score: ${results.totalPassed}/${results.totalOperations} (${results.scorePercent}%)",
-      durationMs: 3000,
+      durationMs: 3500,
     })
 ${segments.join("\n")}
 
-    // Render the full scorecard as the last segment (visible for ~8s)
+    // Render the full scorecard as the last segment — narration is intentionally
+    // long (~15s) so the card stays on screen long enough to read.
     .segment(${JSON.stringify(buildScorecardNarration(results, checklist))}, {
       setup: async () => {
         await page.setContent(SCORECARD_HTML, { waitUntil: "domcontentloaded" });
         await page.waitForTimeout(500);
       },
       action: async (pace) => {
+        // Multiple pace() calls distribute the full narration duration
+        // across visible card time (so card is held, not rushed to outro)
+        await pace();
+        await pace();
+        await pace();
         await pace();
       },
     })
@@ -687,7 +696,7 @@ ${segments.join("\n")}
     .outro({
       text: "QA Results: ${results.totalPassed}/${results.totalOperations} (${results.scorePercent}%)",
       subtitle: ${JSON.stringify(scoreLines.join(" | "))},
-      durationMs: 4000,
+      durationMs: 5000,
     });
 
   // Pre-generate TTS BEFORE navigating — avoids idle time in recording
