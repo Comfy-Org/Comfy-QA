@@ -77,6 +77,34 @@ No mocks. QA runs against real servers:
 bun install
 ```
 
+## Roadmap
+
+Short-term, in priority order:
+
+1. **Improve reproduction precision.** Current pipeline misses bugs that depend
+   on specific workflows or custom nodes (see
+   [PR #9430](https://github.com/Comfy-Org/ComfyUI_frontend/pull/9430) — 8/11
+   reproduced). Environment setup tools (workflow loader, custom-node
+   installer, attachment downloader) close this gap.
+
+2. **Measure reliability (flakiness).** Run the same checklist N times, track
+   pass→fail→pass transitions per operation. A QA run is only trustworthy if
+   its result is stable across repeats. Surface flaky operations on the
+   dashboard.
+
+3. **Auto-file GitHub issues for failing operations** — gated behind a
+   confidence threshold. `scripts/report-failures.sh` exists but is intentionally
+   not wired up yet: while reproduction rate is still ~70%, auto-filing would
+   drown maintainers in false positives. Enable once (1) and (2) lift the
+   floor, and keep a manual review step before filing the first batch per repo.
+
+4. **Cross-product QA matrix.** Today: registry, docs, website, download-data,
+   embedded-editor. Add cloud.comfy.org (WebGL, already working via
+   `--headless=new`), comfy-vibe, and first-party ComfyUI_frontend runs.
+
+5. **Continuous QA.** Schedule daily runs, track score trends per product,
+   alert on regressions (score drop ≥ 10%).
+
 ## License
 
 MIT
