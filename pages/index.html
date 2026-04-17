@@ -298,10 +298,11 @@
         if (el) el.textContent = n > 0 ? `(${n})` : "";
       }
 
-      // Build repo filter buttons dynamically
+      // Build repo filter buttons dynamically with counts
       const repos = [...new Set(allRuns.map(r => r.repo).filter(Boolean))];
+      const repoCounts = Object.fromEntries(repos.map(repo => [repo, allRuns.filter(r => r.repo === repo).length]));
       document.getElementById("repo-filters").innerHTML = repos.map(repo =>
-        `<button onclick="filterRepo('${repo}')" class="filter-btn px-2 py-0.5 rounded text-xs border border-zinc-700 text-zinc-400 hover:text-white" data-filter="repo:${repo}">${repo}</button>`
+        `<button onclick="filterRepo('${repo}')" class="filter-btn px-2 py-0.5 rounded text-xs border border-zinc-700 text-zinc-400 hover:text-white" data-filter="repo:${repo}">${repo} <span class="opacity-60">(${repoCounts[repo]})</span></button>`
       ).join("");
 
       // Stats
