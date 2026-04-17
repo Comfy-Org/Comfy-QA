@@ -6,6 +6,8 @@
   <title>Comfy QA — Registry</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' }</script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; }
     .badge-pass { background: #22c55e; }
@@ -25,9 +27,25 @@
         <h1 class="text-xl font-bold">Comfy QA</h1>
         <p class="text-sm text-zinc-400">Automated QA video registry for Comfy-Org products</p>
       </div>
-      <div class="flex gap-3 text-sm">
+      <div class="flex items-center gap-3 text-sm">
         <a href="https://github.com/Comfy-Org/Comfy-QA" class="text-zinc-400 hover:text-white">GitHub</a>
         <a href="https://www.npmjs.com/package/comfy-qa" class="text-zinc-400 hover:text-white">npm</a>
+        <!-- Auth -->
+        <button id="sign-in-btn" onclick="window.signIn()" class="hidden px-3 py-1.5 rounded bg-zinc-700 hover:bg-zinc-600 text-white font-medium text-sm">Sign In</button>
+        <div id="user-dropdown" class="hidden relative">
+          <button onclick="window.toggleDropdown()" class="flex items-center gap-2 hover:opacity-80">
+            <img id="user-avatar" src="" class="w-8 h-8 rounded-full bg-zinc-700 object-cover" alt="">
+            <span id="user-display-name" class="text-sm text-zinc-300 max-w-24 truncate"></span>
+            <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div id="dropdown-menu" class="hidden absolute right-0 mt-2 w-56 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl z-50">
+            <div class="px-4 py-3 border-b border-zinc-700">
+              <div id="dropdown-name" class="text-sm font-semibold text-white"></div>
+              <div id="dropdown-email" class="text-xs text-zinc-400 truncate mt-0.5"></div>
+            </div>
+            <button onclick="window.signOut()" class="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-700 hover:text-white rounded-b-lg">Sign out</button>
+          </div>
+        </div>
       </div>
     </div>
   </header>
@@ -334,6 +352,56 @@
     }
 
     init();
+
+    // Firebase Auth — same project as registry-web (dreamboothy-dev)
+    firebase.initializeApp({
+      apiKey: "AIzaSyDa_YMeyzV0SkVe92vBZ1tVikWBmOU5KVE",
+      authDomain: "dreamboothy-dev.firebaseapp.com",
+      projectId: "dreamboothy-dev",
+    });
+    const auth = firebase.auth();
+
+    auth.onAuthStateChanged(user => {
+      const signInBtn = document.getElementById("sign-in-btn");
+      const userDropdown = document.getElementById("user-dropdown");
+      if (user) {
+        signInBtn.classList.add("hidden");
+        userDropdown.classList.remove("hidden");
+        const avatar = document.getElementById("user-avatar");
+        avatar.src = user.photoURL || "";
+        avatar.style.display = user.photoURL ? "" : "none";
+        document.getElementById("user-display-name").textContent = user.displayName || user.email || "";
+        document.getElementById("dropdown-name").textContent = user.displayName || "";
+        document.getElementById("dropdown-email").textContent = user.email || "";
+      } else {
+        signInBtn.classList.remove("hidden");
+        userDropdown.classList.add("hidden");
+      }
+    });
+
+    window.signIn = async () => {
+      try {
+        await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+      } catch (e) {
+        console.error("Sign in failed:", e.message);
+      }
+    };
+
+    window.signOut = async () => {
+      await auth.signOut();
+      document.getElementById("dropdown-menu").classList.add("hidden");
+    };
+
+    window.toggleDropdown = () => {
+      document.getElementById("dropdown-menu").classList.toggle("hidden");
+    };
+
+    document.addEventListener("click", e => {
+      const dropdown = document.getElementById("user-dropdown");
+      if (dropdown && !dropdown.contains(e.target)) {
+        document.getElementById("dropdown-menu").classList.add("hidden");
+      }
+    });
   </script>
 </body>
 </html>
