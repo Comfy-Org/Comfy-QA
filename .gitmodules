@@ -1,3 +1,6 @@
 [submodule "lib/demowright"]
 	path = lib/demowright
 	url = https://github.com/snomiao/demowright.git
+[submodule "lib/slack-cli"]
+	path = lib/slack-cli
+	url = https://github.com/snomiao/slack-cli.git

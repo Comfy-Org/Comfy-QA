@@ -11,7 +11,8 @@
   "type": "module",
   "bin": {
     "comfy-qa": "./src/cli.ts",
-    "cmqa": "./src/cli.ts"
+    "cmqa": "./src/cli.ts",
+    "qabot": "./bot/cli.ts"
   },
   "files": [
     "src/"
