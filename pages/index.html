@@ -8,6 +8,7 @@
   <script>tailwind.config = { darkMode: 'class' }</script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; }
     .badge-pass { background: #22c55e; }
@@ -17,6 +18,8 @@
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
     .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
     .card { transition: all 0.15s ease; }
+    .auth-required { display: none !important; }
+    body.signed-in .auth-required { display: flex !important; }
   </style>
 </head>
 <body class="bg-zinc-950 text-zinc-100 min-h-screen">
@@ -236,6 +239,15 @@
               #${run.number}
             </a>` : ''}
           </div>
+          <div class="auth-required items-center gap-3 mt-2 pt-2 border-t border-zinc-800" data-fb="${run.branch}">
+            <button class="fb-up flex items-center gap-1 text-zinc-500 hover:text-green-400 text-xs transition-colors" onclick="event.stopPropagation();window.submitFeedback('${run.branch}',1)">
+              👍 <span class="fb-up-count text-zinc-600">0</span>
+            </button>
+            <button class="fb-down flex items-center gap-1 text-zinc-500 hover:text-red-400 text-xs transition-colors" onclick="event.stopPropagation();window.submitFeedback('${run.branch}',-1)">
+              👎 <span class="fb-down-count text-zinc-600">0</span>
+            </button>
+            <span class="fb-comment text-xs text-zinc-600 italic ml-auto"></span>
+          </div>
         </div>
       `;
     }
@@ -353,7 +365,7 @@
 
     init();
 
-    // Firebase Auth — same project as registry-web (dreamboothy-dev)
+    // Firebase Auth + Firestore — same project as registry-web (dreamboothy-dev)
     // Values injected by CI from GitHub Secrets (FIREBASE_API_KEY etc.)
     firebase.initializeApp({
       apiKey: "%%FIREBASE_API_KEY%%",
@@ -361,8 +373,57 @@
       projectId: "%%FIREBASE_PROJECT_ID%%",
     });
     const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let currentUser = null;
+    const feedbackCache = {};
+
+    function updateFeedbackUI() {
+      document.querySelectorAll("[data-fb]").forEach(el => {
+        const branch = el.dataset.fb;
+        const data = feedbackCache[branch] || {};
+        const myVote = currentUser ? ((data.userVotes || {})[currentUser.uid] || 0) : 0;
+        el.querySelector(".fb-up-count").textContent = data.up || 0;
+        el.querySelector(".fb-down-count").textContent = data.down || 0;
+        el.querySelector(".fb-up").classList.toggle("text-green-400", myVote === 1);
+        el.querySelector(".fb-down").classList.toggle("text-red-400", myVote === -1);
+      });
+    }
+
+    async function loadFeedback() {
+      const branches = allRuns.map(r => r.branch).filter(Boolean);
+      for (let i = 0; i < branches.length; i += 10) {
+        try {
+          const snap = await db.collection("feedback")
+            .where(firebase.firestore.FieldPath.documentId(), "in", branches.slice(i, i + 10)).get();
+          snap.forEach(doc => { feedbackCache[doc.id] = doc.data(); });
+        } catch {}
+      }
+      updateFeedbackUI();
+    }
+
+    window.submitFeedback = async (branch, vote) => {
+      if (!currentUser) { window.signIn(); return; }
+      const ref = db.collection("feedback").doc(branch);
+      const uid = currentUser.uid;
+      try {
+        await db.runTransaction(async tx => {
+          const doc = await tx.get(ref);
+          const d = doc.exists ? doc.data() : { up: 0, down: 0, userVotes: {} };
+          const prev = (d.userVotes || {})[uid] || 0;
+          if (prev !== 0) d[prev === 1 ? "up" : "down"] = Math.max(0, (d[prev === 1 ? "up" : "down"] || 0) - 1);
+          if (prev === vote) { delete d.userVotes[uid]; }
+          else { d[vote === 1 ? "up" : "down"] = (d[vote === 1 ? "up" : "down"] || 0) + 1; (d.userVotes = d.userVotes || {})[uid] = vote; }
+          tx.set(ref, d);
+          feedbackCache[branch] = d;
+        });
+        updateFeedbackUI();
+      } catch (e) { console.error("Feedback failed:", e.message); }
+    };
 
     auth.onAuthStateChanged(user => {
+      currentUser = user;
+      document.body.classList.toggle("signed-in", !!user);
       const signInBtn = document.getElementById("sign-in-btn");
       const userDropdown = document.getElementById("user-dropdown");
       if (user) {
@@ -374,10 +435,12 @@
         document.getElementById("user-display-name").textContent = user.displayName || user.email || "";
         document.getElementById("dropdown-name").textContent = user.displayName || "";
         document.getElementById("dropdown-email").textContent = user.email || "";
+        if (allRuns.length > 0) loadFeedback();
       } else {
         signInBtn.classList.remove("hidden");
         userDropdown.classList.add("hidden");
       }
+      updateFeedbackUI();
     });
 
     window.signIn = async () => {
