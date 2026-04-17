@@ -194,7 +194,7 @@
 
     function renderCard(run) {
       // CF Pages may truncate long branch names in subdomains — prefer url from results.json
-      const pageUrl = run.url || `https://${run.branch}.${PAGES_DOMAIN}/`;
+      const pageUrl = (run.url || `https://${run.branch}.${PAGES_DOMAIN}`).replace(/\/?$/, "/");
       const title = run.title || run.product || `#${run.number}` || run.branch;
       const subtitle = run.repo || run.type || "";
       const date = run.date || run.started || "";
