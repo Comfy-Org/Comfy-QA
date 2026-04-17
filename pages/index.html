@@ -354,10 +354,11 @@
     init();
 
     // Firebase Auth — same project as registry-web (dreamboothy-dev)
+    // Values injected by CI from GitHub Secrets (FIREBASE_API_KEY etc.)
     firebase.initializeApp({
-      apiKey: "AIzaSyDa_YMeyzV0SkVe92vBZ1tVikWBmOU5KVE",
-      authDomain: "dreamboothy-dev.firebaseapp.com",
-      projectId: "dreamboothy-dev",
+      apiKey: "%%FIREBASE_API_KEY%%",
+      authDomain: "%%FIREBASE_AUTH_DOMAIN%%",
+      projectId: "%%FIREBASE_PROJECT_ID%%",
     });
     const auth = firebase.auth();
 

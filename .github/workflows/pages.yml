@@ -27,6 +27,16 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: bash scripts/build-index.sh pages
 
+      - name: Inject Firebase config
+        env:
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          sed -i "s|%%FIREBASE_API_KEY%%|${FIREBASE_API_KEY}|g" pages/index.html
+          sed -i "s|%%FIREBASE_AUTH_DOMAIN%%|${FIREBASE_AUTH_DOMAIN}|g" pages/index.html
+          sed -i "s|%%FIREBASE_PROJECT_ID%%|${FIREBASE_PROJECT_ID}|g" pages/index.html
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
