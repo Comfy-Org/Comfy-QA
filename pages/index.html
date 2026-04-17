@@ -143,6 +143,14 @@
       return `<span class="${cls} px-2 py-0.5 rounded text-xs font-bold text-white">${label}</span>`;
     }
 
+    function issueUrl(run) {
+      if (run.sourceUrl) return run.sourceUrl;
+      // Construct from repo + number. repo may be "sno-qa", "ComfyUI_frontend", etc.
+      const repo = run.githubRepo || (run.repo && !run.repo.startsWith("sno") ? `Comfy-Org/${run.repo}` : "");
+      if (repo && run.number) return `https://github.com/${repo}/issues/${run.number}`;
+      return "";
+    }
+
     function renderCard(run) {
       // CF Pages may truncate long branch names in subdomains — prefer url from results.json
       const pageUrl = run.url || `https://${run.branch}.${PAGES_DOMAIN}/`;
@@ -151,37 +159,46 @@
       const date = run.date || run.started || "";
       const dateStr = date ? new Date(date).toLocaleDateString() : "";
       const hasVideo = run.hasVideo !== false;
+      const ghUrl = issueUrl(run);
 
       return `
-        <a href="${pageUrl}" target="_blank" class="card block bg-zinc-900 border border-zinc-800 rounded-lg p-4 hover:border-zinc-600">
-          <div class="flex items-start justify-between mb-2">
-            <div class="font-medium text-sm">${title}</div>
-            ${statusBadge(run)}
-          </div>
-          <div class="text-xs text-zinc-500 mb-3">${subtitle} ${dateStr}</div>
-          ${hasVideo ? `
-            <div class="bg-zinc-800 rounded aspect-video flex items-center justify-center text-zinc-600 text-xs mb-2 overflow-hidden relative group/video">
-              <img
-                class="w-full h-full object-cover absolute inset-0 group-hover/video:opacity-0 transition-opacity"
-                src="${pageUrl}thumbnail.jpg"
-                alt=""
-                loading="lazy"
-                onerror="this.style.display='none'"
-              >
-              <video
-                class="w-full h-full object-cover absolute inset-0 opacity-0 group-hover/video:opacity-100 transition-opacity"
-                src="${pageUrl}video.mp4"
-                muted loop playsinline preload="none"
-                onmouseenter="this.play().catch(()=>{})"
-                onmouseleave="this.pause();this.currentTime=0"
-              ></video>
-              <div class="absolute inset-0 flex items-center justify-center bg-black/40 group-hover/video:opacity-0 transition-opacity pointer-events-none">
-                <svg class="w-10 h-10 text-white/80" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-              </div>
+        <div class="card bg-zinc-900 border border-zinc-800 rounded-lg p-4 hover:border-zinc-600">
+          <a href="${pageUrl}" target="_blank" class="block">
+            <div class="flex items-start justify-between mb-2">
+              <div class="font-medium text-sm">${title}</div>
+              ${statusBadge(run)}
             </div>
-          ` : ''}
-          <div class="text-xs text-zinc-600 font-mono">${run.branch}</div>
-        </a>
+            <div class="text-xs text-zinc-500 mb-3">${subtitle} ${dateStr}</div>
+            ${hasVideo ? `
+              <div class="bg-zinc-800 rounded aspect-video flex items-center justify-center text-zinc-600 text-xs mb-2 overflow-hidden relative group/video">
+                <img
+                  class="w-full h-full object-cover absolute inset-0 group-hover/video:opacity-0 transition-opacity"
+                  src="${pageUrl}thumbnail.jpg"
+                  alt=""
+                  loading="lazy"
+                  onerror="this.style.display='none'"
+                >
+                <video
+                  class="w-full h-full object-cover absolute inset-0 opacity-0 group-hover/video:opacity-100 transition-opacity"
+                  src="${pageUrl}video.mp4"
+                  muted loop playsinline preload="none"
+                  onmouseenter="this.play().catch(()=>{})"
+                  onmouseleave="this.pause();this.currentTime=0"
+                ></video>
+                <div class="absolute inset-0 flex items-center justify-center bg-black/40 group-hover/video:opacity-0 transition-opacity pointer-events-none">
+                  <svg class="w-10 h-10 text-white/80" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+              </div>
+            ` : ''}
+          </a>
+          <div class="flex items-center justify-between mt-1">
+            <div class="text-xs text-zinc-600 font-mono">${run.branch}</div>
+            ${ghUrl ? `<a href="${ghUrl}" target="_blank" class="text-xs text-zinc-500 hover:text-blue-400 flex items-center gap-1" onclick="event.stopPropagation()">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+              #${run.number}
+            </a>` : ''}
+          </div>
+        </div>
       `;
     }
 
