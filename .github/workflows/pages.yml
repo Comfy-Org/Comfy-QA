@@ -2,8 +2,8 @@ name: Deploy to Cloudflare Pages
 
 on:
   push:
-    branches: [main]
-    paths: [pages/**, scripts/build-index.sh]
+    branches: [main, sno-auth]
+    paths: [pages/**, scripts/build-index.sh, .github/workflows/pages.yml]
   workflow_dispatch:
   schedule:
     - cron: '0 */6 * * *'  # Rebuild index every 6 hours
@@ -32,5 +32,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy pages --project-name=comfy-qa
+          command: pages deploy pages --project-name=comfy-qa --branch=${{ github.ref_name }}
           packageManager: npm
