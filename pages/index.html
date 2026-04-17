@@ -201,22 +201,27 @@
                 <video
                   class="w-full h-full object-cover absolute inset-0 opacity-0 group-hover/video:opacity-100 transition-opacity"
                   src="${run.videoSrc ? pageUrl + run.videoSrc : pageUrl + 'video.mp4'}"
-                  muted loop playsinline preload="none"
-                  onmouseenter="this.play().catch(()=>{})"
-                  onmouseleave="this.pause();this.currentTime=0"
+                  muted playsinline preload="metadata"
+                  onmousemove="if(this.readyState>=1&&this.duration){this.currentTime=this.duration*(event.offsetX/this.offsetWidth)}"
+                  onmouseleave="this.currentTime=0"
                 ></video>
                 <div class="absolute inset-0 flex items-center justify-center bg-black/40 group-hover/video:opacity-0 transition-opacity pointer-events-none">
                   <svg class="w-10 h-10 text-white/80" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                 </div>
+                <!-- Scrub hint bar -->
+                <div class="absolute bottom-0 inset-x-0 h-0.5 bg-white/20 opacity-0 group-hover/video:opacity-100 transition-opacity pointer-events-none"></div>
               </div>
             ` : ''}
           </a>
           <div class="flex items-center justify-between mt-1">
-            <div class="text-xs text-zinc-600 font-mono">${run.branch}</div>
-            ${ghUrl ? `<a href="${ghUrl}" target="_blank" class="text-xs text-zinc-500 hover:text-blue-400 flex items-center gap-1" onclick="event.stopPropagation()">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-              #${run.number}
-            </a>` : ''}
+            <div class="text-xs text-zinc-600 font-mono truncate max-w-32">${run.branch}</div>
+            <div class="flex items-center gap-2">
+              ${run.number ? `<span class="issue-status text-xs" data-owner="${(run.githubRepo || 'Comfy-Org/' + run.repo).split('/')[0]}" data-repo="${(run.githubRepo || 'Comfy-Org/' + run.repo).split('/')[1] || run.repo}" data-number="${run.number}" data-type="${run.type === 'pr' ? 'pr' : 'issue'}"></span>` : ''}
+              ${ghUrl ? `<a href="${ghUrl}" target="_blank" class="text-xs text-zinc-500 hover:text-blue-400 flex items-center gap-1" onclick="event.stopPropagation()">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                #${run.number}
+              </a>` : ''}
+            </div>
           </div>
         </div>
       `;
@@ -247,6 +252,45 @@
         grid.innerHTML = filtered.map(renderCard).join("");
       }
       document.getElementById("count").textContent = `${filtered.length} of ${allRuns.length}`;
+      loadIssueStatuses();
+    }
+
+    // Fetch open/closed status for issue/PR badges via CF Pages Function (/api/github-status)
+    const issueStatusCache = {};
+    async function loadIssueStatuses() {
+      const els = document.querySelectorAll(".issue-status[data-number]");
+      const toFetch = [];
+      els.forEach(el => {
+        const key = `${el.dataset.owner}/${el.dataset.repo}/${el.dataset.type}/${el.dataset.number}`;
+        if (issueStatusCache[key] !== undefined) {
+          applyIssueStatus(el, issueStatusCache[key]);
+        } else {
+          toFetch.push({ el, key, owner: el.dataset.owner, repo: el.dataset.repo, number: el.dataset.number, type: el.dataset.type });
+        }
+      });
+      // Batch in parallel, max 10 at a time
+      for (let i = 0; i < toFetch.length; i += 10) {
+        await Promise.all(toFetch.slice(i, i + 10).map(async ({ el, key, owner, repo, number, type }) => {
+          try {
+            const r = await fetch(`/api/github-status?owner=${owner}&repo=${repo}&number=${number}&type=${type}`);
+            if (r.ok) {
+              const data = await r.json();
+              issueStatusCache[key] = data;
+              applyIssueStatus(el, data);
+            }
+          } catch {}
+        }));
+      }
+    }
+
+    function applyIssueStatus(el, data) {
+      if (!data || !data.state) return;
+      const isMerged = data.merged;
+      const isOpen = data.state === "open";
+      const color = isMerged ? "text-purple-400" : isOpen ? "text-green-400" : "text-red-400";
+      const dot = isMerged ? "●" : isOpen ? "●" : "●";
+      const label = isMerged ? "Merged" : isOpen ? "Open" : "Closed";
+      el.innerHTML = `<span class="${color}" title="${data.title || ''}">${dot} ${label}</span>`;
     }
 
     function syncUrl() {
