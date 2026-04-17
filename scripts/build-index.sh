@@ -138,6 +138,20 @@ def fetch_status(run):
     except:
         pass
 
+    # Detect actual video filename from the subsite's HTML
+    try:
+        import re as _re
+        req = urllib.request.Request(f"{url}/", headers=headers)
+        html = urllib.request.urlopen(req, timeout=8).read().decode(errors="replace")
+        vm = _re.search(r'<(?:source|video)[^>]+src=["\']?([^"\'>\s]+\.(?:mp4|webm))', html)
+        if vm:
+            run["videoSrc"] = vm.group(1)
+            run["hasVideo"] = True
+        else:
+            run["hasVideo"] = False
+    except:
+        run["hasVideo"] = False
+
     return run
 
 print(f"Fetching status for {len(runs)} runs...")

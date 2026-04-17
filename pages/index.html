@@ -200,7 +200,7 @@
                 >
                 <video
                   class="w-full h-full object-cover absolute inset-0 opacity-0 group-hover/video:opacity-100 transition-opacity"
-                  src="${pageUrl}video.mp4"
+                  src="${run.videoSrc ? pageUrl + run.videoSrc : pageUrl + 'video.mp4'}"
                   muted loop playsinline preload="none"
                   onmouseenter="this.play().catch(()=>{})"
                   onmouseleave="this.pause();this.currentTime=0"
