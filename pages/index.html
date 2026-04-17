@@ -185,13 +185,14 @@
       return `
         <div class="card bg-zinc-900 border border-zinc-800 rounded-lg p-4 hover:border-zinc-600">
           <a href="${pageUrl}" target="_blank" class="block">
-            <div class="flex items-start justify-between mb-1">
-              <div class="font-medium text-sm">${title}</div>
-              ${statusBadge(run)}
+            <div class="flex items-start justify-between gap-2 mb-1">
+              <div class="min-w-0">
+                <div class="issue-title font-medium text-sm text-white leading-snug mb-0.5 line-clamp-2" data-number="${run.number || ''}">${title}</div>
+                <div class="text-xs text-zinc-500">${run.number ? `<span class="text-zinc-400">#${run.number}</span> · ` : ""}${subtitle} · ${dateStr}</div>
+              </div>
+              <div class="shrink-0">${statusBadge(run)}</div>
             </div>
-            ${run.number ? `<div class="issue-title text-xs text-zinc-300 mb-1 truncate" data-number="${run.number}"></div>` : ""}
-            <div class="text-xs text-zinc-500 ${desc ? "mb-1" : "mb-3"}">${subtitle} ${dateStr}</div>
-            ${desc ? `<div class="text-xs text-zinc-400 mb-3 truncate" title="${desc}">${desc}</div>` : ""}
+            ${desc ? `<div class="text-xs text-zinc-400 mt-1 mb-2 truncate" title="${desc}">${desc}</div>` : `<div class="mb-3"></div>`}
             ${hasVideo ? `
               <div class="bg-zinc-800 rounded aspect-video flex items-center justify-center text-zinc-600 text-xs mb-2 overflow-hidden relative group/video">
                 <img
@@ -294,7 +295,7 @@
       const dot = isMerged ? "●" : isOpen ? "●" : "●";
       const label = isMerged ? "Merged" : isOpen ? "Open" : "Closed";
       el.innerHTML = `<span class="${color}" title="${data.title || ''}">${dot} ${label}</span>`;
-      // Populate issue title on card
+      // Populate issue title as main card heading
       if (data.title) {
         const card = el.closest(".card");
         const titleEl = card && card.querySelector(`.issue-title[data-number="${data.number}"]`);
