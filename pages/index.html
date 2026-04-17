@@ -68,7 +68,7 @@
       </div>
       <input type="text" id="search" placeholder="Search by issue #, repo, or product..."
         class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-1 text-sm focus:outline-none focus:border-zinc-500"
-        oninput="renderCards()">
+        oninput="renderCards();syncUrl()">
       <span id="count" class="text-sm text-zinc-500"></span>
     </div>
   </div>
@@ -279,23 +279,35 @@
       document.getElementById("count").textContent = `${filtered.length} of ${allRuns.length}`;
     }
 
-    function filter(f) {
+    function syncUrl() {
+      const params = new URLSearchParams();
+      if (currentFilter !== "all") params.set("filter", currentFilter);
+      const q = document.getElementById("search").value;
+      if (q) params.set("q", q);
+      const newUrl = params.toString() ? `?${params}` : location.pathname;
+      history.replaceState(null, "", newUrl);
+    }
+
+    function applyFilter(f) {
       currentFilter = f;
       document.querySelectorAll(".filter-btn").forEach(b => {
-        b.classList.toggle("bg-zinc-700", b.dataset.filter === f);
-        b.classList.toggle("text-white", b.dataset.filter === f);
-        b.classList.toggle("active", b.dataset.filter === f);
+        const active = b.dataset.filter === f;
+        b.classList.toggle("bg-zinc-700", active);
+        b.classList.toggle("text-white", active);
+        b.classList.toggle("active", active);
       });
+    }
+
+    function filter(f) {
+      applyFilter(f);
       renderCards();
+      syncUrl();
     }
 
     function filterRepo(repo) {
-      currentFilter = "repo:" + repo;
-      document.querySelectorAll(".filter-btn").forEach(b => {
-        b.classList.toggle("bg-zinc-700", b.dataset.filter === currentFilter);
-        b.classList.toggle("text-white", b.dataset.filter === currentFilter);
-      });
+      applyFilter("repo:" + repo);
       renderCards();
+      syncUrl();
     }
 
     async function init() {
@@ -346,6 +358,13 @@
       document.getElementById("stat-running").textContent =
         (inconclusive ? `${inconclusive} inconclusive` : "") +
         (runningCount ? ` ${runningCount} running` : "");
+
+      // Restore filter + search from URL params
+      const params = new URLSearchParams(location.search);
+      const urlFilter = params.get("filter") || "all";
+      const urlQ = params.get("q") || "";
+      if (urlQ) document.getElementById("search").value = urlQ;
+      applyFilter(urlFilter);
 
       renderCards();
 
