@@ -440,12 +440,29 @@
       } catch (e) { console.error("Feedback failed:", e.message); }
     };
 
+    // Only allow redirects to *.comfy-qa.pages.dev to prevent open redirect
+    function safeReturnUrl() {
+      try {
+        const p = new URLSearchParams(location.search);
+        const r = p.get("return");
+        if (!r) return null;
+        const url = new URL(r);
+        if (url.hostname === "comfy-qa.pages.dev" || url.hostname.endsWith(".comfy-qa.pages.dev")) return r;
+      } catch {}
+      return null;
+    }
+
     auth.onAuthStateChanged(user => {
       currentUser = user;
       document.body.classList.toggle("signed-in", !!user);
+      const params = new URLSearchParams(location.search);
       const signInBtn = document.getElementById("sign-in-btn");
       const userDropdown = document.getElementById("user-dropdown");
       if (user) {
+        // Redirect back after sign-in via ?signin=1&return=<url>
+        const returnUrl = safeReturnUrl();
+        if (returnUrl) { window.location.replace(returnUrl); return; }
+
         signInBtn.classList.add("hidden");
         userDropdown.classList.remove("hidden");
         const avatar = document.getElementById("user-avatar");
@@ -458,6 +475,8 @@
       } else {
         signInBtn.classList.remove("hidden");
         userDropdown.classList.add("hidden");
+        // Auto-trigger sign-in when arriving via ?signin=1 link from a subdomain
+        if (params.get("signin") === "1") window.signIn();
       }
       updateFeedbackUI();
     });
