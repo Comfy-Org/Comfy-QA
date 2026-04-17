@@ -19,7 +19,7 @@
  *   bun bot/slack/index.ts
  */
 
-import App from "@slack/bolt";
+import { App } from "@slack/bolt";
 import OpenAI from "openai";
 import { toolDefinitions, executeTool } from "./tools";
 
@@ -44,7 +44,7 @@ Keep responses concise and use Slack formatting:
 You are read-only — you cannot trigger new QA runs or modify results. If asked to run QA, point to the GitHub Actions workflow.`;
 
 // ── Init ──
-const app = new App.default({
+const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
   signingSecret: process.env.SLACK_SIGNING_SECRET,
   socketMode: true,
