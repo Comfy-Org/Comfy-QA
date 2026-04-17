@@ -132,6 +132,17 @@
       } catch { return []; }
     }
 
+    function formatDuration(startISO) {
+      if (!startISO) return "";
+      const ms = Date.now() - new Date(startISO).getTime();
+      const sec = Math.floor(ms / 1000);
+      if (sec < 60) return `${sec}s`;
+      const min = Math.floor(sec / 60);
+      if (min < 60) return `${min}m ${sec % 60}s`;
+      const hr = Math.floor(min / 60);
+      return `${hr}h ${min % 60}m`;
+    }
+
     function statusBadge(run) {
       // Use original badge.svg if available (shows detailed reproduced/not-repro/inconclusive)
       if (run.badge_url) {
@@ -140,6 +151,15 @@
       const status = run.status || "unknown";
       const cls = { pass: "badge-pass", reproduced: "badge-pass", fail: "badge-fail", "not-repro": "badge-fail", inconclusive: "badge-skip", running: "badge-running", skip: "badge-skip", unknown: "badge-skip" }[status] || "badge-skip";
       const label = { pass: "PASS", reproduced: "REPRODUCED", fail: "FAIL", "not-repro": "NOT REPRO", inconclusive: "INCONCLUSIVE", running: "RUNNING", skip: "SKIP", unknown: "?" }[status] || status.toUpperCase();
+
+      if (status === "running") {
+        const started = run.started || run.date || "";
+        const dur = formatDuration(started);
+        const startedStr = started ? new Date(started).toLocaleTimeString() : "";
+        const tooltip = [startedStr && `Started: ${startedStr}`, dur && `Elapsed: ${dur}`].filter(Boolean).join("\\n");
+        return `<span class="${cls} px-2 py-0.5 rounded text-xs font-bold text-white cursor-help" title="${tooltip}" data-started="${started}">${label} ${dur ? `(${dur})` : ""}</span>`;
+      }
+
       return `<span class="${cls} px-2 py-0.5 rounded text-xs font-bold text-white">${label}</span>`;
     }
 
@@ -283,6 +303,19 @@
         (runningCount ? ` ${runningCount} running` : "");
 
       renderCards();
+
+      // Live-update running badge elapsed times every 10s
+      if (runningCount > 0) {
+        setInterval(() => {
+          document.querySelectorAll("[data-started]").forEach(el => {
+            const started = el.getAttribute("data-started");
+            if (!started) return;
+            const dur = formatDuration(started);
+            el.textContent = `RUNNING ${dur ? `(${dur})` : ""}`;
+            el.title = `Started: ${new Date(started).toLocaleTimeString()}\nElapsed: ${dur}`;
+          });
+        }, 10_000);
+      }
     }
 
     init();
