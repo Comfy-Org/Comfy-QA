@@ -36,12 +36,12 @@
   <div class="border-b border-zinc-800 px-6 py-3">
     <div class="max-w-6xl mx-auto flex items-center gap-4">
       <div class="flex gap-1 flex-wrap">
-        <button onclick="filter('all')" class="filter-btn active px-3 py-1 rounded text-sm" data-filter="all">All</button>
-        <button onclick="filter('qa')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="qa">QA Runs</button>
-        <button onclick="filter('demo')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="demo">Demos</button>
-        <button onclick="filter('reproduced')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="reproduced">Reproduced</button>
-        <button onclick="filter('not-repro')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="not-repro">Not Repro</button>
-        <button onclick="filter('inconclusive')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="inconclusive">Inconclusive</button>
+        <button onclick="filter('all')" class="filter-btn active px-3 py-1 rounded text-sm" data-filter="all">All <span id="fc-all" class="text-xs opacity-60"></span></button>
+        <button onclick="filter('qa')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="qa">QA Runs <span id="fc-qa" class="text-xs opacity-60"></span></button>
+        <button onclick="filter('demo')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="demo">Demos <span id="fc-demo" class="text-xs opacity-60"></span></button>
+        <button onclick="filter('reproduced')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="reproduced">Reproduced <span id="fc-reproduced" class="text-xs opacity-60"></span></button>
+        <button onclick="filter('not-repro')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="not-repro">Not Repro <span id="fc-not-repro" class="text-xs opacity-60"></span></button>
+        <button onclick="filter('inconclusive')" class="filter-btn px-3 py-1 rounded text-sm" data-filter="inconclusive">Inconclusive <span id="fc-inconclusive" class="text-xs opacity-60"></span></button>
         <span class="text-zinc-700 px-1">|</span>
         <span id="repo-filters" class="flex gap-1"></span>
       </div>
@@ -283,6 +283,20 @@
         if (b.status === "running" && a.status !== "running") return 1;
         return (b.date || "") > (a.date || "") ? 1 : -1;
       });
+
+      // Update filter button counts
+      const counts = {
+        all: allRuns.length,
+        qa: allRuns.filter(r => r.type === "qa" || r.type === "running").length,
+        demo: allRuns.filter(r => r.type === "demo").length,
+        reproduced: allRuns.filter(r => r.status === "reproduced" || r.status === "pass").length,
+        "not-repro": allRuns.filter(r => r.status === "not-repro").length,
+        inconclusive: allRuns.filter(r => r.status === "inconclusive").length,
+      };
+      for (const [key, n] of Object.entries(counts)) {
+        const el = document.getElementById(`fc-${key}`);
+        if (el) el.textContent = n > 0 ? `(${n})` : "";
+      }
 
       // Build repo filter buttons dynamically
       const repos = [...new Set(allRuns.map(r => r.repo).filter(Boolean))];
