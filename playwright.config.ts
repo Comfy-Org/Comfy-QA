@@ -22,9 +22,16 @@ export default defineConfig({
     viewport: { width: 1280, height: 720 },
     screenshot: "on",
     headless: true, // qa-hud captures audio via Web Audio API tap, works headless
-    // Chrome-specific args; Firefox ignores them but they shouldn't cause harm
+    // Enable WebGL in headless mode via SwiftShader (software GPU renderer).
+    // Required for canvas-heavy apps like cloud.comfy.org.
+    // In Docker, also pass --gpu=all to enable /dev/dri passthrough.
     launchOptions: {
-      args: [],
+      args: [
+        "--use-gl=angle",
+        "--use-angle=swiftshader",
+        "--enable-webgl",
+        "--ignore-gpu-blocklist",
+      ],
     },
   },
   projects: [
