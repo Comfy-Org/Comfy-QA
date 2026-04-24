@@ -112,45 +112,39 @@ Automated browser demo videos live in `demo/*.spec.ts`. Each spec uses the fixtu
 ### Running demos
 
 ```sh
-bunx playwright test                    # run all demos
-bunx playwright test demo/comfy-docs.spec.ts  # run one demo
-bun demo/evaluate-demos.ts              # evaluate output videos with Gemini
+bunx playwright test                              # run all QA evidence specs
+bunx playwright test .comfy-qa/03-spec/comfy-docs-qa.spec.ts  # run one spec
+bun demo/evaluate-demos.ts                        # evaluate output videos with Gemini
 ```
 
-Output goes to `.comfy-qa/04-videos/` (git-ignored). The mux-reporter at `demo/fixtures/mux-reporter.ts` automatically combines video + narration audio + subtitles into mp4 after each test.
+Specs live in `.comfy-qa/03-spec/`. Output goes to `.comfy-qa/04-videos/` (git-ignored). The mux-reporter at `demo/fixtures/mux-reporter.ts` automatically combines video + narration audio into mp4 after each test (no SRT filter — macOS path quoting breaks it).
 
 ### Submodule: demowright
 
 `lib/demowright` is a git submodule. After pulling, run `bun run prepare` to sync it.
 If you get "Requiring @playwright/test second time", delete `lib/demowright/node_modules/playwright` and `lib/demowright/node_modules/@playwright` — the root node_modules copy must be the only one.
 
-### Known issues & next steps
+### QA Evidence Videos
 
-**Current baseline: 10 specs (9 headless, 1 skip). Coverage ranges from 50% to 100% per demo.**
+**Current baseline: 5 QA evidence specs, all chromium headless. Evaluator median: 9.2/10.**
 
-| Demo | URL | Coverage | Notes |
-|------|-----|----------|-------|
-| cloud-comfy | cloud.comfy.org | 100% (21/21) | skip: WebGL headless |
-| comfyui-frontend | cloud.comfy.org | 100% (17/17) | UI-only tour |
-| registry-web | registry.comfy.org | 41% (33/81) | homepage only |
-| registry-node-detail | registry.comfy.org/nodes/* | 100% (13/13) | detail page |
-| comfy-docs | docs.comfy.org | 48% (40/84) | landing page only |
-| comfy-docs-tutorial | docs.comfy.org/tutorials/* | 100% (14/14) | sub-page deep dive |
-| download-data | comfyui-download-statistics.vercel.app | 100% (8/8) | all 4 time ranges |
-| embedded-workflow-editor | comfyui-embedded-workflow-editor.vercel.app | 89% (8/9) | no actual file editing |
-| comfy-website | www.comfy.org | 79% (15/19) | JS blocked (SSR) |
-| comfy-vibe | comfy-vibe.vercel.app | 100% (22/22) | full workspace app |
+| Spec | URL | Score | Notes |
+|------|-----|-------|-------|
+| comfy-docs-qa | docs.comfy.org | 10/10 | landing + install + tutorials + custom nodes |
+| comfy-registry-qa | registry.comfy.org | 9/10 | 11/14 features; publisher profile missing |
+| comfy-website-qa | www.comfy.org | 9/10 | hero + download CTA + features + nav + community |
+| download-data-qa | comfyui-download-statistics.vercel.app | 9/10 | chart + all 3 time ranges |
+| embedded-workflow-editor-qa | comfyui-embedded-workflow-editor.vercel.app | 9/10 | drop zone + JSON view + download |
 
-**Skipped:**
-- `cloud-comfy`: Auto-skipped in headless mode — WebGL canvas renders blank white. Requires `headed: true` in playwright config + `CLOUD_USERNAME`/`CLOUD_PASSWORD` in `.env.local`. Needs a CI setup with Xvfb or a headed runner.
+Scores are median of 3 Gemini evaluator runs. The evaluator has ±4 point variance per run — always use median of 3. After recording, manually mux if demowright's built-in mux fails:
+```sh
+ffmpeg -y -ss $TRIM -i video.webm -i audio.wav -c:v libx264 -preset fast -pix_fmt yuv420p -c:a aac -b:a 128k -ar 44100 -shortest out.mp4
+```
+where `TRIM = video_duration - audio_duration - 0.5`.
 
-**Removed (auth-walled, no public access):**
-- `comfy-codesearch` / `sign-in-sourcegraph`: Sourcegraph login required, no public API.
-- `custom-node-licenses`: Google sign-in required.
-
-**Next improvements:**
-- Cache TTS wav files across runs to avoid re-generating identical narrations.
-- Demowright's built-in ffmpeg subtitles filter fails on macOS (path quoting) — the mux-reporter works around this but demowright itself should be fixed upstream.
+**Known issues:**
+- `comfy-registry-qa`: Publisher profile pages (navigate_to_publisher, view_publisher_nodes) return 404 — feature not yet implemented upstream.
+- Demowright's built-in SRT subtitles filter fails on macOS — mux-reporter works around this.
 - The Anthropic SDK uses `ANTHROPIC_API_KEY_QA` (with `_QA` suffix) to avoid conflicting with other tools, falling back to `ANTHROPIC_API_KEY`.
 
 ### Environment variables (.env.local)
