@@ -14,6 +14,13 @@ if (fs.existsSync(envPath)) {
   }
 }
 
+const chromiumWebGlArgs = [
+  "--use-gl=angle",
+  "--use-angle=swiftshader",
+  "--enable-webgl",
+  "--ignore-gpu-blocklist",
+];
+
 export default defineConfig({
   preserveOutput: "always",
   timeout: 5 * 60_000,
@@ -21,26 +28,21 @@ export default defineConfig({
     video: { mode: "on", size: { width: 1280, height: 720 } },
     viewport: { width: 1280, height: 720 },
     screenshot: "on",
-    headless: true, // qa-hud captures audio via Web Audio API tap, works headless
-    // Enable WebGL in headless mode via SwiftShader (software GPU renderer).
-    // Required for canvas-heavy apps like cloud.comfy.org.
-    // In Docker, also pass --gpu=all to enable /dev/dri passthrough.
-    launchOptions: {
-      args: [
-        "--use-gl=angle",
-        "--use-angle=swiftshader",
-        "--enable-webgl",
-        "--ignore-gpu-blocklist",
-      ],
-    },
+    headless: true,
   },
   projects: [
-    { name: "firefox", use: { browserName: "firefox" }, testIgnore: "cloud-comfy.spec.ts" },
     {
+      name: "firefox",
+      use: { browserName: "firefox" },
+      testIgnore: "cloud-comfy.spec.ts",
+    },
+    {
+      // Most specs run on Chromium with WebGL for canvas-heavy pages.
+      // SwiftShader enables headless WebGL (required for cloud.comfy.org).
       name: "chromium-webgl",
       use: {
         browserName: "chromium",
-        launchOptions: { args: ["--headless=new"] },
+        launchOptions: { args: chromiumWebGlArgs },
       },
       testMatch: "cloud-comfy.spec.ts",
     },

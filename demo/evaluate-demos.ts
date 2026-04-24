@@ -7,7 +7,9 @@
 import * as fs from "fs";
 import * as path from "path";
 
-const DEMOS_DIR = path.resolve(import.meta.dirname!, "..", ".comfy-qa", ".demos");
+const DEMOS_DIR = process.env.DEMOS_DIR
+  ? path.resolve(process.env.DEMOS_DIR)
+  : path.resolve(import.meta.dirname!, "..", ".comfy-qa", ".demos");
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const MODEL = "gemini-2.5-flash";
 
