@@ -32,8 +32,8 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "firefox",
-      use: { browserName: "firefox" },
+      name: "chromium",
+      use: { browserName: "chromium" },
       testIgnore: "cloud-comfy.spec.ts",
     },
     {

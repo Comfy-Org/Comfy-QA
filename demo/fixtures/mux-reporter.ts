@@ -40,12 +40,22 @@ function specSlug(testFile: string): string {
   return path.basename(testFile).replace(/\.spec\.[tj]sx?$/, "");
 }
 
-async function waitForFile(p: string, timeoutMs = 5000): Promise<boolean> {
+async function waitForFile(p: string, timeoutMs = 8000): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
+  let lastSize = -1;
+  let stableCount = 0;
   while (Date.now() < deadline) {
     try {
       const st = fs.statSync(p);
-      if (st.size > 0) return true;
+      if (st.size > 0) {
+        if (st.size === lastSize) {
+          stableCount++;
+          if (stableCount >= 5) return true; // size stable for 500ms
+        } else {
+          stableCount = 0;
+          lastSize = st.size;
+        }
+      }
     } catch {}
     await new Promise((r) => setTimeout(r, 100));
   }
@@ -74,17 +84,21 @@ function findVideoWebm(dir: string): string | undefined {
  */
 async function getVideoTrimOffset(webm: string, wav: string): Promise<number> {
   try {
-    const probe = (file: string): Promise<number> =>
-      new Promise((resolve) => {
-        const proc = spawn(FFMPEG_BIN.replace(/ffmpeg$/, "ffprobe"), [
-          "-v", "error", "-show_entries", "format=duration",
-          "-of", "csv=p=0", file,
-        ], { stdio: ["ignore", "pipe", "ignore"] });
-        let out = "";
-        proc.stdout.on("data", (d: Buffer) => { out += d; });
-        proc.on("close", () => resolve(parseFloat(out) || 0));
-        proc.on("error", () => resolve(0));
-      });
+    const staticFfprobe = FFMPEG_BIN.replace(/ffmpeg$/, "ffprobe");
+    const probe = (file: string): Promise<number> => {
+      const tryBin = (bin: string, fallback?: string): Promise<number> =>
+        new Promise((resolve) => {
+          const proc = spawn(bin, [
+            "-v", "error", "-show_entries", "format=duration",
+            "-of", "csv=p=0", file,
+          ], { stdio: ["ignore", "pipe", "ignore"] });
+          let out = "";
+          proc.stdout.on("data", (d: Buffer) => { out += d; });
+          proc.on("close", () => resolve(parseFloat(out) || 0));
+          proc.on("error", () => fallback ? tryBin(fallback).then(resolve) : resolve(0));
+        });
+      return tryBin(staticFfprobe, "ffprobe");
+    };
     const [videoDur, audioDur] = await Promise.all([probe(webm), probe(wav)]);
     if (videoDur > 0 && audioDur > 0 && videoDur > audioDur) {
       return videoDur - audioDur;
