@@ -154,10 +154,30 @@ export default class MuxReporter implements Reporter {
       if (!webm) {
         const tmpDemos = path.join(PROJECT_ROOT, ".comfy-qa", ".tmp", "demos");
         if (fs.existsSync(tmpDemos)) {
-          const dirs = fs.readdirSync(tmpDemos).filter((d) => d.startsWith(slug));
+          // Named dirs matching the slug (Chromium layout)
+          const dirs = fs.readdirSync(tmpDemos).filter((d) => d.includes(slug));
           for (const d of dirs) {
             const candidate = findVideoWebm(path.join(tmpDemos, d));
             if (candidate) { webm = candidate; break; }
+          }
+          // Firefox / arbitrary layout: scan .playwright-artifacts-* for most recent webm
+          if (!webm) {
+            const artifactDirs = fs.readdirSync(tmpDemos)
+              .filter((d) => d.startsWith(".playwright-artifacts"))
+              .map((d) => path.join(tmpDemos, d));
+            let latestWebm: string | undefined;
+            let latestMtime = 0;
+            for (const dir of artifactDirs) {
+              const candidate = findVideoWebm(dir);
+              if (candidate) {
+                try {
+                  const mtime = fs.statSync(candidate).mtimeMs;
+                  if (mtime > latestMtime) { latestMtime = mtime; latestWebm = candidate; }
+                } catch {}
+              }
+            }
+            // Only use if modified within last 15 minutes
+            if (latestWebm && Date.now() - latestMtime < 15 * 60_000) webm = latestWebm;
           }
         }
       }
