@@ -1,181 +1,144 @@
 /**
- * Evaluate demo videos using Gemini 2.5 Pro.
- * Sends each video to Gemini and asks for a quality assessment.
+ * Evaluate demo video quality using Gemini's vision model.
+ * Reads all .mp4 files in .comfy-qa/.demos/ and asks Gemini to review each one.
  *
- * Usage:
- *   bun demo/evaluate-demos.ts                    # evaluate all
- *   bun demo/evaluate-demos.ts comfy-registry-qa  # evaluate one
+ * Usage: bun demo/evaluate-demos.ts
  */
-import * as fs from "node:fs";
-import * as path from "node:path";
+import * as fs from "fs";
+import * as path from "path";
 
-const GEMINI_KEY = process.env.GEMINI_API_KEY ?? "";
-if (!GEMINI_KEY) {
-  console.error("GEMINI_API_KEY missing in .env.local");
+const DEMOS_DIR = path.resolve(import.meta.dirname!, "..", ".comfy-qa", ".demos");
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const MODEL = "gemini-2.5-flash";
+
+if (!GEMINI_API_KEY) {
+  console.error("GEMINI_API_KEY not set");
   process.exit(1);
 }
 
-const DEMOS_DIR = path.resolve(".comfy-qa/.demos");
-
 interface EvalResult {
-  slug: string;
+  file: string;
+  sizeMB: string;
   score: number;
-  narration: number;
-  visuals: number;
-  pacing: number;
-  coverage: number;
+  actionSync: number;
   summary: string;
-  issues: string[];
 }
 
-function extractFieldsRegex(slug: string, text: string): EvalResult {
-  const num = (key: string): number => {
-    const m = text.match(new RegExp(`"${key}"\\s*:\\s*([\\d.]+)`));
-    return m ? Math.round(parseFloat(m[1])) : 0;
+async function evaluateVideo(mp4Path: string): Promise<EvalResult> {
+  const filename = path.basename(mp4Path);
+  const stat = fs.statSync(mp4Path);
+  const sizeMB = (stat.size / 1024 / 1024).toFixed(1);
+  const videoB64 = fs.readFileSync(mp4Path).toString("base64");
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  const body = {
+    contents: [
+      {
+        parts: [
+          { inlineData: { mimeType: "video/mp4", data: videoB64 } },
+          {
+            text: `You are a STRICT QA reviewer for automated browser demo videos. Your job is to catch problems, not praise. Most AI-generated demos have serious issues.
+
+SCORE HARSHLY. A 9-10 is reserved for demos that could ship to a customer TODAY with zero edits. Most demos score 4-7.
+
+Key failure modes to watch for:
+- **Narration says an action but nothing happens on screen** (e.g., "I'm typing controlnet" but no typing occurs) → this alone should drop the score to 3 or below
+- **Cursor moves randomly** instead of pointing at what the narration describes → score 4 or below
+- **Narration describes UI elements that don't exist on screen** → score 3 or below
+- **Blank/white screen** for any portion → score 1-2
+- **No audio or silent narration** → score 4 or below
+
+Scoring rubric (be strict):
+1. **Action-narration sync (1-10)**: THE MOST IMPORTANT. When narration says "I'm clicking X", does the cursor click X? When it says "typing controlnet", does text appear? Score 1 if narration describes actions not performed.
+2. **Visual clarity (1-10)**: Is content readable? Any glitches, blank screens?
+3. **Pacing (1-10)**: Natural pace? Dead time?
+4. **Completeness (1-10)**: Does the demo actually demonstrate the feature, or just show a static page?
+5. **Overall (1-10)**: Would you send this to a customer? Be honest.
+
+The overall score is NOT an average — it should be DRAGGED DOWN by the worst category. A demo with perfect visuals but zero action sync should score 2-3 overall.
+
+Respond in this exact JSON format (no markdown fences):
+{"score": <1-10>, "actionSync": <1-10>, "visual": <1-10>, "pacing": <1-10>, "completeness": <1-10>, "summary": "<2-3 sentences explaining the biggest problems>"}`,
+          },
+        ],
+      },
+    ],
+    generationConfig: { temperature: 0.1, maxOutputTokens: 2048 },
   };
-  const str = (key: string): string => {
-    const m = text.match(new RegExp(`"${key}"\\s*:\\s*"([^"]*)`));
-    return m ? m[1] : "";
-  };
-  const arr = (key: string): string[] => {
-    const m = text.match(new RegExp(`"${key}"\\s*:\\s*\\[([^\\]]*)`, "s"));
-    if (!m) return [];
-    return [...m[1].matchAll(/"([^"]*)"/g)].map(x => x[1]);
-  };
-  return {
-    slug,
-    score: num("score"),
-    narration: num("narration"),
-    visuals: num("visuals"),
-    pacing: num("pacing"),
-    coverage: num("coverage"),
-    summary: str("summary"),
-    issues: arr("issues"),
-  };
-}
 
-async function evaluateVideo(videoPath: string, slug: string): Promise<EvalResult> {
-  const videoBytes = fs.readFileSync(videoPath);
-  const base64Video = videoBytes.toString("base64");
-  const mimeType = videoPath.endsWith(".webm") ? "video/webm" : "video/mp4";
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(120_000),
+  });
 
-  const prompt = `You are evaluating a QA evidence demo video for a web product.
-
-Score each dimension 1-10:
-1. **Narration**: Is the TTS clear? Does it explain what's happening and why?
-2. **Visuals**: Are the right UI elements shown? Is the page visible and not blank?
-3. **Pacing**: Is the video well-paced? No long idle gaps? No rushed sections?
-4. **Coverage**: Are the key features demonstrated? Both successes and failures shown?
-
-Also list any specific issues (blank screens, misaligned audio, idle time, etc.)
-
-Respond with JSON only:
-{
-  "score": <overall 1-10>,
-  "narration": <1-10>,
-  "visuals": <1-10>,
-  "pacing": <1-10>,
-  "coverage": <1-10>,
-  "summary": "<1-2 sentence overall assessment>",
-  "issues": ["issue1", "issue2"]
-}`;
-
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key=${GEMINI_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: prompt },
-            { inlineData: { mimeType, data: base64Video } },
-          ],
-        }],
-        generationConfig: { maxOutputTokens: 1024 },
-      }),
-    },
-  );
-
-  const json = await res.json() as any;
-  let text = json.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-
-  // Strip markdown fences (```json ... ```)
-  text = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
-
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-
-  if (!jsonMatch) {
-    // Fallback: extract individual fields with regex
-    return extractFieldsRegex(slug, text);
+  if (!resp.ok) {
+    const errText = await resp.text();
+    return { file: filename, sizeMB, score: 0, actionSync: 0, summary: `API error ${resp.status}: ${errText.slice(0, 200)}` };
   }
 
+  const data: any = await resp.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+
   try {
-    const result = JSON.parse(jsonMatch[0]);
-    return { slug, ...result };
-  } catch {
-    // JSON.parse failed — extract fields with regex
-    return extractFieldsRegex(slug, jsonMatch[0]);
+    const cleaned = text.replace(/```json\s*/g, "").replace(/```\s*/g, "");
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("No JSON in response");
+    const parsed = JSON.parse(jsonMatch[0]);
+    return {
+      file: filename,
+      sizeMB,
+      score: Math.round((parsed.score ?? 0) * 10) / 10,
+      actionSync: Math.round((parsed.actionSync ?? 0) * 10) / 10,
+      summary: parsed.summary ?? text.slice(0, 500),
+    };
+  } catch (e) {
+    const rawPreview = text.slice(0, 200).replace(/\n/g, " ");
+    console.error(`\n  [parse error] ${filename}: ${e} — raw: ${rawPreview}`);
+    const scoreMatch = text.match(/"score"\s*:\s*([\d.]+)/);
+    const syncMatch = text.match(/"actionSync"\s*:\s*([\d.]+)/);
+    const summaryMatch = text.match(/"summary"\s*:\s*"([^"]{10,})"/);
+    const score = scoreMatch ? parseFloat(scoreMatch[1]) : 0;
+    const actionSync = syncMatch ? parseFloat(syncMatch[1]) : 0;
+    const summary = summaryMatch ? summaryMatch[1] : text.slice(0, 500);
+    return { file: filename, sizeMB, score, actionSync, summary };
   }
 }
 
 async function main() {
-  const filter = process.argv[2];
-
-  const videos = fs.readdirSync(DEMOS_DIR)
-    .filter(f => f.endsWith(".mp4"))
-    .filter(f => !filter || f.includes(filter))
+  const mp4s = fs.readdirSync(DEMOS_DIR)
+    .filter((f) => f.endsWith(".mp4"))
+    .map((f) => path.join(DEMOS_DIR, f))
     .sort();
 
-  console.log(`\nEvaluating ${videos.length} videos...\n`);
+  console.log(`Found ${mp4s.length} demo videos in ${DEMOS_DIR}\n`);
 
   const results: EvalResult[] = [];
 
-  for (const video of videos) {
-    const slug = video.replace(".mp4", "");
-    const videoPath = path.join(DEMOS_DIR, video);
-    const size = fs.statSync(videoPath).size;
-
-    // Skip videos larger than 20MB (Gemini inline limit)
-    if (size > 20 * 1024 * 1024) {
-      console.log(`  ⏭ ${slug}: too large (${(size / 1024 / 1024).toFixed(1)}MB)`);
-      continue;
-    }
-
-    console.log(`  🔍 ${slug} (${(size / 1024 / 1024).toFixed(1)}MB)...`);
-    const result = await evaluateVideo(videoPath, slug);
+  for (const mp4 of mp4s) {
+    const name = path.basename(mp4);
+    process.stdout.write(`  Evaluating ${name}...`);
+    const result = await evaluateVideo(mp4);
     results.push(result);
-    console.log(`     Score: ${result.score}/10 — ${result.summary}`);
+    console.log(` ${result.score}/10 (sync: ${result.actionSync}/10)`);
   }
 
-  // Summary table
-  console.log("\n┌─────────────────────────────────────────────────────────────────┐");
-  console.log("│  Demo Video Evaluation Results                                 │");
-  console.log("├──────────────────────────┬───────┬─────┬─────┬─────┬───────────┤");
-  console.log("│ Video                    │ Score │ Nar │ Vis │ Pac │ Cov       │");
-  console.log("├──────────────────────────┼───────┼─────┼─────┼─────┼───────────┤");
+  console.log("\n" + "=".repeat(80));
+  console.log("DEMO VIDEO QUALITY REPORT (strict scoring)");
+  console.log("=".repeat(80) + "\n");
+
   for (const r of results) {
-    const name = r.slug.padEnd(24).slice(0, 24);
-    console.log(`│ ${name} │  ${String(r.score).padStart(2)}   │  ${r.narration}  │  ${r.visuals}  │  ${r.pacing}  │  ${r.coverage}        │`);
-  }
-  console.log("└──────────────────────────┴───────┴─────┴─────┴─────┴───────────┘");
-
-  const avg = results.length > 0
-    ? (results.reduce((a, r) => a + r.score, 0) / results.length).toFixed(1)
-    : "0";
-  console.log(`\nAverage: ${avg}/10`);
-
-  // Issues
-  const allIssues = results.flatMap(r => r.issues.map(i => `${r.slug}: ${i}`));
-  if (allIssues.length > 0) {
-    console.log("\nIssues:");
-    allIssues.forEach(i => console.log(`  - ${i}`));
+    const flag = r.score <= 5 ? " *** NEEDS FIX ***" : r.score <= 7 ? " * needs improvement *" : "";
+    console.log(`${r.file} (${r.sizeMB} MB) — Score: ${r.score}/10 | Action sync: ${r.actionSync}/10${flag}`);
+    console.log(`   ${r.summary}\n`);
   }
 
-  // Save results
-  const outPath = path.join(DEMOS_DIR, "evaluation.json");
-  fs.writeFileSync(outPath, JSON.stringify(results, null, 2));
-  console.log(`\nSaved: ${outPath}`);
+  const avg = results.reduce((s, r) => s + r.score, 0) / results.length;
+  const syncAvg = results.reduce((s, r) => s + r.actionSync, 0) / results.length;
+  console.log("-".repeat(80));
+  console.log(`Average: ${avg.toFixed(1)}/10 | Action sync avg: ${syncAvg.toFixed(1)}/10 | ${results.length} demos`);
+  console.log(`Target: 9/10 average with no demo below 7/10`);
 }
 
-main().catch(err => { console.error(err); process.exit(1); });
+main().catch(console.error);
