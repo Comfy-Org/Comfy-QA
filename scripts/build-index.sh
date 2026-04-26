@@ -87,56 +87,63 @@ def fetch_status(run):
     headers = {"User-Agent": "comfy-qa-indexer/1.0"}
 
     # Try results.json first
+    results_ok = False
     try:
         req = urllib.request.Request(f"{url}/results.json", headers=headers)
         resp = json.loads(urllib.request.urlopen(req, timeout=8).read())
         if "status" in resp:
             run["status"] = resp["status"]
             run["title"] = resp.get("title", run.get("title", ""))
-            return run
+            if resp.get("videoSrc"):
+                run["videoSrc"] = resp["videoSrc"]
+            results_ok = True
+            if run.get("videoSrc"):
+                return run
+            # videoSrc missing from results.json — fall through to HTML detection only
     except:
         pass
 
-    # Try badge.svg — parse detailed status from SVG title text
-    try:
-        import re
-        req = urllib.request.Request(f"{url}/badge.svg", headers=headers)
-        svg = urllib.request.urlopen(req, timeout=8).read().decode()
+    # Try badge.svg — parse detailed status from SVG title text (skip if results.json succeeded)
+    if not results_ok:
+        try:
+            import re
+            req = urllib.request.Request(f"{url}/badge.svg", headers=headers)
+            svg = urllib.request.urlopen(req, timeout=8).read().decode()
 
-        # Extract title: "#10766 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
-        title_match = re.search(r"<title>([^<]+)</title>", svg)
-        if title_match:
-            badge_text = title_match.group(1)
-            run["badge_title"] = badge_text
+            # Extract title: "#10766 QA0413: 1 reproduced, 0 not-repro, 0 inconclusive / 1"
+            title_match = re.search(r"<title>([^<]+)</title>", svg)
+            if title_match:
+                badge_text = title_match.group(1)
+                run["badge_title"] = badge_text
 
-            # Parse counts
-            repro = int(m.group(1)) if (m := re.search(r"(\d+)\s*reproduced", badge_text)) else 0
-            not_repro = int(m.group(1)) if (m := re.search(r"(\d+)\s*not-repro", badge_text)) else 0
-            inconclusive = int(m.group(1)) if (m := re.search(r"(\d+)\s*inconclusive", badge_text)) else 0
-            total = int(m.group(1)) if (m := re.search(r"/\s*(\d+)", badge_text)) else (repro + not_repro + inconclusive)
+                # Parse counts
+                repro = int(m.group(1)) if (m := re.search(r"(\d+)\s*reproduced", badge_text)) else 0
+                not_repro = int(m.group(1)) if (m := re.search(r"(\d+)\s*not-repro", badge_text)) else 0
+                inconclusive = int(m.group(1)) if (m := re.search(r"(\d+)\s*inconclusive", badge_text)) else 0
+                total = int(m.group(1)) if (m := re.search(r"/\s*(\d+)", badge_text)) else (repro + not_repro + inconclusive)
 
-            run["reproduced"] = repro
-            run["not_repro"] = not_repro
-            run["inconclusive"] = inconclusive
-            run["total"] = total
+                run["reproduced"] = repro
+                run["not_repro"] = not_repro
+                run["inconclusive"] = inconclusive
+                run["total"] = total
 
-            # Determine status
-            if repro > 0:
-                run["status"] = "reproduced"
-            elif not_repro > 0:
-                run["status"] = "not-repro"
-            elif inconclusive > 0:
-                run["status"] = "inconclusive"
+                # Determine status
+                if repro > 0:
+                    run["status"] = "reproduced"
+                elif not_repro > 0:
+                    run["status"] = "not-repro"
+                elif inconclusive > 0:
+                    run["status"] = "inconclusive"
 
-            # Extract issue number
-            num_match = re.search(r"#(\d+)", badge_text)
-            if num_match:
-                run["title"] = f"#{num_match.group(1)}"
+                # Extract issue number
+                num_match = re.search(r"#(\d+)", badge_text)
+                if num_match:
+                    run["title"] = f"#{num_match.group(1)}"
 
-        # Store badge URL for direct display
-        run["badge_url"] = f"{url}/badge.svg"
-    except:
-        pass
+            # Store badge URL for direct display
+            run["badge_url"] = f"{url}/badge.svg"
+        except:
+            pass
 
     # Detect actual video filename from the subsite's HTML
     try:
@@ -147,10 +154,11 @@ def fetch_status(run):
         if vm:
             run["videoSrc"] = vm.group(1)
             run["hasVideo"] = True
-        else:
+        elif not results_ok:
             run["hasVideo"] = False
     except:
-        run["hasVideo"] = False
+        if not results_ok:
+            run["hasVideo"] = False
 
     return run
 

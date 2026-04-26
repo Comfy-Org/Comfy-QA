@@ -200,12 +200,13 @@
                   src="${pageUrl}thumbnail.jpg"
                   alt=""
                   loading="lazy"
-                  onerror="this.style.display='none'"
+                  onerror="extractVideoThumbnail(this)"
                 >
                 <video
                   class="w-full h-full object-cover absolute inset-0 opacity-0 group-hover/video:opacity-100 transition-opacity"
                   src="${run.videoSrc ? pageUrl + run.videoSrc : pageUrl + 'video.mp4'}"
                   muted playsinline preload="metadata"
+                  crossorigin="anonymous"
                   onmousemove="if(this.readyState>=1&&this.duration){this.currentTime=this.duration*(event.offsetX/this.offsetWidth)}"
                   onmouseleave="this.currentTime=0"
                 ></video>
@@ -284,6 +285,31 @@
             }
           } catch {}
         }));
+      }
+    }
+
+    function extractVideoThumbnail(img) {
+      const video = img.parentElement && img.parentElement.querySelector('video');
+      if (!video) { img.style.display = 'none'; return; }
+
+      function capture() {
+        try {
+          const c = document.createElement('canvas');
+          c.width = video.videoWidth || 640;
+          c.height = video.videoHeight || 360;
+          c.getContext('2d').drawImage(video, 0, 0, c.width, c.height);
+          const url = c.toDataURL('image/jpeg', 0.7);
+          if (url && url.length > 100) { img.src = url; return; }
+        } catch (_) {}
+        img.style.display = 'none';
+      }
+
+      if (video.readyState >= 2) {
+        capture();
+      } else {
+        video.addEventListener('loadeddata', capture, { once: true });
+        // Bump preload so the browser actually fetches frame data
+        if (video.preload !== 'auto') { video.preload = 'auto'; video.load(); }
       }
     }
 

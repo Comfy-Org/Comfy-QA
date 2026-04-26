@@ -35,18 +35,24 @@ if [ ! -f "$RUNS_JSON" ]; then
   exit 1
 fi
 
-# Extract branch names from runs.json
-BRANCHES=$(python3 -c "import json; [print(r['branch']) for r in json.load(open('$RUNS_JSON')) if r.get('hasVideo', True) and r.get('branch')]")
+# Extract branch+videoSrc pairs from runs.json (tab-separated)
+BRANCH_VIDS=$(python3 -c "
+import json
+for r in json.load(open('$RUNS_JSON')):
+    if r.get('hasVideo', True) and r.get('branch'):
+        print(r['branch'] + '\t' + (r.get('videoSrc') or 'video.mp4'))
+")
 
-TOTAL=$(echo "$BRANCHES" | wc -l | tr -d ' ')
+TOTAL=$(echo "$BRANCH_VIDS" | wc -l | tr -d ' ')
 CURRENT=0
 DONE=0
 SKIPPED=0
 FAILED=0
 
-for BRANCH in $BRANCHES; do
+while IFS=$'\t' read -r BRANCH VIDEO_SRC; do
   CURRENT=$((CURRENT + 1))
   URL="https://${BRANCH}.${PAGES_DOMAIN}"
+  VIDEO_FILE="${VIDEO_SRC:-video.mp4}"
 
   # Skip if thumbnail already exists (HEAD request)
   if curl -sfI "${URL}/thumbnail.jpg" -o /dev/null 2>&1; then
@@ -55,11 +61,15 @@ for BRANCH in $BRANCHES; do
     continue
   fi
 
-  # Check video exists
-  if ! curl -sfI "${URL}/video.mp4" -o /dev/null 2>&1; then
-    echo "[$CURRENT/$TOTAL] skip ${BRANCH} (no video)"
-    SKIPPED=$((SKIPPED + 1))
-    continue
+  # Check video exists (use videoSrc filename, fall back to video.mp4)
+  if ! curl -sfI "${URL}/${VIDEO_FILE}" -o /dev/null 2>&1; then
+    if [ "${VIDEO_FILE}" != "video.mp4" ] && curl -sfI "${URL}/video.mp4" -o /dev/null 2>&1; then
+      VIDEO_FILE="video.mp4"
+    else
+      echo "[$CURRENT/$TOTAL] skip ${BRANCH} (no video)"
+      SKIPPED=$((SKIPPED + 1))
+      continue
+    fi
   fi
 
   WORKDIR=$(mktemp -d)
@@ -67,8 +77,8 @@ for BRANCH in $BRANCHES; do
 
   echo "[$CURRENT/$TOTAL] generate thumbnail for ${BRANCH}..."
 
-  # Download video
-  if ! curl -sf "${URL}/video.mp4" -o "${WORKDIR}/video.mp4"; then
+  # Download video (use detected VIDEO_FILE name)
+  if ! curl -sf "${URL}/${VIDEO_FILE}" -o "${WORKDIR}/video.mp4"; then
     echo "  download failed"
     FAILED=$((FAILED + 1))
     rm -rf "$WORKDIR"
@@ -115,7 +125,7 @@ for BRANCH in $BRANCHES; do
 
   rm -rf "$WORKDIR"
   trap - EXIT
-done
+done <<< "$BRANCH_VIDS"
 
 echo ""
 echo "Done: $DONE generated, $SKIPPED skipped, $FAILED failed, $TOTAL total"
