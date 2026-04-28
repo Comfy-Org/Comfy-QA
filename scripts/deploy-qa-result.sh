@@ -69,7 +69,7 @@ esac
 cat > badge.svg <<BADGE
 <svg xmlns="http://www.w3.org/2000/svg" width="90" height="20">
   <rect width="90" height="20" rx="3" fill="$BADGE_COLOR"/>
-  <text x="45" y="14" text-anchor="middle" fill="white" font-family="system-ui" font-size="11" font-weight="bold">QA ${STATUS^^}</text>
+  <text x="45" y="14" text-anchor="middle" fill="white" font-family="system-ui" font-size="11" font-weight="bold">QA $(echo "$STATUS" | tr '[:lower:]' '[:upper:]')</text>
 </svg>
 BADGE
 
