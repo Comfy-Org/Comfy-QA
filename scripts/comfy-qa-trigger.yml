@@ -1,0 +1,34 @@
+# Copy this file to .github/workflows/comfy-qa-trigger.yml in any Comfy-Org repo.
+#
+# Prerequisites:
+#   1. Add comfy-pr-bot as a collaborator so it can be assigned as reviewer.
+#   2. Add COMFY_QA_TOKEN secret (PAT with contents:write on Comfy-Org/Comfy-QA).
+#
+# When comfy-pr-bot is assigned as reviewer on any PR, this workflow fires a
+# repository_dispatch to Comfy-Org/Comfy-QA which runs the full QA pipeline.
+
+name: Trigger Comfy QA on reviewer assignment
+
+on:
+  pull_request:
+    types: [review_requested]
+
+jobs:
+  trigger:
+    if: github.event.requested_reviewer.login == 'comfy-pr-bot'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.COMFY_QA_TOKEN }}
+          repository: Comfy-Org/Comfy-QA
+          event-type: qa-review-requested
+          client-payload: >
+            {
+              "repo":    "${{ github.repository }}",
+              "number":  ${{ github.event.pull_request.number }},
+              "title":   "${{ github.event.pull_request.title }}",
+              "url":     "${{ github.event.pull_request.html_url }}",
+              "sha":     "${{ github.event.pull_request.head.sha }}",
+              "branch":  "${{ github.event.pull_request.head.ref }}"
+            }
