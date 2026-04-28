@@ -37,46 +37,56 @@ export function parseRef(ref: string): { owner: string; repo: string; number?: n
 }
 
 export async function fetchPR(owner: string, repo: string, number: number): Promise<PRInfo> {
-  const json = await $`gh pr view ${number} --repo ${owner}/${repo} --json number,title,body,state,headRefName,baseRefName,author,labels,url,files,comments`.text();
-  const raw = JSON.parse(json);
+  const [prJson, filesJson, commentsJson] = await Promise.all([
+    $`gh api repos/${owner}/${repo}/pulls/${number}`.text(),
+    $`gh api repos/${owner}/${repo}/pulls/${number}/files --paginate`.text(),
+    $`gh api repos/${owner}/${repo}/issues/${number}/comments --paginate`.text(),
+  ]);
+  const pr = JSON.parse(prJson);
+  const files = JSON.parse(filesJson);
+  const comments = JSON.parse(commentsJson);
   return {
-    number: raw.number,
-    title: raw.title,
-    body: raw.body || "",
-    state: raw.state,
-    headRefName: raw.headRefName,
-    baseRefName: raw.baseRefName,
-    author: raw.author?.login || "unknown",
-    labels: (raw.labels || []).map((l: any) => l.name),
-    url: raw.url,
-    files: (raw.files || []).map((f: any) => ({
-      path: f.path,
+    number: pr.number,
+    title: pr.title,
+    body: pr.body || "",
+    state: pr.state,
+    headRefName: pr.head.ref,
+    baseRefName: pr.base.ref,
+    author: pr.user?.login || "unknown",
+    labels: (pr.labels || []).map((l: any) => l.name),
+    url: pr.html_url,
+    files: files.map((f: any) => ({
+      path: f.filename,
       additions: f.additions,
       deletions: f.deletions,
     })),
-    comments: (raw.comments || []).map((c: any) => ({
-      author: c.author?.login || "unknown",
+    comments: comments.map((c: any) => ({
+      author: c.user?.login || "unknown",
       body: c.body || "",
-      createdAt: c.createdAt,
+      createdAt: c.created_at,
     })),
   };
 }
 
 export async function fetchIssue(owner: string, repo: string, number: number): Promise<IssueInfo> {
-  const json = await $`gh issue view ${number} --repo ${owner}/${repo} --json number,title,body,state,author,labels,url,comments`.text();
-  const raw = JSON.parse(json);
+  const [issueJson, commentsJson] = await Promise.all([
+    $`gh api repos/${owner}/${repo}/issues/${number}`.text(),
+    $`gh api repos/${owner}/${repo}/issues/${number}/comments --paginate`.text(),
+  ]);
+  const issue = JSON.parse(issueJson);
+  const comments = JSON.parse(commentsJson);
   return {
-    number: raw.number,
-    title: raw.title,
-    body: raw.body || "",
-    state: raw.state,
-    author: raw.author?.login || "unknown",
-    labels: (raw.labels || []).map((l: any) => l.name),
-    url: raw.url,
-    comments: (raw.comments || []).map((c: any) => ({
-      author: c.author?.login || "unknown",
+    number: issue.number,
+    title: issue.title,
+    body: issue.body || "",
+    state: issue.state,
+    author: issue.user?.login || "unknown",
+    labels: (issue.labels || []).map((l: any) => l.name),
+    url: issue.html_url,
+    comments: comments.map((c: any) => ({
+      author: c.user?.login || "unknown",
       body: c.body || "",
-      createdAt: c.createdAt,
+      createdAt: c.created_at,
     })),
   };
 }
