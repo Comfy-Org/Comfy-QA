@@ -79,12 +79,38 @@ interface ResearchResults {
 
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY_QA ?? process.env.ANTHROPIC_API_KEY ?? "";
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY ?? "";
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL ?? "openai/gpt-4.5";
 
 import Anthropic from "@anthropic-ai/sdk";
 
 const anthropicClient = ANTHROPIC_KEY ? new Anthropic({ apiKey: ANTHROPIC_KEY, timeout: 60_000 }) : null;
 
 async function callLLM(system: string, messages: any[]): Promise<string> {
+  // Prefer OpenRouter
+  if (OPENROUTER_KEY) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 60_000);
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        signal: controller.signal,
+        headers: { Authorization: `Bearer ${OPENROUTER_KEY}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          model: OPENROUTER_MODEL,
+          messages: [{ role: "system", content: system }, ...messages],
+          max_tokens: 8192,
+        }),
+      });
+      clearTimeout(timer);
+      const json = (await res.json()) as any;
+      if (json.choices?.[0]?.message?.content) return json.choices[0].message.content;
+      console.log(`  ⚠ OpenRouter: ${json.error?.message?.slice(0, 80) ?? "empty response"}`);
+    } catch (err: any) {
+      console.log(`  ⚠ OpenRouter: ${err.message?.slice(0, 60)}`);
+    }
+  }
+
+  // Fallback: Anthropic SDK
   if (anthropicClient) {
     try {
       const res = await anthropicClient.messages.create({
@@ -96,28 +122,6 @@ async function callLLM(system: string, messages: any[]): Promise<string> {
       return res.content?.[0]?.type === "text" ? res.content[0].text : "";
     } catch (err: any) {
       console.log(`  ⚠ Anthropic SDK: ${err.message?.slice(0, 80)}`);
-    }
-  }
-
-  if (OPENROUTER_KEY) {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 60_000);
-      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        signal: controller.signal,
-        headers: { Authorization: `Bearer ${OPENROUTER_KEY}`, "content-type": "application/json" },
-        body: JSON.stringify({
-          model: "anthropic/claude-sonnet-4-20250514",
-          messages: [{ role: "system", content: system }, ...messages],
-          max_tokens: 8192,
-        }),
-      });
-      clearTimeout(timer);
-      const json = (await res.json()) as any;
-      return json.choices?.[0]?.message?.content ?? "";
-    } catch (err: any) {
-      console.log(`  ⚠ OpenRouter: ${err.message?.slice(0, 60)}`);
     }
   }
 

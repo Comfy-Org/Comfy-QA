@@ -1,8 +1,27 @@
 import { $ } from "bun";
 import type { PRInfo, IssueInfo } from "../utils/github";
 
-/** Call Claude via CLI (already authenticated) or SDK if ANTHROPIC_API_KEY is set */
+const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY ?? "";
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL ?? "openai/gpt-4.5";
+
 async function callClaude(prompt: string): Promise<string> {
+  // Prefer OpenRouter
+  if (OPENROUTER_KEY) {
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${OPENROUTER_KEY}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        model: OPENROUTER_MODEL,
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 4096,
+      }),
+    });
+    const json = (await res.json()) as any;
+    if (json.choices?.[0]?.message?.content) return json.choices[0].message.content;
+    console.log(`  ⚠ OpenRouter: ${json.error?.message?.slice(0, 80) ?? "empty response"}`);
+  }
+
+  // Fallback: Anthropic SDK
   const apiKey = process.env.ANTHROPIC_API_KEY_QA ?? process.env.ANTHROPIC_API_KEY;
   if (apiKey) {
     const Anthropic = (await import("@anthropic-ai/sdk")).default;
@@ -14,7 +33,8 @@ async function callClaude(prompt: string): Promise<string> {
     });
     return response.content[0].type === "text" ? response.content[0].text : "";
   }
-  // Fallback: pipe through claude CLI via stdin
+
+  // Last resort: claude CLI
   const proc = Bun.spawn(["claude", "--print", "--model", "claude-opus-4-6"], {
     stdin: new TextEncoder().encode(prompt),
     stdout: "pipe",
