@@ -50,7 +50,7 @@ src/
 │   ├── browser-agent.ts   ← AI-driven browser automation
 │   ├── orchestrator.ts    ← full QA pipeline (fetch → research → record → report)
 │   └── research.ts        ← PR/issue analysis agent
-├── cli.ts                 ← CLI entry point (cmqa)
+├── cli.ts                 ← CLI entry point (comfy-qa)
 └── utils/                 ← GitHub API, URL parsing, ComfyUI helpers
 
 demo/
@@ -100,7 +100,7 @@ GOOGLE_PASSWORD=...
 ## CLI
 
 ```bash
-cmqa pr <owner/repo#number>     # QA a pull request
-cmqa issue <owner/repo#number>  # QA an issue
-cmqa full <owner/repo>          # Batch QA for a repo
+comfy-qa pr <owner/repo#number>     # QA a pull request
+comfy-qa issue <owner/repo#number>  # QA an issue
+comfy-qa full <owner/repo>          # Batch QA for a repo
 ```

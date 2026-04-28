@@ -7,7 +7,7 @@ E2E QA automation for user-facing frontend repos. AI-driven Playwright tests wit
 Tell your AI agent (Claude Code, Cursor, etc.):
 
 ```
-run npx cmqa setup
+run npx comfy-qa setup
 ```
 
 The agent reads the emitted prompt and automatically:
@@ -20,21 +20,21 @@ The agent reads the emitted prompt and automatically:
 - Creates starter `tests/e2e/qa.spec.ts` covering your key routes
 - Updates `.gitignore`
 
-Re-running `npx cmqa setup` updates existing files without overwriting what's already correct.
+Re-running `npx comfy-qa setup` updates existing files without overwriting what's already correct.
 
 ## QA a PR or issue
 
 ```bash
 # Paste a GitHub URL — auto-detects PR vs issue
-cmqa https://github.com/org/repo/pull/123
-cmqa https://github.com/org/repo/issues/456
+comfy-qa https://github.com/org/repo/pull/123
+comfy-qa https://github.com/org/repo/issues/456
 
 # Or use subcommands
-cmqa pr https://github.com/org/repo/pull/123
-cmqa issue org/repo#456
+comfy-qa pr https://github.com/org/repo/pull/123
+comfy-qa issue org/repo#456
 
 # Batch QA recent open issues
-cmqa full org/repo --limit 5
+comfy-qa full org/repo --limit 5
 ```
 
 Each run produces in `.comfy-qa/<slug>/`:

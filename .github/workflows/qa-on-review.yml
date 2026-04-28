@@ -63,8 +63,8 @@ jobs:
           timeout 90 bash -c 'until curl -sf http://localhost:8188/; do sleep 2; done'
           echo "ComfyUI ready"
 
-      - name: Run cmqa pr
-        run: bunx cmqa pr "$PR_URL"
+      - name: Run comfy-qa pr
+        run: bunx comfy-qa pr "$PR_URL"
         env:
           COMFYUI_URL: http://localhost:8188
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

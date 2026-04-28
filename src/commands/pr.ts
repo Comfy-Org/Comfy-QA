@@ -7,15 +7,15 @@ export async function commandPR(args: string[]): Promise<void> {
   const comfyUrlIdx = args.indexOf("--comfy-url");
   const comfyUrl = comfyUrlIdx >= 0 ? args[comfyUrlIdx + 1] : undefined;
 
-  // Accept GitHub URL: cmqa pr https://github.com/org/repo/pull/123
+  // Accept GitHub URL: comfy-qa pr https://github.com/org/repo/pull/123
   if (ref) {
     const parsed = parseGitHubUrl(ref);
     if (parsed) ref = parsed.ref;
   }
 
   if (!ref) {
-    console.error("Usage: cmqa pr <github-url | owner/repo#number>");
-    console.error("       cmqa pr https://github.com/org/repo/pull/123");
+    console.error("Usage: comfy-qa pr <github-url | owner/repo#number>");
+    console.error("       comfy-qa pr https://github.com/org/repo/pull/123");
     process.exit(1);
   }
 

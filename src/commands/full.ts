@@ -10,7 +10,7 @@ export async function commandFull(args: string[]): Promise<void> {
   const comfyUrl = comfyUrlIdx >= 0 ? args[comfyUrlIdx + 1] : undefined;
 
   if (!repoRef) {
-    console.error("Usage: cmqa full <owner/repo> [--limit N] [--no-record]");
+    console.error("Usage: comfy-qa full <owner/repo> [--limit N] [--no-record]");
     process.exit(1);
   }
 

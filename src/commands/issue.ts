@@ -7,15 +7,15 @@ export async function commandIssue(args: string[]): Promise<void> {
   const comfyUrlIdx = args.indexOf("--comfy-url");
   const comfyUrl = comfyUrlIdx >= 0 ? args[comfyUrlIdx + 1] : undefined;
 
-  // Accept GitHub URL: cmqa issue https://github.com/org/repo/issues/456
+  // Accept GitHub URL: comfy-qa issue https://github.com/org/repo/issues/456
   if (ref) {
     const parsed = parseGitHubUrl(ref);
     if (parsed) ref = parsed.ref;
   }
 
   if (!ref) {
-    console.error("Usage: cmqa issue <github-url | owner/repo#number>");
-    console.error("       cmqa issue https://github.com/org/repo/issues/456");
+    console.error("Usage: comfy-qa issue <github-url | owner/repo#number>");
+    console.error("       comfy-qa issue https://github.com/org/repo/issues/456");
     process.exit(1);
   }
 
