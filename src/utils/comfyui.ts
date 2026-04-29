@@ -11,6 +11,16 @@ export interface ComfyUIInstance {
   stop: () => Promise<void>;
 }
 
+/** Repos that ARE ComfyUI itself — use detectRunningInstance() for these */
+export const COMFYUI_REPOS = new Set(["ComfyUI", "ComfyUI_frontend"]);
+
+/** Production URLs for known web-app repos (fallback when no preview URL found) */
+export const REPO_PROD_URLS: Record<string, string> = {
+  "registry-web": "https://registry.comfy.org",
+  "website":      "https://www.comfy.org",
+  "comfy-portal": "https://comfy.org",
+};
+
 /** Known repo dependency graph: repo → related repos to clone into tmp/ */
 const RELATED_REPOS: Record<string, { owner: string; repo: string; setup?: string }[]> = {
   // Web UIs testable with Playwright — real backend, no mocks

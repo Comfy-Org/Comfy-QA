@@ -95,3 +95,25 @@ export async function fetchRecentIssues(owner: string, repo: string, limit = 20)
   const json = await $`gh issue list --repo ${owner}/${repo} --limit ${limit} --state open --json number,title,body,state,author,labels,url`.text();
   return JSON.parse(json);
 }
+
+/** Extract the first Vercel/Netlify/preview deployment URL from PR bot comments */
+export async function fetchDeploymentPreviewUrl(owner: string, repo: string, prNumber: number): Promise<string | null> {
+  const commentsJson = await $`gh api repos/${owner}/${repo}/issues/${prNumber}/comments --paginate`.text();
+  const comments: { user: { login: string }; body: string }[] = JSON.parse(commentsJson);
+
+  for (const c of comments) {
+    const login = c.user?.login ?? "";
+    // Only trust bot comments
+    if (!login.includes("bot") && login !== "github-actions") continue;
+
+    // Extract first https URL from known deploy platforms
+    const match = c.body.match(/https:\/\/[^\s\)\"\'<]+(?:vercel\.app|netlify\.app|pages\.dev|fly\.dev|railway\.app)[^\s\)\"\'<]*/);
+    if (match) {
+      // Skip feedback/avatar/non-app URLs
+      const url = match[0].replace(/[.,;]+$/, "");
+      if (url.includes("feedback") || url.includes("avatar") || url.includes("badge") || url.includes("svg")) continue;
+      return url;
+    }
+  }
+  return null;
+}

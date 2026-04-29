@@ -1,7 +1,7 @@
 import * as path from "path";
 import * as fs from "fs";
-import { fetchPR, fetchIssue, parseRef } from "../utils/github";
-import { detectRunningInstance, bootstrapWorkspace, type ComfyUIInstance } from "../utils/comfyui";
+import { fetchPR, fetchIssue, parseRef, fetchDeploymentPreviewUrl } from "../utils/github";
+import { detectRunningInstance, bootstrapWorkspace, type ComfyUIInstance, COMFYUI_REPOS, REPO_PROD_URLS } from "../utils/comfyui";
 import { researchPR, researchIssue } from "./research";
 import { startRecorder, navigateWithHUD } from "../browser/recorder";
 import { runScenarioWithAgent, runScenarioResearchOnly } from "./browser-agent";
@@ -83,41 +83,57 @@ export async function runQA(opts: QAOptions): Promise<void> {
   if (record) {
     console.log(`\n[3/5] Recording phase — Playwright + HUD…`);
 
-    // Resolve ComfyUI URL: explicit flag → auto-detect → auto-bootstrap
-    let comfyUrl = opts.comfyUrl || await detectRunningInstance();
+    // Resolve target URL:
+    //   ComfyUI repos → detect local instance or bootstrap
+    //   Other web-app repos → Vercel/preview URL from PR comments, then prod fallback
+    let comfyUrl = opts.comfyUrl ?? null;
     let bootstrappedInstance: ComfyUIInstance | null = null;
 
     if (!comfyUrl) {
-      // Auto clone + build the target repo
-      console.log(`  [bootstrap] No running instance — cloning & building target repo…`);
-      const prBranch = targetType === "pr"
-        ? (target as Awaited<ReturnType<typeof fetchPR>>).headRefName
-        : undefined;
+      if (COMFYUI_REPOS.has(parsed.repo)) {
+        comfyUrl = await detectRunningInstance();
+        if (!comfyUrl) {
+          console.log(`  [bootstrap] No running ComfyUI — cloning & building target repo…`);
+          const prBranch = targetType === "pr"
+            ? (target as Awaited<ReturnType<typeof fetchPR>>).headRefName
+            : undefined;
 
-      // Clone workspace first so we can set up QA skill before bootstrapping
-      const wsPath = await cloneWorkspace({
-        owner: parsed.owner,
-        repo: parsed.repo,
-        outputBase,
-        branch: prBranch,
-        prNumber: targetType === "pr" ? parsed.number : undefined,
-      });
+          const wsPath = await cloneWorkspace({
+            owner: parsed.owner,
+            repo: parsed.repo,
+            outputBase,
+            branch: prBranch,
+            prNumber: targetType === "pr" ? parsed.number : undefined,
+          });
+          await ensureQASkill(wsPath);
 
-      // Ensure QA skill exists (creates comfy-qa branch + generates files if missing)
-      await ensureQASkill(wsPath);
-
-      try {
-        bootstrappedInstance = await bootstrapWorkspace({
-          owner: parsed.owner,
-          repo: parsed.repo,
-          outputBase,
-          branch: prBranch,
-          prNumber: targetType === "pr" ? parsed.number : undefined,
-        });
-        comfyUrl = bootstrappedInstance.url;
-      } catch (err) {
-        console.log(`  [bootstrap] Failed: ${err}`);
-        console.log(`  [bootstrap] Falling back to research-only mode`);
+          try {
+            bootstrappedInstance = await bootstrapWorkspace({
+              owner: parsed.owner,
+              repo: parsed.repo,
+              outputBase,
+              branch: prBranch,
+              prNumber: targetType === "pr" ? parsed.number : undefined,
+            });
+            comfyUrl = bootstrappedInstance.url;
+          } catch (err) {
+            console.log(`  [bootstrap] Failed: ${err}`);
+            console.log(`  [bootstrap] Falling back to research-only mode`);
+          }
+        }
+      } else {
+        // Non-ComfyUI repo: use Vercel/preview URL or production fallback
+        if (targetType === "pr") {
+          console.log(`  [target] Fetching deployment preview URL from PR comments…`);
+          comfyUrl = await fetchDeploymentPreviewUrl(parsed.owner, parsed.repo, parsed.number);
+          if (comfyUrl) {
+            console.log(`  [target] Preview URL: ${comfyUrl}`);
+          }
+        }
+        if (!comfyUrl) {
+          comfyUrl = REPO_PROD_URLS[parsed.repo] ?? null;
+          if (comfyUrl) console.log(`  [target] Using production URL: ${comfyUrl}`);
+        }
       }
     }
 
