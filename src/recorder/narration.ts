@@ -15,6 +15,9 @@ const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
 export interface NarrationSegment {
   id: string;
   text: string;
+  /** When this segment should start in the video (ms from recording start).
+   *  If omitted, segments are concatenated sequentially. */
+  startMs?: number;
 }
 
 export interface NarrationResult {
@@ -166,9 +169,13 @@ export async function generateNarration(
 
   const totalDurationMs = meta.reduce((sum, m) => sum + m.durationMs, 0);
 
-  // Save meta for subtitle generation
+  // Save meta for subtitle generation — include startMs for timed post-mix
   const metaPath = path.join(narrationDir, "meta.json");
-  fs.writeFileSync(metaPath, JSON.stringify({ segments: meta, totalDurationMs }, null, 2));
+  const segmentsWithStart = meta.map((m, i) => ({
+    ...m,
+    startMs: segments[i]?.startMs ?? undefined,
+  }));
+  fs.writeFileSync(metaPath, JSON.stringify({ segments: segmentsWithStart, totalDurationMs }, null, 2));
 
   console.log(`  [narration] Track: ${trackPath} (${(totalDurationMs / 1000).toFixed(1)}s)`);
 

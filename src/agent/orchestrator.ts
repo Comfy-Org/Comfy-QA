@@ -4,7 +4,7 @@ import { fetchPR, fetchIssue, parseRef, fetchDeploymentPreviewUrl } from "../uti
 import { detectRunningInstance, bootstrapWorkspace, type ComfyUIInstance, COMFYUI_REPOS, REPO_PROD_URLS } from "../utils/comfyui";
 import { researchPR, researchIssue } from "./research";
 import { startRecorder, navigateWithHUD } from "../browser/recorder";
-import { runScenarioWithAgent, runScenarioResearchOnly } from "./browser-agent";
+import { runScenarioWithAgent, runScenarioResearchOnly, prePlanScenario, runScenarioWithPlan, type PlannedScenario } from "./browser-agent";
 import { saveReport } from "../report/generate";
 import { generateE2ETest } from "../report/e2e-test";
 import { ensureQASkill } from "../utils/qa-skill";
@@ -137,111 +137,152 @@ export async function runQA(opts: QAOptions): Promise<void> {
       }
     }
 
-    // Pre-generate narration BEFORE recording (so durations are known)
-    const narrationSegments: NarrationSegment[] = [
-      { id: "intro", text: `Welcome to comfy QA. Let's review ${targetType} number ${parsed.number}: ${target.title.slice(0, 100)}` },
-      { id: "github", text: `First, let's look at the GitHub ${targetType} page for context.` },
-      { id: "analysis", text: `Severity ${research.severity}. Affected area: ${research.affectedArea}.` },
-      ...research.testScenarios.flatMap((s, i): NarrationSegment[] => [
-        { id: `scenario-${i + 1}-intro`, text: `Scenario ${i + 1}: ${s.name}. ${s.description}` },
-        ...s.steps.slice(0, 5).map((step, j) => ({
-          id: `scenario-${i + 1}-step-${j + 1}`,
-          text: `Step ${j + 1}: ${step.slice(0, 150)}`,
-        })),
-      ]),
-      { id: "outro", text: `QA session complete. Report and video evidence saved.` },
-    ];
+    // [3a] Pre-plan all scenario actions before recording (parallel LLM calls, no browser yet)
+    let plans: PlannedScenario[] = [];
+    if (comfyUrl) {
+      console.log(`\n[3a/5] Pre-planning ${research.testScenarios.length} scenarios…`);
+      plans = await Promise.all(
+        research.testScenarios.map((s, i) => prePlanScenario(s, i, comfyUrl!))
+      );
+      console.log(`  ✓ Plans ready`);
+    }
 
-    const narration = await generateNarration(narrationSegments, outputDir);
-
+    // [3b] Record — execute pre-planned actions (no LLM calls on the hot path)
+    // Narration is generated AFTER recording using real step timings for perfect sync.
     const session = await startRecorder(outputDir, `qa-${parsed.number}`);
-    if (narration) session.attachNarration(narration.durations);
-    const ffmpegStartMs = Date.now();
+
+    // Timing markers collected during recording, used for narration after
+    const introStartMs = Date.now();
+    let githubDoneMs = 0;
+    let analysisDoneMs = 0;
+    const scenarioStartMs: number[] = [];
+    const stepTimings: number[][] = []; // [scenarioIdx][stepIdx] = elapsed ms
 
     try {
-      // Screenshot the GitHub page for evidence
-      if (narration) await session.narrate("intro", `Opening ${target.url}`);
-      else await session.step(`Opening ${target.url}`);
+      await session.step(`Opening ${target.url}`);
       await navigateWithHUD(session, target.url, `QA: ${targetType.toUpperCase()} #${parsed.number}`);
       await session.plan(`Analyzing: ${target.title}`);
-      if (narration) await session.narrate("github", "Inspecting GitHub page");
-      else await session.page.waitForTimeout(2000);
-      if (narration) await session.narrate("analysis", `${research.severity} severity`);
+      await session.page.waitForTimeout(2000);
+      githubDoneMs = Date.now();
       await session.screenshot("01-github-page");
+      analysisDoneMs = Date.now();
 
-      if (comfyUrl) {
-        // ── ComfyUI available: AI agent drives the browser ──
-        console.log(`  [mode] Agent-driven QA against ${comfyUrl}`);
-        await session.step(`Navigating to ComfyUI at ${comfyUrl}`);
-        await navigateWithHUD(session, comfyUrl, `ComfyUI QA — ${targetType.toUpperCase()} #${parsed.number}`);
+      if (comfyUrl && plans.length > 0) {
+        console.log(`  [mode] Pre-planned QA against ${comfyUrl}`);
+        await session.step(`Navigating to ${comfyUrl}`);
+        await navigateWithHUD(session, comfyUrl, `QA — ${targetType.toUpperCase()} #${parsed.number}`);
         await session.page.waitForTimeout(2000);
-        await session.screenshot("02-comfyui-loaded");
+        await session.screenshot("02-target-loaded");
 
-        for (let i = 0; i < research.testScenarios.length; i++) {
-          const scenario = research.testScenarios[i];
-          console.log(`  [scenario ${i + 1}/${research.testScenarios.length}] ${scenario.name}`);
-
-          const result = await runScenarioWithAgent(session, scenario, i);
+        for (const plan of plans) {
+          scenarioStartMs.push(Date.now());
+          const result = await runScenarioWithPlan(session, plan);
+          stepTimings.push(result.stepTimingsMs);
           allLogs.push(...result.log);
 
+          if (plan.scenarioIndex < plans.length - 1) {
+            await session.page.goto(comfyUrl, { waitUntil: "domcontentloaded", timeout: 15000 });
+            await session.page.waitForTimeout(500);
+          }
+        }
+      } else if (comfyUrl) {
+        // Fallback to live agent if pre-planning produced no plans
+        console.log(`  [mode] Live agent QA against ${comfyUrl}`);
+        await navigateWithHUD(session, comfyUrl, `QA — ${targetType.toUpperCase()} #${parsed.number}`);
+        await session.page.waitForTimeout(2000);
+        await session.screenshot("02-target-loaded");
+        for (let i = 0; i < research.testScenarios.length; i++) {
+          scenarioStartMs.push(Date.now());
+          const result = await runScenarioWithAgent(session, research.testScenarios[i]!, i);
+          stepTimings.push([]);
+          allLogs.push(...result.log);
           if (i < research.testScenarios.length - 1) {
             await session.page.goto(comfyUrl, { waitUntil: "domcontentloaded", timeout: 15000 });
-            await session.page.waitForTimeout(1000);
+            await session.page.waitForTimeout(500);
           }
         }
       } else {
-        // ── No ComfyUI: research-only recording with GitHub evidence ──
-        console.log(`  [mode] Research-only (no ComfyUI instance available)`);
-
+        console.log(`  [mode] Research-only (no target URL)`);
         await session.step("Scrolling through issue details");
         for (let scroll = 0; scroll < 3; scroll++) {
           await session.page.mouse.wheel(0, 400);
           await session.page.waitForTimeout(1000);
         }
         await session.screenshot("02-github-details");
-
         for (let i = 0; i < research.testScenarios.length; i++) {
-          const scenario = research.testScenarios[i];
-          console.log(`  [scenario ${i + 1}/${research.testScenarios.length}] ${scenario.name} (planned)`);
-
-          if (narration) {
-            await session.narrate(`scenario-${i + 1}-intro`, `Scenario ${i + 1}: ${scenario.name}`);
-            for (let j = 0; j < Math.min(scenario.steps.length, 5); j++) {
-              await session.narrate(`scenario-${i + 1}-step-${j + 1}`, `Step ${j + 1}: ${scenario.steps[j].slice(0, 80)}`);
-            }
-            await session.screenshot(`scenario-${String(i + 1).padStart(2, "0")}-plan`);
-          } else {
-            const result = await runScenarioResearchOnly(session, scenario, i);
-            allLogs.push(...result.log);
-          }
+          const result = await runScenarioResearchOnly(session, research.testScenarios[i]!, i);
+          allLogs.push(...result.log);
         }
       }
 
-      if (narration) await session.narrate("outro", "QA Session complete");
-      else await session.step("QA Session complete");
-      await session.status(comfyUrl ? "Agent-driven QA finished" : "Research-only QA finished");
-      await session.page.waitForTimeout(1500);
+      await session.step("QA Session complete");
+      await session.status("QA finished");
+      await session.page.waitForTimeout(1000);
       await session.screenshot("99-final");
       screenshots = session.screenshots;
     } finally {
-      const demoStartMs = session.getDemoStartMs();
       await session.stop();
-      if (bootstrappedInstance) {
-        await bootstrappedInstance.stop();
-      }
+      if (bootstrappedInstance) await bootstrappedInstance.stop();
       const webm = path.join(outputDir, `qa-${parsed.number}.webm`);
       if (fs.existsSync(webm)) videoPath = webm;
+    }
 
-      // Post-mix narration onto the recorded video
-      if (narration && videoPath) {
-        try {
-          const offsetMs = Math.max(0, demoStartMs - ffmpegStartMs);
-          const finalPath = path.join(outputDir, `qa-${parsed.number}-narrated.mp4`);
-          await postMix(videoPath, narration.trackPath, narration.metaPath, offsetMs, finalPath);
+    // [3c] Generate narration using REAL step timings measured during recording
+    if (videoPath) {
+      const recordingStart = introStartMs;
+      const toVideoMs = (absMs: number) => Math.max(0, absMs - recordingStart);
+
+      const narrationSegments: NarrationSegment[] = [
+        {
+          id: "intro",
+          text: `Welcome to comfy QA. Reviewing ${targetType} ${parsed.number}: ${target.title.slice(0, 100)}`,
+          startMs: 0,
+        },
+        {
+          id: "github",
+          text: `First, the GitHub ${targetType} page for context.`,
+          startMs: toVideoMs(githubDoneMs),
+        },
+        {
+          id: "analysis",
+          text: `Severity ${research.severity}. Affected area: ${research.affectedArea}.`,
+          startMs: toVideoMs(analysisDoneMs),
+        },
+        ...research.testScenarios.flatMap((s, i): NarrationSegment[] => {
+          const scenStepTimings = stepTimings[i] ?? [];
+          const scenStart = scenarioStartMs[i] ?? analysisDoneMs;
+          // Accumulate step start times within the scenario
+          let stepCursor = toVideoMs(scenStart);
+          return [
+            {
+              id: `scenario-${i + 1}-intro`,
+              text: `Scenario ${i + 1}: ${s.name}. ${s.description.slice(0, 120)}`,
+              startMs: stepCursor,
+            },
+            ...s.steps.slice(0, 5).map((step, j) => {
+              const start = stepCursor;
+              stepCursor += scenStepTimings[j] ?? 2000;
+              return {
+                id: `scenario-${i + 1}-step-${j + 1}`,
+                text: `Step ${j + 1}: ${step.slice(0, 150)}`,
+                startMs: start,
+              };
+            }),
+          ];
+        }),
+        { id: "outro", text: `QA session complete. Report and video evidence saved.`, startMs: toVideoMs(Date.now()) },
+      ];
+
+      try {
+        console.log(`\n[3d/5] Generating narration from real timings…`);
+        const narration = await generateNarration(narrationSegments, outputDir);
+        if (narration) {
+          const finalPath = path.join(outputDir, `qa-${parsed.number}.mp4`);
+          await postMix(videoPath, narration.trackPath, narration.metaPath, 0, finalPath);
           videoPath = finalPath;
-        } catch (err) {
-          console.log(`  [post-mix] Failed: ${String(err).slice(0, 200)}`);
         }
+      } catch (err) {
+        console.log(`  [narration] Failed: ${String(err).slice(0, 200)}`);
       }
     }
 

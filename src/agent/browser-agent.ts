@@ -1,6 +1,7 @@
 import type { Page } from "playwright";
 import type { RecorderSession } from "../browser/recorder";
-import type { TestScenario, QAChecklistItem } from "./research";
+import type { TestScenario } from "./research";
+import { callLLM } from "../utils/llm";
 
 /** An action the AI agent decides to take */
 interface AgentAction {
@@ -61,70 +62,30 @@ async function capturePageState(page: Page): Promise<{
   return { screenshot, a11yTree, url, title, consoleErrors: [] };
 }
 
-/** Ask Claude to decide the next action based on the current page state */
+/** Ask Claude to decide the next action based on the current page state (live fallback) */
 async function askAgentForAction(
   scenario: TestScenario,
   stepIndex: number,
   pageState: { screenshot: string; a11yTree: string; url: string; title: string },
   history: string[]
 ): Promise<AgentAction[]> {
-  const prompt = `You are a QA automation agent controlling a browser via Playwright to test ComfyUI.
+  const prompt = `You are a QA automation agent controlling a browser via Playwright.
 
-## Current Scenario: ${scenario.name}
-${scenario.description}
+## Scenario: ${scenario.name}
+## Step ${stepIndex + 1}/${scenario.steps.length}: "${scenario.steps[stepIndex]}"
+## Playwright Hint: ${scenario.playwrightHint}
+## URL: ${pageState.url}
+## A11y Tree (truncated):
+${pageState.a11yTree.slice(0, 2000)}
+## History: ${history.slice(-5).join("; ") || "(start)"}
 
-## Test Steps
-${scenario.steps.map((s, i) => `${i === stepIndex ? "👉 " : "  "}${i + 1}. ${s}`).join("\n")}
+Return a JSON array of 1-5 actions:
+{"type":"click"|"type"|"scroll"|"hover"|"wait"|"key"|"done","selector":"...","text":"...","key":"...","ms":N,"observation":"..."}
+Use "done" when the step is complete. Return ONLY the JSON array.`;
 
-## Current Step: ${stepIndex + 1}/${scenario.steps.length}
-"${scenario.steps[stepIndex]}"
-
-## Expected Outcome
-${scenario.expectedOutcome}
-
-## Playwright Hint
-${scenario.playwrightHint}
-
-## Page State
-- URL: ${pageState.url}
-- Title: ${pageState.title}
-
-## Accessibility Tree (truncated)
-${pageState.a11yTree.slice(0, 3000)}
-
-## Action History
-${history.slice(-10).join("\n") || "(start)"}
-
----
-
-Return a JSON array of 1-5 actions to execute for this step. Each action:
-{
-  "type": "click" | "type" | "scroll" | "hover" | "wait" | "key" | "done",
-  "selector": "CSS selector or text content to target",
-  "text": "text to type (for type action)",
-  "x": number, "y": number (for coordinate-based click),
-  "key": "key name (for key action, e.g. Enter, Tab)",
-  "ms": milliseconds (for wait action),
-  "observation": "what you expect to see / what you observed"
-}
-
-Use "done" when the current step is complete and we should move to the next step.
-If ComfyUI is not loaded or the page shows something unexpected, include an observation explaining what you see.
-Return ONLY the JSON array.`;
-
-  const proc = Bun.spawn(["claude", "--print", "--model", "claude-sonnet-4-6"], {
-    stdin: new TextEncoder().encode(prompt),
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-  const output = await new Response(proc.stdout).text();
-  await proc.exited;
-
+  const output = await callLLM(prompt);
   const jsonMatch = output.match(/\[[\s\S]*\]/);
-  if (!jsonMatch) {
-    return [{ type: "done", observation: `Agent could not parse response: ${output.slice(0, 200)}` }];
-  }
-
+  if (!jsonMatch) return [{ type: "done", observation: `No JSON in response` }];
   try {
     return JSON.parse(jsonMatch[0]) as AgentAction[];
   } catch {
@@ -194,6 +155,120 @@ async function executeAction(page: Page, action: AgentAction): Promise<string> {
   } catch (err: any) {
     return `Action failed: ${err.message?.slice(0, 150)}`;
   }
+}
+
+// ─── Pre-planning ──────────────────────────────────────────────────────────
+
+export interface PlannedStep {
+  stepText: string;
+  actions: AgentAction[];
+}
+
+export interface PlannedScenario {
+  scenarioIndex: number;
+  scenario: TestScenario;
+  steps: PlannedStep[];
+}
+
+/** Pre-plan all actions for a scenario before recording starts (one LLM call, no browser) */
+export async function prePlanScenario(
+  scenario: TestScenario,
+  scenarioIndex: number,
+  targetUrl: string,
+): Promise<PlannedScenario> {
+  console.log(`  [plan] Scenario ${scenarioIndex + 1}: ${scenario.name}`);
+
+  const prompt = `You are a Playwright automation expert. Plan concrete browser actions for this QA scenario.
+Site URL: ${targetUrl}
+
+## Scenario: ${scenario.name}
+${scenario.description}
+
+## Playwright Hint
+${scenario.playwrightHint}
+
+## Preconditions
+${scenario.preconditions.join("\n")}
+
+## Steps to automate
+${scenario.steps.map((s, i) => `${i + 1}. ${s}`).join("\n")}
+
+For each step, return concrete Playwright actions. Use real CSS selectors or accessible names from the site.
+Prefer: getByRole, getByLabel, getByText, getByPlaceholder over brittle CSS selectors.
+Express selectors as Playwright locator strings (e.g. "button:has-text('Submit')" or "[data-testid='search']").
+
+Return a JSON array — one object per step:
+[
+  {
+    "stepText": "exact step text",
+    "actions": [
+      {"type": "click"|"type"|"scroll"|"hover"|"wait"|"key", "selector": "...", "text": "...", "key": "...", "ms": N, "observation": "..."}
+    ]
+  }
+]
+
+Return ONLY the JSON array. Be specific and actionable.`;
+
+  const output = await callLLM(prompt);
+  const jsonMatch = output.match(/\[[\s\S]*\]/);
+  if (jsonMatch) {
+    try {
+      const steps = JSON.parse(jsonMatch[0]) as PlannedStep[];
+      return { scenarioIndex, scenario, steps };
+    } catch {}
+  }
+
+  // Fallback: one wait action per step so recording at least proceeds
+  return {
+    scenarioIndex,
+    scenario,
+    steps: scenario.steps.map((stepText) => ({
+      stepText,
+      actions: [{ type: "wait" as const, ms: 1500, observation: stepText }],
+    })),
+  };
+}
+
+/** Execute pre-planned actions and return actual elapsed ms per step */
+export async function runScenarioWithPlan(
+  session: RecorderSession,
+  plan: PlannedScenario,
+): Promise<{ success: boolean; log: string[]; stepTimingsMs: number[] }> {
+  const log: string[] = [];
+  const stepTimingsMs: number[] = [];
+
+  await session.step(`Scenario ${plan.scenarioIndex + 1}: ${plan.scenario.name}`);
+  await session.plan(plan.scenario.description);
+  log.push(`=== Scenario: ${plan.scenario.name} ===`);
+
+  for (let stepIdx = 0; stepIdx < plan.steps.length; stepIdx++) {
+    const planned = plan.steps[stepIdx];
+    if (!planned) continue;
+    const stepText = planned.stepText;
+    await session.status(`Step ${stepIdx + 1}/${plan.steps.length}: ${stepText}`);
+    log.push(`--- Step ${stepIdx + 1}: ${stepText} ---`);
+
+    const stepStart = Date.now();
+
+    for (const action of planned.actions) {
+      if (action.observation) {
+        log.push(`  [observe] ${action.observation}`);
+        await session.annotate(200, 300, action.observation, 1500);
+      }
+      const result = await executeAction(session.page, action);
+      log.push(`  [action] ${result}`);
+      await session.page.waitForTimeout(150); // minimal visual pause
+    }
+
+    stepTimingsMs.push(Date.now() - stepStart);
+
+    await session.screenshot(
+      `scenario-${String(plan.scenarioIndex + 1).padStart(2, "0")}-step-${String(stepIdx + 1).padStart(2, "0")}`
+    );
+  }
+
+  log.push(`=== Scenario complete ===`);
+  return { success: true, log, stepTimingsMs };
 }
 
 /** Run a full test scenario with AI-driven browser automation */

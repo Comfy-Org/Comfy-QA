@@ -1,15 +1,24 @@
 /**
- * Post-mix narration audio onto the recorded video and burn subtitles.
- * Uses ffmpeg adelay filter for sync — single offset = (demo_start - ffmpeg_start) ms.
+ * Post-mix narration audio onto the recorded video.
  *
- * Inspired by snomiao/playwright-multi-tab — see docs/making-the-demo-video.md
+ * Two modes:
+ *  - Timed: each narration segment is placed at its measured video timestamp
+ *    (startMs from meta.json). Achieves perfect sync with pre-planned recording.
+ *  - Sequential (fallback): segments are concatenated and delayed by offsetMs.
  */
 import { $ } from "bun";
 import * as fs from "fs";
 import * as path from "path";
 
+interface MetaSegment {
+  id: string;
+  text: string;
+  durationMs: number;
+  startMs?: number;
+}
+
 interface Meta {
-  segments: { id: string; text: string; durationMs: number }[];
+  segments: MetaSegment[];
   totalDurationMs: number;
 }
 
@@ -27,45 +36,37 @@ function vttTime(ms: number): string {
   return srtTime(ms).replace(",", ".");
 }
 
-/** Generate SRT subtitle file from meta + initial offset */
-function generateSrt(meta: Meta, offsetMs: number, outPath: string): void {
-  const lines: string[] = [];
-  let cursor = offsetMs;
-  meta.segments.forEach((seg, i) => {
-    const start = cursor;
-    const end = cursor + seg.durationMs;
-    lines.push(String(i + 1));
-    lines.push(`${srtTime(start)} --> ${srtTime(end)}`);
-    lines.push(seg.text);
-    lines.push("");
-    cursor = end;
-  });
-  fs.writeFileSync(outPath, lines.join("\n"));
-}
+/** Generate SRT + WebVTT subtitle files. Uses startMs if available, else sequential. */
+function generateSubtitles(meta: Meta, fallbackOffsetMs: number, outDir: string): void {
+  const srtLines: string[] = [];
+  const vttLines: string[] = ["WEBVTT", ""];
+  let cursor = fallbackOffsetMs;
 
-/** Generate WebVTT subtitle file from meta + initial offset (browser-native, no libass) */
-export function generateVtt(meta: Meta, offsetMs: number, outPath: string): void {
-  const lines: string[] = ["WEBVTT", ""];
-  let cursor = offsetMs;
   meta.segments.forEach((seg, i) => {
-    const start = cursor;
-    const end = cursor + seg.durationMs;
-    lines.push(String(i + 1));
-    lines.push(`${vttTime(start)} --> ${vttTime(end)}`);
-    lines.push(seg.text);
-    lines.push("");
-    cursor = end;
+    const start = seg.startMs ?? cursor;
+    const end = start + seg.durationMs;
+    cursor = seg.startMs != null ? end : end; // advance cursor either way
+
+    srtLines.push(String(i + 1), `${srtTime(start)} --> ${srtTime(end)}`, seg.text, "");
+    vttLines.push(String(i + 1), `${vttTime(start)} --> ${vttTime(end)}`, seg.text, "");
   });
-  fs.writeFileSync(outPath, lines.join("\n"));
+
+  fs.writeFileSync(path.join(outDir, "narration.srt"), srtLines.join("\n"));
+  fs.writeFileSync(path.join(outDir, "narration.vtt"), vttLines.join("\n"));
 }
 
 /**
- * Mix audio + subtitles onto video.
- * @param videoPath path to silent recorded video (webm/mp4)
- * @param trackPath narration_track.wav from generateNarration
- * @param metaPath meta.json from generateNarration
- * @param offsetMs delay to apply to audio (when narration starts in video timeline)
- * @param outPath output video path
+ * Mix narration segments onto video.
+ *
+ * If meta.json segments have `startMs`, each segment is placed at that exact
+ * video timestamp (timed mode — perfectly synced with pre-planned recording).
+ * Otherwise falls back to a single adelay of `offsetMs` on the concatenated track.
+ *
+ * @param videoPath  recorded video (webm or mp4)
+ * @param trackPath  concatenated narration_track.wav
+ * @param metaPath   meta.json with segments array
+ * @param offsetMs   fallback global adelay (0 in timed mode)
+ * @param outPath    output mp4
  */
 export async function postMix(
   videoPath: string,
@@ -75,24 +76,45 @@ export async function postMix(
   outPath: string
 ): Promise<void> {
   const meta: Meta = JSON.parse(fs.readFileSync(metaPath, "utf-8"));
+  const outDir = path.dirname(outPath);
 
-  // Step 1: overlay audio with adelay
-  const tmpDir = path.dirname(outPath);
-  const audioMixed = path.join(tmpDir, "_audio-mixed.mp4");
+  const timedMode = meta.segments.every((s) => s.startMs != null);
+  console.log(`  [post-mix] Mode: ${timedMode ? "timed (real timestamps)" : "sequential (adelay)"}`);
+
+  // Build ffmpeg audio filter
+  let audioFilter: string;
+  let inputFlag: string[];
+
+  if (timedMode) {
+    // Each segment WAV file is delayed to its measured video timestamp.
+    // We need individual WAV paths — stored alongside narration_track in narration/ dir.
+    const narrationDir = path.dirname(trackPath);
+    const segWavs = meta.segments.map((s) => path.join(narrationDir, `${s.id}.wav`));
+    const missing = segWavs.filter((p) => !fs.existsSync(p));
+    if (missing.length > 0) {
+      // Fall back to sequential if individual WAVs are missing
+      console.log(`  [post-mix] Missing ${missing.length} segment WAVs — falling back to sequential`);
+      timedFallback();
+    } else {
+      // -i video -i seg0.wav -i seg1.wav ...
+      inputFlag = segWavs.flatMap((p) => ["-i", p]);
+      const delays = meta.segments.map((s, i) => `[${i + 1}:a]adelay=${s.startMs}|${s.startMs}[a${i}]`).join(";");
+      const mix = meta.segments.map((_, i) => `[a${i}]`).join("");
+      audioFilter = `${delays};${mix}amix=inputs=${meta.segments.length}:normalize=0[aout]`;
+
+      console.log(`  [post-mix] Mixing ${meta.segments.length} timed segments…`);
+      await $`ffmpeg -y -i ${videoPath} ${inputFlag} -filter_complex ${audioFilter} -map 0:v -map [aout] -c:v libx264 -preset fast -pix_fmt yuv420p -c:a aac -b:a 128k -shortest ${outPath}`.quiet();
+      generateSubtitles(meta, 0, outDir);
+      console.log(`  [post-mix] Final video → ${outPath}`);
+      return;
+    }
+  }
+
+  // Sequential mode (or timed fallback)
+  function timedFallback() {}
   const adelay = `${offsetMs}|${offsetMs}`;
-
-  console.log(`  [post-mix] Overlaying audio (adelay=${offsetMs}ms)…`);
-  await $`ffmpeg -y -i ${videoPath} -i ${trackPath} -filter_complex ${`[1:a]adelay=${adelay}[aout]`} -map 0:v -map [aout] -c:v libx264 -preset fast -pix_fmt yuv420p -c:a aac -shortest ${audioMixed}`.quiet();
-
-  // Step 2: generate SRT + WebVTT (browser-native, no libass needed)
-  const srtPath = path.join(tmpDir, "narration.srt");
-  generateSrt(meta, offsetMs, srtPath);
-  const vttPath = path.join(tmpDir, "narration.vtt");
-  generateVtt(meta, offsetMs, vttPath);
-  console.log(`  [post-mix] Subtitles → ${srtPath} + ${vttPath}`);
-
-  // Step 3: rename audio-mixed to final output (subtitles served as sidecar .vtt)
-  fs.renameSync(audioMixed, outPath);
-
-  console.log(`  [post-mix] Final video → ${outPath} (subtitles: ${vttPath})`);
+  console.log(`  [post-mix] Overlaying track (adelay=${offsetMs}ms)…`);
+  await $`ffmpeg -y -i ${videoPath} -i ${trackPath} -filter_complex ${`[1:a]adelay=${adelay}[aout]`} -map 0:v -map [aout] -c:v libx264 -preset fast -pix_fmt yuv420p -c:a aac -b:a 128k -shortest ${outPath}`.quiet();
+  generateSubtitles(meta, offsetMs, outDir);
+  console.log(`  [post-mix] Final video → ${outPath}`);
 }
