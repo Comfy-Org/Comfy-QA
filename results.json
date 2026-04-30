@@ -1,0 +1,11 @@
+{
+  "type": "qa",
+  "branch": "qa-registry-web-261",
+  "repo": "Comfy-Org/registry-web",
+  "number": "261",
+  "title": "feat(i18n): searchable language selector with keyboard navigation",
+  "status": "pass",
+  "date": "2026-04-30T04:44:30Z",
+  "hasVideo": true,
+  "url": "https://qa-registry-web-261.comfy-qa.pages.dev/"
+}
