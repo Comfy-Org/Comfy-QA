@@ -110,7 +110,7 @@ cat > index.html <<HTML
       <span>$REPO #$NUMBER</span> &middot;
       <span>$(date -u +%Y-%m-%d)</span>
     </div>
-    $([ -n "$VIDEO" ] && echo '<video controls class="w-full rounded-lg mb-6" src="video.mp4"></video>')
+    $([ -n "$VIDEO" ] && echo '<video controls class="w-full rounded-lg mb-6" src="video.mp4"><track kind="subtitles" src="narration.vtt" srclang="en" label="Narration" default></video>')
     <div class="bg-zinc-900 rounded-lg p-4 mb-6">
       <h2 class="text-sm font-bold mb-2">Results</h2>
       <pre id="results" class="text-xs text-zinc-400 overflow-auto"></pre>
@@ -128,6 +128,9 @@ HTML
 
 # Copy video and spec if provided
 [ -n "$VIDEO" ] && [ -f "$VIDEO" ] && cp "$VIDEO" video.mp4
+# Copy WebVTT subtitle sidecar if present alongside the video
+VIDEO_DIR=$([ -n "$VIDEO" ] && dirname "$VIDEO" || echo ".")
+[ -f "${VIDEO_DIR}/narration.vtt" ] && cp "${VIDEO_DIR}/narration.vtt" narration.vtt || true
 
 # Generate poster thumbnail from video at 3s (for dashboard main page)
 if [ -f "video.mp4" ] && command -v ffmpeg >/dev/null 2>&1; then

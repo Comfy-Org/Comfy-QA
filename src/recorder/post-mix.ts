@@ -22,6 +22,11 @@ function srtTime(ms: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")},${String(msr).padStart(3, "0")}`;
 }
 
+/** Format ms as WebVTT timestamp HH:MM:SS.mmm */
+function vttTime(ms: number): string {
+  return srtTime(ms).replace(",", ".");
+}
+
 /** Generate SRT subtitle file from meta + initial offset */
 function generateSrt(meta: Meta, offsetMs: number, outPath: string): void {
   const lines: string[] = [];
@@ -31,6 +36,22 @@ function generateSrt(meta: Meta, offsetMs: number, outPath: string): void {
     const end = cursor + seg.durationMs;
     lines.push(String(i + 1));
     lines.push(`${srtTime(start)} --> ${srtTime(end)}`);
+    lines.push(seg.text);
+    lines.push("");
+    cursor = end;
+  });
+  fs.writeFileSync(outPath, lines.join("\n"));
+}
+
+/** Generate WebVTT subtitle file from meta + initial offset (browser-native, no libass) */
+export function generateVtt(meta: Meta, offsetMs: number, outPath: string): void {
+  const lines: string[] = ["WEBVTT", ""];
+  let cursor = offsetMs;
+  meta.segments.forEach((seg, i) => {
+    const start = cursor;
+    const end = cursor + seg.durationMs;
+    lines.push(String(i + 1));
+    lines.push(`${vttTime(start)} --> ${vttTime(end)}`);
     lines.push(seg.text);
     lines.push("");
     cursor = end;
@@ -63,19 +84,15 @@ export async function postMix(
   console.log(`  [post-mix] Overlaying audio (adelay=${offsetMs}ms)…`);
   await $`ffmpeg -y -i ${videoPath} -i ${trackPath} -filter_complex ${`[1:a]adelay=${adelay}[aout]`} -map 0:v -map [aout] -c:v libx264 -preset fast -pix_fmt yuv420p -c:a aac -shortest ${audioMixed}`.quiet();
 
-  // Step 2: generate SRT
+  // Step 2: generate SRT + WebVTT (browser-native, no libass needed)
   const srtPath = path.join(tmpDir, "narration.srt");
   generateSrt(meta, offsetMs, srtPath);
-  console.log(`  [post-mix] Subtitles → ${srtPath}`);
+  const vttPath = path.join(tmpDir, "narration.vtt");
+  generateVtt(meta, offsetMs, vttPath);
+  console.log(`  [post-mix] Subtitles → ${srtPath} + ${vttPath}`);
 
-  // Step 3: burn subtitles
-  console.log(`  [post-mix] Burning subtitles…`);
-  // Escape path for ffmpeg subtitle filter
-  const escSrt = srtPath.replace(/\\/g, "/").replace(/:/g, "\\:");
-  await $`ffmpeg -y -i ${audioMixed} -vf ${`subtitles=${escSrt}:force_style='FontSize=18,Alignment=2,OutlineColour=&H80000000,BorderStyle=4,MarginV=30'`} -c:a copy ${outPath}`.quiet();
+  // Step 3: rename audio-mixed to final output (subtitles served as sidecar .vtt)
+  fs.renameSync(audioMixed, outPath);
 
-  // Cleanup intermediate
-  try { fs.unlinkSync(audioMixed); } catch {}
-
-  console.log(`  [post-mix] Final video → ${outPath}`);
+  console.log(`  [post-mix] Final video → ${outPath} (subtitles: ${vttPath})`);
 }
